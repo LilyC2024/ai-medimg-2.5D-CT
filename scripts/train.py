@@ -323,6 +323,12 @@ def main() -> int:
             best_eval_dice = eval_metrics["dice"]
             torch.save(
                 {
+                    "preprocessing_contract": json.loads(
+                        (index_path.parent / "manifest.json").read_text()
+                    )["preprocessing"],
+                    "data_contract": json.loads(
+                        (index_path.parent / "manifest.json").read_text()
+                    ),
                     "provenance": {
                         "git_commit": __import__("subprocess")
                         .check_output(

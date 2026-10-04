@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import io
+import hashlib
 import json
 import os
 
@@ -71,11 +72,10 @@ def set_deterministic_runtime(num_threads: int) -> None:
 
 
 def load_checkpoint(checkpoint_path: str | Path) -> dict[str, Any]:
-    return torch.load(
-        Path(checkpoint_path).expanduser().resolve(),
-        map_location="cpu",
-        weights_only=True,
-    )
+    path = Path(checkpoint_path).expanduser().resolve()
+    checkpoint = torch.load(path, map_location="cpu", weights_only=True)
+    checkpoint["_checkpoint_sha256"] = hashlib.sha256(path.read_bytes()).hexdigest()
+    return checkpoint
 
 
 def build_model_from_checkpoint(checkpoint: dict[str, Any]) -> UNetSmall:
@@ -126,7 +126,16 @@ def export_checkpoint_to_onnx(
         )
     import onnx
 
-    onnx.checker.check_model(onnx.load(str(destination)))
+    graph = onnx.load(str(destination))
+    onnx.helper.set_model_props(
+        graph,
+        {
+            "checkpoint_sha256": checkpoint["_checkpoint_sha256"],
+            "pipeline_version": "0.8.0",
+        },
+    )
+    onnx.checker.check_model(graph)
+    onnx.save(graph, str(destination))
     return destination
 
 
@@ -203,6 +212,7 @@ def validate_onnx_equivalence(
     checkpoint = load_checkpoint(checkpoint_path)
     model = build_model_from_checkpoint(checkpoint)
     session = create_onnx_session(onnx_path, num_threads=num_threads)
+    verify_runtime_binding(checkpoint, session)
 
     with torch.no_grad():
         torch_logits = (
@@ -255,6 +265,26 @@ def create_onnx_session(
         sess_options=session_options,
         providers=["CPUExecutionProvider"],
     )
+
+
+def verify_runtime_binding(checkpoint, session):
+    if (
+        session.get_modelmeta().custom_metadata_map.get("checkpoint_sha256")
+        != checkpoint["_checkpoint_sha256"]
+    ):
+        raise ValueError(
+            "ONNX/checkpoint provenance mismatch; export the matching checkpoint."
+        )
+
+
+def verify_preprocessing_contract(checkpoint, config):
+    expected = checkpoint.get("preprocessing_contract")
+    if expected is None:
+        raise ValueError(
+            "Historical checkpoint lacks preprocessing contract; retrain the corrected baseline."
+        )
+    if json.loads(json.dumps(asdict(config))) != expected:
+        raise ValueError("Input preprocessing differs from the checkpoint contract.")
 
 
 def run_onnx_segmentation(
@@ -347,6 +377,7 @@ def run_deployment_inference(
         if runtime_checkpoint is not None
         else load_checkpoint(checkpoint_path)
     )
+    verify_preprocessing_contract(checkpoint, preprocess_config)
     model_height = int(checkpoint["resize"]["height"])
     model_width = int(checkpoint["resize"]["width"])
     temperature = float(checkpoint.get("temperature", 1.0))
@@ -386,6 +417,7 @@ def run_deployment_inference(
         if runtime_session is not None
         else create_onnx_session(onnx_path, num_threads=num_threads)
     )
+    verify_runtime_binding(checkpoint, session)
     inference_start = time.perf_counter()
     probabilities_bchw = run_onnx_segmentation(
         session,

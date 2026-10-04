@@ -56,7 +56,10 @@ def prepare(series, destination):
     frame = build_case_index([case], {"subject_001": "train"}, {"subject_001": splits})
     frame["volume_path"] = "volume.npz"
     frame["label_volume_path"] = "labels.npz"
-    frame["series_dir"] = "source-series"
+    frame = frame.drop(columns=["series_dir", "slice_mask_path"])
+    frame["case_alias"] = "sample_001"
+    frame["schema_version"] = 1
+    frame["pipeline_version"] = "0.8.0"
     frame.to_csv(destination / "index.csv", index=False)
     checksum = lambda path: hashlib.sha256(Path(path).read_bytes()).hexdigest()
     manifest = {

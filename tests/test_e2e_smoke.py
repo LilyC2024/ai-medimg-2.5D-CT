@@ -1,3 +1,6 @@
+from dataclasses import asdict
+import json
+from config import PreprocessConfig
 import json
 import subprocess
 import sys
@@ -27,6 +30,9 @@ class TestDeploymentSmoke(unittest.TestCase):
                         "num_classes": 4,
                         "base_channels": 2,
                     },
+                    "preprocessing_contract": json.loads(
+                        json.dumps(asdict(PreprocessConfig()))
+                    ),
                     "state_dict": model.state_dict(),
                     "resize": {"height": 32, "width": 32},
                     "temperature": 1.0,

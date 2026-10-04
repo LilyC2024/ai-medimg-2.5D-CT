@@ -20,6 +20,8 @@ from deploy.inference_runtime import (
     create_onnx_session,
     run_deployment_inference,
     unzip_series_bytes,
+    verify_runtime_binding,
+    verify_preprocessing_contract,
 )
 
 
@@ -36,6 +38,8 @@ async def lifespan(app):
         app.state.checkpoint = load_checkpoint(app.state.checkpoint_path)
         build_model_from_checkpoint(app.state.checkpoint)
         app.state.session = create_onnx_session(app.state.onnx_path)
+        verify_runtime_binding(app.state.checkpoint, app.state.session)
+        verify_preprocessing_contract(app.state.checkpoint, PreprocessConfig())
         shape = app.state.session.get_inputs()[0].shape
         if shape[1:] != [
             3,

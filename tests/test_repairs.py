@@ -182,3 +182,33 @@ class Repairs(unittest.TestCase):
             negative_log_likelihood(apply_temperature(logits, t), targets),
             negative_log_likelihood(logits, targets),
         )
+
+    def test_runtime_binding_and_preprocess_mismatch(self):
+        from deploy.inference_runtime import (
+            verify_runtime_binding,
+            verify_preprocessing_contract,
+        )
+        from types import SimpleNamespace
+        from dataclasses import asdict, replace
+        import json
+
+        c = {
+            "_checkpoint_sha256": "a",
+            "preprocessing_contract": json.loads(
+                json.dumps(asdict(PreprocessConfig()))
+            ),
+        }
+        verify_preprocessing_contract(c, PreprocessConfig())
+        with self.assertRaises(ValueError):
+            verify_preprocessing_contract(
+                c, replace(PreprocessConfig(), hu_clip_min=-500)
+            )
+        with self.assertRaises(ValueError):
+            verify_runtime_binding(
+                c,
+                SimpleNamespace(
+                    get_modelmeta=lambda: SimpleNamespace(
+                        custom_metadata_map={"checkpoint_sha256": "b"}
+                    )
+                ),
+            )

@@ -1,3 +1,6 @@
+from dataclasses import asdict
+import json
+from config import PreprocessConfig
 import io
 import os
 from pathlib import Path
@@ -39,6 +42,9 @@ class ServiceTests(unittest.TestCase):
                         "num_classes": 4,
                         "base_channels": 2,
                     },
+                    "preprocessing_contract": json.loads(
+                        json.dumps(asdict(PreprocessConfig()))
+                    ),
                     "state_dict": model.state_dict(),
                     "resize": {"height": 32, "width": 32},
                 },
