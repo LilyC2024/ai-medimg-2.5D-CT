@@ -33,9 +33,9 @@ class PreprocessConfig:
     # HU threshold for separating air from patient/head region.
     head_threshold_hu: float = -350.0
     # Morphology cleanup iterations for binary opening (remove tiny noise blobs).
-    mask_opening_iterations: int = 10
+    mask_opening_iterations: int = 1
     # Morphology cleanup iterations for binary closing (fill small mask holes).
-    mask_closing_iterations: int = 10
+    mask_closing_iterations: int = 2
     # Margin (z, y, x) in millimeters added around the detected head bounding box.
     crop_margin_mm_zyx: tuple[float, float, float] = (2.0, 10.0, 10.0)
 

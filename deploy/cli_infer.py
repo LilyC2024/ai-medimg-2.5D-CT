@@ -7,11 +7,6 @@ from dataclasses import replace
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-if str(REPO_ROOT) not in sys.path:
-    sys.path.insert(0, str(REPO_ROOT))
-SRC_DIR = REPO_ROOT / 'src'
-if str(SRC_DIR) not in sys.path:
-    sys.path.insert(0, str(SRC_DIR))
 
 from deploy.inference_runtime import (  # noqa: E402
     attach_reference_metrics,
@@ -31,22 +26,39 @@ def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Day 7 deployment CLI: DICOM folder -> ONNX Runtime CPU inference -> mask volume + overlays.",
     )
-    parser.add_argument("--series-dir", type=str, default=str(REPO_ROOT / "data" / "dicom_series_01"))
-    parser.add_argument("--checkpoint", type=str, default=str(REPO_ROOT / "saved_models" / "best.pt"))
-    parser.add_argument("--onnx-path", type=str, default=str(REPO_ROOT / "onnx" / "model.onnx"))
-    parser.add_argument("--output-dir", type=str, default=str(REPO_ROOT / "outputs" / "day7_infer_demo"))
-    parser.add_argument("--processed-dir", type=str, default=str(REPO_ROOT / "data_processed"))
+    parser.add_argument(
+        "--series-dir", type=str, default=str(REPO_ROOT / "data" / "dicom_series_01")
+    )
+    parser.add_argument(
+        "--checkpoint", type=str, default=str(REPO_ROOT / "saved_models" / "best.pt")
+    )
+    parser.add_argument(
+        "--onnx-path", type=str, default=str(REPO_ROOT / "onnx" / "model.onnx")
+    )
+    parser.add_argument(
+        "--output-dir", type=str, default=str(REPO_ROOT / "outputs" / "day7_infer_demo")
+    )
+    parser.add_argument(
+        "--processed-dir", type=str, default=str(REPO_ROOT / "data_processed")
+    )
     parser.add_argument("--batch-size", type=int, default=1)
     parser.add_argument("--threads", type=int, default=1)
     parser.add_argument("--mask-format", choices=["npz", "nii.gz"], default="npz")
-    parser.add_argument("--output-formats", nargs="+", choices=["mask", "overlays"], default=["mask", "overlays"])
+    parser.add_argument(
+        "--output-formats",
+        nargs="+",
+        choices=["mask", "overlays"],
+        default=["mask", "overlays"],
+    )
     parser.add_argument("--force-export", action="store_true")
     parser.add_argument("--skip-validation", action="store_true")
     parser.add_argument("--disable-postprocess", action="store_true")
 
     parser.add_argument("--xy-spacing-mm", type=float, default=1.0)
     parser.add_argument("--target-z-mm", type=float, default=None)
-    parser.add_argument("--keep-z-if-coarse", action=argparse.BooleanOptionalAction, default=True)
+    parser.add_argument(
+        "--keep-z-if-coarse", action=argparse.BooleanOptionalAction, default=True
+    )
     parser.add_argument("--coarse-z-threshold-mm", type=float, default=3.0)
     parser.add_argument("--resample-order", type=int, default=1)
     parser.add_argument("--head-threshold-hu", type=float, default=-350.0)
@@ -97,13 +109,9 @@ def main() -> int:
     )
 
     report = dict(result.report)
-    reference_path = Path(args.processed_dir).expanduser().resolve() / "pseudo_labels" / "pseudo_labels_3d.npz"
-    if reference_path.exists():
-        import numpy as np
-
-        with np.load(reference_path) as data:
-            report = attach_reference_metrics(report, result.prediction_volume, data["pseudo_labels"].astype(np.uint8))
-    result.output_paths.report_path.write_text(json.dumps(report, indent=2), encoding="utf-8")
+    result.output_paths.report_path.write_text(
+        json.dumps(report, indent=2), encoding="utf-8"
+    )
 
     print(f"Saved mask volume: {result.output_paths.mask_volume_path}")
     if "overlays" in set(args.output_formats):

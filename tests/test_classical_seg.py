@@ -77,7 +77,9 @@ class TestClassicalSegmentation(unittest.TestCase):
         self.assertEqual(result.brain_mask_3d.shape, volume.shape)
         self.assertEqual(result.pseudo_labels_3d.shape, volume.shape)
 
-        stats = summarize_mask_quality(result.brain_mask_3d, spacing_zyx=(1.0, 1.0, 1.0))
+        stats = summarize_mask_quality(
+            result.brain_mask_3d, spacing_zyx=(1.0, 1.0, 1.0)
+        )
         self.assertGreater(int(stats["voxel_count"]), 0)
         self.assertGreaterEqual(int(stats["max_contiguous_run_slices"]), 1)
         self.assertGreaterEqual(float(stats["largest_component_ratio"]), 0.5)

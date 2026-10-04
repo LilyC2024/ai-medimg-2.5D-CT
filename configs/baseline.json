@@ -1,0 +1,7 @@
+{
+  "pipeline_version": "0.8.0", "seed": 13, "optimizer": "Adam", "learning_rate": 0.001,
+  "batch_size": 2, "epochs": 8, "image_size": [256,256], "base_channels": 16,
+  "num_threads": 4, "loss": "0.5 weighted CE + 0.5 foreground soft Dice",
+  "augmentation": {"rotation_deg": 7.5, "flip": true, "intensity_jitter": true},
+  "selection": "validation foreground macro Dice", "temperature": 1.0
+}

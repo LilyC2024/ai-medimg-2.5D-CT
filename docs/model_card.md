@@ -1,52 +1,11 @@
-# Model Card
+# Model card — prototype 0.8.0
 
-## Model Details
+Intended use: engineer/researcher inspection of agreement with versioned classical CT head-region pseudo labels. Input: supported regular single-frame monochrome CT, normalized/resized ordered neighboring slices. Output: four heuristic candidate classes on the source image grid. Architecture and label semantics are documented in architecture.md.
 
-- Name: `UNetSmall` 2.5D CT head segmentation baseline
-- Version: `v0.6-robustness`
-- Framework: PyTorch
-- Inputs: 3-slice 2.5D stacks built from preprocessed axial CT slices
-- Outputs: 4-class pseudo-label segmentation (`background`, `brain-ish`, `bone`, `overlap`) plus an uncertainty proxy
+Training: one CT series, 18 train centers, four validation centers, two-center buffer at each boundary. Seed 13, base width 16, 256x256, eight CPU epochs, Adam LR 0.001, CE+Dice. Model selection uses validation foreground macro Dice. Test is four contiguous centers from the same series, not independent patients. Sources, split and checkpoint hashes are in reports; no public artifact download is promised. Original best.pt is safely compatible with the architecture but is historical, unversioned evidence, and is not deployed as the repaired model.
 
-## Intended Use
+Raw test agreement is weak overall (approximately 0.303 foreground macro Dice), and existing postprocessing reduces agreement (approximately 0.145). Class 1 is rare; teacher overlap dominates central tissue. The teacher's -100 HU bone threshold includes soft tissue. These limitations make anatomical naming unreliable. Teacher agreement cannot demonstrate superiority to the teacher. No clinical labels, lesion diagnosis, calibration generalization, site/scanner analysis or external validation exists.
 
-- Education and prototyping for medical imaging pipelines
-- Stress-testing DICOM ingestion, preprocessing, pseudo-label learning, and reporting workflows
-- Prioritized manual review using slice-level metrics and uncertainty summaries
+Deployment: graph-checked ONNX CPU and full-model Intel NPU execution are measured. CPU parity and FP16 NPU results use different declared gates. Uncertainty is a model behavior summary, not validated clinical confidence. Thick slices, crop extremes, small classes, motion/metal and parameter sensitivity may cause failure. Unsupported geometry fails explicitly rather than being accepted silently.
 
-## Not Intended For
-
-- Clinical diagnosis, treatment planning, or autonomous triage
-- Any deployment where calibrated risk estimates or regulatory-grade validation are required
-- Performance claims on unseen patient populations without manual ground-truth labels
-
-## Data
-
-- Current repository state uses one CT head DICOM series
-- Supervision comes from Day 3 classical pseudo labels, not expert annotations
-- Preprocessing includes spacing-aware resampling, ROI crop, HU clipping, and normalization
-
-## Evaluation
-
-- Slice and volume metrics are computed against pseudo labels
-- Day 6 adds connected-component cleanup, small-object removal, hole filling, smoothing, and entropy/TTA uncertainty proxies
-- The standardized report highlights best/worst slices for manual review
-
-## Constraints
-
-- Single-series data means weak generalization evidence and limited leakage-safe validation
-- Thick slices, missing spacing tags, motion, beam hardening, and metal can degrade mask plausibility
-- Uncertainty is heuristic and should be used as a review signal, not a decision threshold
-
-## Failure Modes
-
-- Missing or malformed DICOM spacing tags prevent safe physical resampling
-- Motion and metal artifacts can fragment connected components or create false positive high-HU regions
-- Thick-slice scans weaken 3D morphology assumptions and increase unstable boundaries
-- Pseudo-label supervision can reinforce Day 3 rule-based errors during Day 5/6 learning and inference
-
-## Human Oversight
-
-- Review the Day 6 report before trusting segmentation outputs
-- Inspect worst slices and high-uncertainty slices manually
-- Treat any validation warnings in preprocessing/classical reports as blockers for downstream analysis
+Human verification: no clinical expert review is claimed. An AI coding agent inspected code, generated fixtures, repaired implementation, ran tests and local experiments, and visually inspected a local pseudo-label contact sheet. The user selected MIT for code. Source-data permissions and any human approval of labels remain open. This project has no CE claim and must not support patient diagnosis.

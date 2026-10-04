@@ -1,16 +1,1 @@
-pydicom
-SimpleITK
-numpy
-scipy
-matplotlib
-scikit-image
-opencv-python
-pandas
-tqdm
-onnx
-onnxruntime
-fastapi
-python-multipart
-uvicorn
-monai
-torch
+-e .[ml]

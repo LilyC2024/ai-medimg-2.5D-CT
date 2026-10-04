@@ -1,31 +1,18 @@
-from __future__ import annotations
+"""Required CPU checks; missing tooling is an error, never a silent skip."""
 
-import shutil
 import subprocess
 import sys
 from pathlib import Path
 
-
-REPO_ROOT = Path(__file__).resolve().parents[1]
-
-
-def _run(command: list[str], *, required: bool = True) -> int:
-    print(f"$ {' '.join(command)}")
-    completed = subprocess.run(command, cwd=REPO_ROOT, check=False)
-    if required and completed.returncode != 0:
-        raise SystemExit(completed.returncode)
-    return completed.returncode
+ROOT = Path(__file__).resolve().parents[1]
 
 
-def main() -> int:
-    formatter = shutil.which("ruff")
-    if formatter:
-        _run([formatter, "format", "--check", "."])
-    else:
-        print("ruff not installed; skipping formatting check.")
-
-    python_executable = sys.executable
-    _run([python_executable, "-m", "unittest", "discover", "-s", "tests", "-v"])
+def main():
+    for args in (
+        ("ruff", "check", "src", "scripts", "deploy", "tests"),
+        ("unittest", "discover", "-s", "tests", "-v"),
+    ):
+        subprocess.run([sys.executable, "-m", *args], cwd=ROOT, check=True)
     return 0
 
 

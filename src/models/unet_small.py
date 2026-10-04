@@ -42,7 +42,9 @@ class UpBlock(nn.Module):
     def forward(self, x: torch.Tensor, skip: torch.Tensor) -> torch.Tensor:
         x = self.up(x)
         if x.shape[-2:] != skip.shape[-2:]:
-            x = F.interpolate(x, size=skip.shape[-2:], mode="bilinear", align_corners=False)
+            x = F.interpolate(
+                x, size=skip.shape[-2:], mode="bilinear", align_corners=False
+            )
         x = torch.cat([skip, x], dim=1)
         return self.conv(x)
 
@@ -83,7 +85,9 @@ class MetricResult:
 
 def one_hot_labels(targets: torch.Tensor, num_classes: int) -> torch.Tensor:
     if targets.ndim != 3:
-        raise ValueError(f"Expected targets with shape (N, H, W), got {tuple(targets.shape)}")
+        raise ValueError(
+            f"Expected targets with shape (N, H, W), got {tuple(targets.shape)}"
+        )
     encoded = F.one_hot(targets.long(), num_classes=num_classes)
     return encoded.permute(0, 3, 1, 2).float()
 
@@ -96,7 +100,9 @@ def multiclass_dice_loss(
     smooth: float = 1e-5,
 ) -> torch.Tensor:
     probabilities = torch.softmax(logits, dim=1)
-    targets_one_hot = one_hot_labels(targets, num_classes=num_classes).to(probabilities.device)
+    targets_one_hot = one_hot_labels(targets, num_classes=num_classes).to(
+        probabilities.device
+    )
 
     if not include_background:
         probabilities = probabilities[:, 1:]
@@ -118,7 +124,9 @@ def combined_dice_ce_loss(
     class_weights: torch.Tensor | None = None,
 ) -> torch.Tensor:
     ce = F.cross_entropy(logits, targets.long(), weight=class_weights)
-    dice = multiclass_dice_loss(logits, targets, num_classes=num_classes, include_background=False)
+    dice = multiclass_dice_loss(
+        logits, targets, num_classes=num_classes, include_background=False
+    )
     return ce_weight * ce + dice_weight * dice
 
 
@@ -144,22 +152,31 @@ def compute_segmentation_metrics(
     for class_index in class_indices:
         pred_mask = pred_labels == class_index
         target_mask = target_labels == class_index
-        intersection = torch.logical_and(pred_mask, target_mask).sum(dtype=torch.float32)
+        intersection = torch.logical_and(pred_mask, target_mask).sum(
+            dtype=torch.float32
+        )
         union = torch.logical_or(pred_mask, target_mask).sum(dtype=torch.float32)
         pred_sum = pred_mask.sum(dtype=torch.float32)
         target_sum = target_mask.sum(dtype=torch.float32)
 
-        dice = (2.0 * intersection + smooth) / (pred_sum + target_sum + smooth)
-        iou = (intersection + smooth) / (union + smooth)
+        if float(pred_sum + target_sum) == 0:
+            per_class_dice[str(class_index)] = None
+            per_class_iou[str(class_index)] = None
+            continue
+        dice = 2.0 * intersection / (pred_sum + target_sum)
+        iou = intersection / union
 
         per_class_dice[str(class_index)] = float(dice.item())
         per_class_iou[str(class_index)] = float(iou.item())
         dice_values.append(dice)
         iou_values.append(iou)
 
-    mean_dice = torch.stack(dice_values).mean() if dice_values else torch.tensor(1.0)
-    mean_iou = torch.stack(iou_values).mean() if iou_values else torch.tensor(1.0)
+    mean_dice = torch.stack(dice_values).mean() if dice_values else torch.tensor(0.0)
+    mean_iou = torch.stack(iou_values).mean() if iou_values else torch.tensor(0.0)
     return {
+        "sample_count": int(target_labels.shape[0]),
+        "aggregation": "global voxel counts; foreground macro mean",
+        "empty_class_handling": "both empty: null and excluded; all foreground empty: summary zero",
         "dice": float(mean_dice.item()),
         "iou": float(mean_iou.item()),
         "per_class_dice": per_class_dice,

@@ -1,0 +1,7 @@
+# 0.8.0 repair notes — release candidate
+
+Corrected raw-slice support leakage, eliminated train-as-validation fallback and mixed-split evaluation, moved morphology to ordered contiguous volumes, and accumulated metrics globally. Added physical geometry transforms/source-grid export, rescale-aware compressed decoding, padding exclusion, safe checkpoint loading, versioned pseudo-label/data manifests, epoch-varying deterministic augmentation and graph/parity gates.
+
+Added synthetic CLI and service tests, CPU CI, sanitized reports, reviewed technical metadata, explicit package configuration and MIT code license. Removed unused MONAI dependency and deprecated current claims based on old runs. Model and image files remain local and ignored. The full U-Net executed on the actual NPU with explicit device evidence; its FP16 numerical differences and latency are separate from FP32 CPU parity.
+
+Known limits: single-series pseudo-label task, weak raw foreground agreement, postprocessing degradation, rare class failure and no calibrated clinical confidence. Source-data URL/permissions, authorized real-data/model distribution, expert annotation, multi-patient/external validation and clinical product programme remain unresolved. A tagged release is withheld while externally reproducible acquisition and any remaining verification gates are open. Remote push and clean-environment verification statuses must be read from validation evidence, not inferred from these notes.

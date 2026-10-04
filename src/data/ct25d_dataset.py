@@ -115,7 +115,7 @@ def discover_legacy_case(
         )
 
     identifiers = _read_series_identifiers(series_path)
-    split_group_id = f"{identifiers['patient_id']}|{identifiers['series_instance_uid']}"
+    split_group_id = identifiers['patient_id']
     return CT25DCase(
         patient_id=identifiers["patient_id"],
         study_instance_uid=identifiers["study_instance_uid"],
@@ -196,49 +196,34 @@ def assign_single_case_slice_splits(
     test_ratio: float = 0.15,
     context_radius: int = 1,
 ) -> list[str]:
-    if depth <= 0:
-        raise ValueError("depth must be positive.")
+    if depth <= 0 or context_radius < 1:
+        raise ValueError("Positive depth and context_radius >= 1 are required.")
+    if min(val_ratio, test_ratio) < 0 or val_ratio + test_ratio >= 1:
+        raise ValueError("Holdout ratios must be nonnegative and sum to less than one.")
+    # Each boundary discards 2r centers: nearest retained centers differ by 2r+1.
+    val_count = max(1, round(depth * val_ratio)) if val_ratio else 0
+    test_count = max(1, round(depth * test_ratio)) if test_ratio else 0
+    gap = 2 * context_radius
+    train_count = depth - val_count - test_count - gap * bool(val_count) - gap * bool(test_count)
+    if train_count < 1:
+        raise ValueError("Series too short for requested disjoint input supports.")
+    result = ["train"] * train_count
+    for name, count in (("val", val_count), ("test", test_count)):
+        if count:
+            result += ["buffer"] * gap + [name] * count
+    assert_split_support(result, context_radius)
+    return result
 
-    assignments = ["train"] * int(depth)
-    requested_val = int(round(depth * max(val_ratio, 0.0))) if val_ratio > 0 else 0
-    requested_test = int(round(depth * max(test_ratio, 0.0))) if test_ratio > 0 else 0
-    val_count = max(requested_val, 1 if val_ratio > 0 and depth >= 6 else 0)
-    test_count = max(requested_test, 1 if test_ratio > 0 and depth >= 8 else 0)
 
-    def _reserve(center_fraction: float, split_name: str, count: int) -> None:
-        if count <= 0:
-            return
-        center = int(round((depth - 1) * center_fraction))
-        start = max(0, center - count // 2)
-        end = min(depth, start + count)
-        start = max(0, end - count)
-
-        # Slide the block until it no longer collides with a holdout block.
-        while any(assignments[idx] != "train" for idx in range(start, end)) and end < depth:
-            start += 1
-            end += 1
-        while any(assignments[idx] != "train" for idx in range(start, end)) and start > 0:
-            start -= 1
-            end -= 1
-
-        for idx in range(start, end):
-            assignments[idx] = split_name
-
-        buffer_start = max(0, start - int(context_radius))
-        buffer_end = min(depth, end + int(context_radius))
-        for idx in range(buffer_start, buffer_end):
-            if assignments[idx] == "train":
-                assignments[idx] = "buffer"
-
-    _reserve(0.35, "val", val_count)
-    _reserve(0.70, "test", test_count)
-
-    if not any(split == "train" for split in assignments):
-        for idx, split in enumerate(assignments):
-            if split == "buffer":
-                assignments[idx] = "train"
-                break
-    return assignments
+def assert_split_support(assignments: list[str], radius: int = 1) -> None:
+    supports = {name: set() for name in ("train", "val", "test")}
+    for center, name in enumerate(assignments):
+        if name in supports:
+            supports[name].update(max(0, min(len(assignments)-1, center+offset))
+                                  for offset in range(-radius, radius+1))
+    for a, b in (("train", "val"), ("train", "test"), ("val", "test")):
+        if supports[a] & supports[b]:
+            raise ValueError(f"Cross-split raw input support overlap: {a}/{b}")
 
 
 
@@ -447,13 +432,62 @@ class CT25DDataset(Dataset):
         label_key: str = "pseudo_labels",
         transforms: Any | None = None,
         seed: int = 13,
+        data_root: str | Path | None = None,
     ) -> None:
         _torch_required()
         self.index_csv_path = Path(index_csv_path).expanduser().resolve()
         self.index_df = pd.read_csv(self.index_csv_path)
+        required={"split","patient_id","series_instance_uid","slice_index","depth","height","width","volume_path","label_volume_path"}
+        if required-set(self.index_df.columns):
+            raise ValueError("Malformed index: required columns are missing.")
+        if not set(self.index_df["split"]).issubset({"train","val","test","buffer"}):
+            raise ValueError("Invalid split name.")
+        if self.index_df.duplicated(["series_instance_uid","slice_index"]).any():
+            raise ValueError("Duplicate case/slice rows.")
+        # Patient isolation applies between series. A single-series demonstration
+        # explicitly uses intra-series support-disjoint partitions instead.
+        for _, patient in self.index_df.groupby("patient_id"):
+            if patient["series_instance_uid"].nunique()>1 and patient.loc[patient["split"]!="buffer","split"].nunique()>1:
+                raise ValueError("Patient spans multiple splits across series.")
+        manifest_path=self.index_csv_path.parent/"manifest.json"
+        if manifest_path.exists():
+            import json
+            manifest=json.loads(manifest_path.read_text())
+            for name,checksum in manifest["checksums"].items():
+                path=self.index_csv_path.parent/name
+                if not path.is_file() or hashlib.sha256(path.read_bytes()).hexdigest()!=checksum:
+                    raise ValueError("Manifest artifact checksum mismatch.")
+        digest_path = self.index_csv_path.with_suffix(".sha256")
+        if digest_path.exists() and hashlib.sha256(self.index_csv_path.read_bytes()).hexdigest() != digest_path.read_text().strip():
+            raise ValueError("Frozen split manifest checksum mismatch.")
+        for _, series in self.index_df.groupby("series_instance_uid"):
+            depth = int(series["depth"].iloc[0])
+            assignments = ["buffer"] * depth
+            for _, row in series.iterrows():
+                center = int(row["slice_index"])
+                if not 0 <= center < depth:
+                    raise ValueError("Index center out of range.")
+                assignments[center] = str(row["split"])
+                expected = clamp_stack_indices(center,depth)
+                for col,value in zip(("stack_prev_index","stack_center_index","stack_next_index"),expected):
+                    if col in row and int(row[col]) != value:
+                        raise ValueError("Incorrect raw support reference.")
+            assert_split_support(assignments)
         if split is not None:
             self.index_df = self.index_df[self.index_df["split"] == split].reset_index(drop=True)
 
+        self.data_root = Path(data_root).resolve() if data_root else self.index_csv_path.parent
+        self.epoch = 0
+        self.index_df = self.index_df.sort_values(["series_instance_uid", "slice_index"], kind="stable").reset_index(drop=True)
+        for column in ("volume_path", "label_volume_path"):
+            self.index_df[column] = self.index_df[column].map(lambda v: str((self.data_root / str(v)).resolve()))
+            for value in self.index_df[column].unique():
+                if not Path(value).is_file():
+                    raise FileNotFoundError(f"Missing {column}; acquire data per docs/data.md: {value}")
+        for _, row in self.index_df.iterrows():
+            clamp_stack_indices(int(row["slice_index"]), int(row["depth"]))
+        if self.index_df.duplicated(["series_instance_uid", "slice_index"]).any():
+            raise ValueError("Duplicate case/slice rows.")
         self.label_key = label_key
         self.transforms = transforms
         self.seed = int(seed)
@@ -463,6 +497,9 @@ class CT25DDataset(Dataset):
     def __len__(self) -> int:
         return int(len(self.index_df))
 
+    def set_epoch(self, epoch: int) -> None:
+        self.epoch = int(epoch)
+
     def _sample_seed(self, row: pd.Series) -> int:
         raw = "|".join(
             [
@@ -470,6 +507,7 @@ class CT25DDataset(Dataset):
                 str(row["series_instance_uid"]),
                 str(int(row["slice_index"])),
                 str(self.seed),
+                str(self.epoch),
             ],
         )
         digest = hashlib.sha256(raw.encode("utf-8")).hexdigest()
@@ -492,6 +530,10 @@ class CT25DDataset(Dataset):
         volume = self._load_volume(str(row["volume_path"]))
         labels = self._load_label_volume(str(row["label_volume_path"]))
 
+        if volume.shape != labels.shape or tuple(volume.shape) != (int(row["depth"]), int(row["height"]), int(row["width"])):
+            raise ValueError("Index, image and label geometry disagree.")
+        if not np.isfinite(volume).all() or labels.min() < 0 or labels.max() > 3:
+            raise ValueError("Nonfinite inputs or invalid class IDs.")
         slice_index = int(row["slice_index"])
         image = build_25d_stack(volume=volume, center_index=slice_index)
         mask = labels[slice_index].astype(np.int64, copy=False)

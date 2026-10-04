@@ -17,13 +17,14 @@ import torch.nn.functional as F
 from torch.utils.data import DataLoader, Dataset
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-SRC_DIR = REPO_ROOT / "src"
-if str(SRC_DIR) not in sys.path:
-    sys.path.insert(0, str(SRC_DIR))
 
 from calibration import fit_temperature, summarize_temperature_scaling  # noqa: E402
 from data.ct25d_dataset import CT25DDataset, build_default_train_transforms  # noqa: E402
-from models.unet_small import UNetSmall, combined_dice_ce_loss, compute_segmentation_metrics  # noqa: E402
+from models.unet_small import (
+    UNetSmall,
+    combined_dice_ce_loss,
+    compute_segmentation_metrics,
+)  # noqa: E402
 from visualization import save_day5_curves  # noqa: E402
 
 
@@ -52,11 +53,16 @@ class ResizedSegmentationDataset(Dataset):
             mode="bilinear",
             align_corners=False,
         ).squeeze(0)
-        resized_mask = F.interpolate(
-            mask,
-            size=(self.resize.height, self.resize.width),
-            mode="nearest",
-        ).squeeze(0).squeeze(0).long()
+        resized_mask = (
+            F.interpolate(
+                mask,
+                size=(self.resize.height, self.resize.width),
+                mode="nearest",
+            )
+            .squeeze(0)
+            .squeeze(0)
+            .long()
+        )
 
         return {
             **sample,
@@ -81,10 +87,19 @@ def _set_seed(seed: int, num_threads: int) -> None:
 
 
 def _build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Day 5 CPU-friendly 2.5D U-Net training.")
-    parser.add_argument("--index-path", type=str, default=str(REPO_ROOT / "data_processed" / "index.csv"))
+    parser = argparse.ArgumentParser(
+        description="Day 5 CPU-friendly 2.5D U-Net training."
+    )
+    parser.add_argument("--config", default=str(REPO_ROOT / "configs/baseline.json"))
+    parser.add_argument(
+        "--index-path",
+        type=str,
+        default=str(REPO_ROOT / "data_processed" / "index.csv"),
+    )
     parser.add_argument("--output-dir", type=str, default=str(REPO_ROOT / "outputs"))
-    parser.add_argument("--model-dir", type=str, default=str(REPO_ROOT / "saved_models"))
+    parser.add_argument(
+        "--model-dir", type=str, default=str(REPO_ROOT / "saved_models")
+    )
     parser.add_argument("--epochs", type=int, default=8)
     parser.add_argument("--batch-size", type=int, default=4)
     parser.add_argument("--learning-rate", type=float, default=1e-3)
@@ -96,10 +111,27 @@ def _build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--rotation-deg", type=float, default=7.5)
     parser.add_argument("--disable-intensity-jitter", action="store_true")
     parser.add_argument("--device", type=str, default="cpu")
+    known, _ = parser.parse_known_args()
+    configuration = json.loads(Path(known.config).read_text())
+    defaults = {
+        k: configuration[k]
+        for k in (
+            "seed",
+            "learning_rate",
+            "batch_size",
+            "epochs",
+            "base_channels",
+            "num_threads",
+        )
+    }
+    defaults["image_size"] = ",".join(map(str, configuration["image_size"]))
+    parser.set_defaults(**defaults)
     return parser
 
 
-def _make_loader(dataset: Dataset, batch_size: int, shuffle: bool, num_workers: int, seed: int) -> DataLoader:
+def _make_loader(
+    dataset: Dataset, batch_size: int, shuffle: bool, num_workers: int, seed: int
+) -> DataLoader:
     generator = torch.Generator()
     generator.manual_seed(seed)
     return DataLoader(
@@ -134,27 +166,31 @@ def _run_epoch(
     model.train(is_train)
 
     total_loss = 0.0
-    metric_batches = []
+    predictions, targets = [], []
     for batch in loader:
         images = batch["image"].to(device)
         masks = batch["mask"].to(device)
 
         with torch.set_grad_enabled(is_train):
             logits = model(images)
-            loss = combined_dice_ce_loss(logits, masks, num_classes=num_classes, class_weights=class_weights)
+            loss = combined_dice_ce_loss(
+                logits, masks, num_classes=num_classes, class_weights=class_weights
+            )
             if is_train:
                 optimizer.zero_grad(set_to_none=True)
                 loss.backward()
                 optimizer.step()
 
         total_loss += float(loss.item()) * int(images.shape[0])
-        batch_metrics = compute_segmentation_metrics(logits.detach().cpu(), masks.detach().cpu(), num_classes=num_classes)
-        metric_batches.append(batch_metrics)
+        predictions.append(logits.detach().argmax(1).cpu())
+        targets.append(masks.detach().cpu())
 
     sample_count = max(len(loader.dataset), 1)
     mean_loss = total_loss / sample_count
-    mean_dice = float(np.mean([item["dice"] for item in metric_batches])) if metric_batches else 0.0
-    mean_iou = float(np.mean([item["iou"] for item in metric_batches])) if metric_batches else 0.0
+    metrics = compute_segmentation_metrics(
+        torch.cat(predictions), torch.cat(targets), num_classes
+    )
+    mean_dice, mean_iou = metrics["dice"], metrics["iou"]
     return {
         "loss": mean_loss,
         "dice": mean_dice,
@@ -162,7 +198,9 @@ def _run_epoch(
     }
 
 
-def _collect_logits_and_targets(model: UNetSmall, loader: DataLoader, device: torch.device) -> tuple[torch.Tensor, torch.Tensor]:
+def _collect_logits_and_targets(
+    model: UNetSmall, loader: DataLoader, device: torch.device
+) -> tuple[torch.Tensor, torch.Tensor]:
     model.eval()
     all_logits = []
     all_targets = []
@@ -179,6 +217,16 @@ def _collect_logits_and_targets(model: UNetSmall, loader: DataLoader, device: to
 def main() -> int:
     args = _build_parser().parse_args()
     resize = _parse_hw(args.image_size)
+    if (
+        min(resize.height, resize.width) < 8
+        or resize.height % 8
+        or resize.width % 8
+        or args.epochs < 1
+        or args.batch_size < 1
+        or args.learning_rate <= 0
+        or args.num_threads < 1
+    ):
+        raise ValueError("Invalid training configuration.")
     output_dir = Path(args.output_dir).expanduser().resolve()
     model_dir = Path(args.model_dir).expanduser().resolve()
     index_path = Path(args.index_path).expanduser().resolve()
@@ -192,21 +240,43 @@ def main() -> int:
         rotation_degrees=args.rotation_deg,
         enable_intensity_jitter=not args.disable_intensity_jitter,
     )
-    base_train = CT25DDataset(index_csv_path=index_path, split="train", transforms=train_transforms, seed=args.seed)
-    base_eval = CT25DDataset(index_csv_path=index_path, split="val", transforms=None, seed=args.seed)
+    base_train = CT25DDataset(
+        index_csv_path=index_path,
+        split="train",
+        transforms=train_transforms,
+        seed=args.seed,
+    )
+    base_eval = CT25DDataset(
+        index_csv_path=index_path, split="val", transforms=None, seed=args.seed
+    )
     eval_split = "val"
-    if len(base_eval) == 0:
-        base_eval = CT25DDataset(index_csv_path=index_path, split="train", transforms=None, seed=args.seed)
-        eval_split = "train-fallback"
+    if not len(base_train) or not len(base_eval):
+        raise ValueError(
+            "Nonempty train and val splits are required; no training fallback."
+        )
 
     train_dataset = ResizedSegmentationDataset(base_train, resize=resize)
     eval_dataset = ResizedSegmentationDataset(base_eval, resize=resize)
-    train_loader = _make_loader(train_dataset, batch_size=args.batch_size, shuffle=True, num_workers=args.num_workers, seed=args.seed)
-    eval_loader = _make_loader(eval_dataset, batch_size=args.batch_size, shuffle=False, num_workers=args.num_workers, seed=args.seed)
+    train_loader = _make_loader(
+        train_dataset,
+        batch_size=args.batch_size,
+        shuffle=True,
+        num_workers=args.num_workers,
+        seed=args.seed,
+    )
+    eval_loader = _make_loader(
+        eval_dataset,
+        batch_size=args.batch_size,
+        shuffle=False,
+        num_workers=args.num_workers,
+        seed=args.seed,
+    )
 
     class_weights = _estimate_class_weights(train_dataset, num_classes=4).to(device)
 
-    model = UNetSmall(in_channels=3, num_classes=4, base_channels=args.base_channels).to(device)
+    model = UNetSmall(
+        in_channels=3, num_classes=4, base_channels=args.base_channels
+    ).to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=args.learning_rate)
 
     history = {
@@ -223,8 +293,23 @@ def main() -> int:
     train_start = time.perf_counter()
 
     for epoch in range(1, args.epochs + 1):
-        train_metrics = _run_epoch(model, train_loader, optimizer, device=device, num_classes=4, class_weights=class_weights)
-        eval_metrics = _run_epoch(model, eval_loader, optimizer=None, device=device, num_classes=4, class_weights=class_weights)
+        base_train.set_epoch(epoch)
+        train_metrics = _run_epoch(
+            model,
+            train_loader,
+            optimizer,
+            device=device,
+            num_classes=4,
+            class_weights=class_weights,
+        )
+        eval_metrics = _run_epoch(
+            model,
+            eval_loader,
+            optimizer=None,
+            device=device,
+            num_classes=4,
+            class_weights=class_weights,
+        )
 
         history["epoch"].append(epoch)
         history["train_loss"].append(train_metrics["loss"])
@@ -238,6 +323,34 @@ def main() -> int:
             best_eval_dice = eval_metrics["dice"]
             torch.save(
                 {
+                    "provenance": {
+                        "git_commit": __import__("subprocess")
+                        .check_output(
+                            ["git", "rev-parse", "HEAD"], cwd=REPO_ROOT, text=True
+                        )
+                        .strip(),
+                        "split_sha256": __import__("hashlib")
+                        .sha256(index_path.read_bytes())
+                        .hexdigest(),
+                        "working_tree_diff_sha256": __import__("hashlib")
+                        .sha256(
+                            __import__("subprocess").check_output(
+                                ["git", "diff", "HEAD"], cwd=REPO_ROOT
+                            )
+                        )
+                        .hexdigest(),
+                        "source_sha256": {
+                            str(p.relative_to(REPO_ROOT)).replace(
+                                "\\", "/"
+                            ): __import__("hashlib").sha256(p.read_bytes()).hexdigest()
+                            for folder in ("src", "scripts", "configs")
+                            for p in (REPO_ROOT / folder).rglob("*")
+                            if p.suffix in (".py", ".json")
+                        },
+                        "pipeline_version": "0.8.0",
+                        "selection": "validation foreground macro Dice",
+                        "configuration": vars(args),
+                    },
                     "state_dict": model.state_dict(),
                     "model_config": {
                         "in_channels": 3,
@@ -267,25 +380,39 @@ def main() -> int:
     curves_path = output_dir / "day5_curves.png"
     save_day5_curves(history=history, output_path=curves_path)
 
-    best_checkpoint = torch.load(best_checkpoint_path, map_location=device)
+    best_checkpoint = torch.load(
+        best_checkpoint_path, map_location=device, weights_only=True
+    )
     model.load_state_dict(best_checkpoint["state_dict"])
     logits, targets = _collect_logits_and_targets(model, eval_loader, device=device)
-    temperature = fit_temperature(logits.to(device), targets.to(device)) if logits.numel() > 0 else 1.0
-    calibration_summary = summarize_temperature_scaling(logits, targets, temperature) if logits.numel() > 0 else {
-        "temperature": 1.0,
-        "nll_before": 0.0,
-        "nll_after": 0.0,
-        "ece_before": 0.0,
-        "ece_after": 0.0,
-    }
+    temperature = (
+        1.0  # Primary baseline omits exploratory calibration on model-selection data.
+    )
+    calibration_summary = (
+        summarize_temperature_scaling(logits, targets, temperature)
+        if logits.numel() > 0
+        else {
+            "temperature": 1.0,
+            "nll_before": 0.0,
+            "nll_after": 0.0,
+            "ece_before": 0.0,
+            "ece_after": 0.0,
+        }
+    )
     best_checkpoint["temperature"] = float(temperature)
     best_checkpoint["calibration"] = calibration_summary
     torch.save(best_checkpoint, best_checkpoint_path)
 
     calibration_report_path = output_dir / "day5_calibration_report.json"
-    calibration_report_path.write_text(json.dumps(calibration_summary, indent=2), encoding="utf-8")
+    calibration_report_path.write_text(
+        json.dumps(calibration_summary, indent=2), encoding="utf-8"
+    )
 
     report = {
+        "provenance": best_checkpoint["provenance"],
+        "checkpoint_sha256": __import__("hashlib")
+        .sha256(best_checkpoint_path.read_bytes())
+        .hexdigest(),
         "index_path": str(index_path),
         "best_checkpoint_path": str(best_checkpoint_path),
         "curves_path": str(curves_path),

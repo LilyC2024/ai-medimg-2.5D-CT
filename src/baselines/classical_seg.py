@@ -75,9 +75,13 @@ def _postprocess_binary_mask(
     cleaned = mask.astype(bool, copy=False)
 
     if opening_iterations > 0:
-        cleaned = ndimage.binary_opening(cleaned, structure=structure, iterations=int(opening_iterations))
+        cleaned = ndimage.binary_opening(
+            cleaned, structure=structure, iterations=int(opening_iterations)
+        )
     if closing_iterations > 0:
-        cleaned = ndimage.binary_closing(cleaned, structure=structure, iterations=int(closing_iterations))
+        cleaned = ndimage.binary_closing(
+            cleaned, structure=structure, iterations=int(closing_iterations)
+        )
     if fill_holes:
         cleaned = ndimage.binary_fill_holes(cleaned)
 
@@ -130,9 +134,13 @@ def _brain_candidate_mask(
 
     windowed = np.empty_like(volume_hu, dtype=np.float32)
     for z_idx in range(volume_hu.shape[0]):
-        windowed[z_idx] = apply_window(volume_hu[z_idx], center=window_center, width=window_width)
+        windowed[z_idx] = apply_window(
+            volume_hu[z_idx], center=window_center, width=window_width
+        )
 
-    soft_tissue_candidate = (windowed >= float(norm_min)) & (windowed <= float(norm_max))
+    soft_tissue_candidate = (windowed >= float(norm_min)) & (
+        windowed <= float(norm_max)
+    )
     inside_head_candidate = volume_hu >= float(head_threshold_hu)
     candidate = soft_tissue_candidate & inside_head_candidate
     if bone_mask_3d is not None:
@@ -170,7 +178,9 @@ def summarize_mask_quality(
         component_sizes = ndimage.sum(mask_bool, labels=labels, index=component_ids)
         largest_component_voxels = int(np.max(component_sizes))
 
-    largest_component_ratio = float(largest_component_voxels) / float(max(voxel_count, 1))
+    largest_component_ratio = float(largest_component_voxels) / float(
+        max(voxel_count, 1)
+    )
 
     return {
         "voxel_count": voxel_count,
@@ -191,8 +201,12 @@ def _brain_candidate_score(
     volume_hu: np.ndarray,
 ) -> BrainCandidate:
     head_mask = volume_hu >= -300.0
-    stats = summarize_mask_quality(candidate_mask.astype(np.uint8), spacing_zyx=(1.0, 1.0, 1.0))
-    overlap = np.logical_and(candidate_mask.astype(bool), bone_mask_3d.astype(bool)).sum()
+    stats = summarize_mask_quality(
+        candidate_mask.astype(np.uint8), spacing_zyx=(1.0, 1.0, 1.0)
+    )
+    overlap = np.logical_and(
+        candidate_mask.astype(bool), bone_mask_3d.astype(bool)
+    ).sum()
     union = np.logical_or(candidate_mask.astype(bool), bone_mask_3d.astype(bool)).sum()
     overlap_ratio = float(overlap / max(union, 1))
     head_ratio = float(candidate_mask.astype(bool).sum() / max(head_mask.sum(), 1))
@@ -261,7 +275,9 @@ def select_adaptive_brain_mask(
                         min_component_voxels=min_component_voxels,
                         keep_largest_component=keep_largest_component,
                     )
-                    candidate = _brain_candidate_score(candidate_mask, bone_mask_3d=bone_mask_3d, volume_hu=volume_hu)
+                    candidate = _brain_candidate_score(
+                        candidate_mask, bone_mask_3d=bone_mask_3d, volume_hu=volume_hu
+                    )
                     candidates.append(
                         BrainCandidate(
                             mask_3d=candidate.mask_3d,
@@ -279,7 +295,11 @@ def select_adaptive_brain_mask(
                         ),
                     )
 
-    best = max(candidates, key=lambda item: (item.score, item.stats["voxel_count"])) if candidates else None
+    best = (
+        max(candidates, key=lambda item: (item.score, item.stats["voxel_count"]))
+        if candidates
+        else None
+    )
     if best is None or int(best.stats["voxel_count"]) == 0:
         relaxed_candidate = _brain_candidate_mask(
             volume_hu,
@@ -297,7 +317,9 @@ def select_adaptive_brain_mask(
         )
         best = BrainCandidate(
             mask_3d=relaxed_candidate.astype(np.uint8),
-            stats=summarize_mask_quality(relaxed_candidate.astype(np.uint8), spacing_zyx=(1.0, 1.0, 1.0)),
+            stats=summarize_mask_quality(
+                relaxed_candidate.astype(np.uint8), spacing_zyx=(1.0, 1.0, 1.0)
+            ),
             score=0.0,
             params={
                 "window_center": float(window_center),
@@ -396,10 +418,19 @@ def generate_classical_masks(
 
     brain_exclusion_bone = bone_mask(
         volume_hu=volume_hu,
-        threshold_hu=max(300.0, float(segmentation_config.brain_window_center + segmentation_config.brain_window_width), float(segmentation_config.bone_threshold_hu)),
+        threshold_hu=max(
+            300.0,
+            float(
+                segmentation_config.brain_window_center
+                + segmentation_config.brain_window_width
+            ),
+            float(segmentation_config.bone_threshold_hu),
+        ),
         opening_iterations=max(0, int(segmentation_config.bone_opening_iterations) - 1),
         closing_iterations=max(0, int(segmentation_config.bone_closing_iterations) - 1),
-        min_component_voxels=max(16, int(segmentation_config.bone_min_component_voxels) // 2),
+        min_component_voxels=max(
+            16, int(segmentation_config.bone_min_component_voxels) // 2
+        ),
         keep_largest_component=segmentation_config.bone_keep_largest_component,
     )
 

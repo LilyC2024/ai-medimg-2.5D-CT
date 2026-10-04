@@ -29,23 +29,35 @@ def save_hu_histogram(volume_hu: np.ndarray, output_path: str | Path) -> None:
     axis.set_title("HU Histogram")
     axis.set_xlabel("Hounsfield Units (HU)")
     axis.set_ylabel("Voxel Count")
-    axis.axvline(-1000, color="#264653", linestyle="--", linewidth=1, label="Air ~ -1000")
-    axis.axvline(40, color="#E76F51", linestyle="--", linewidth=1, label="Brain WL center ~ 40")
-    axis.axvline(600, color="#F4A261", linestyle="--", linewidth=1, label="Bone WL center ~ 600")
+    axis.axvline(
+        -1000, color="#264653", linestyle="--", linewidth=1, label="Air ~ -1000"
+    )
+    axis.axvline(
+        40, color="#E76F51", linestyle="--", linewidth=1, label="Brain WL center ~ 40"
+    )
+    axis.axvline(
+        600, color="#F4A261", linestyle="--", linewidth=1, label="Bone WL center ~ 600"
+    )
     axis.legend(loc="upper right")
     fig.tight_layout()
     fig.savefig(output_file, dpi=160)
     plt.close(fig)
 
 
-def save_montage(volume_hu: np.ndarray, output_path: str | Path, slices_per_row: int = 8) -> None:
+def save_montage(
+    volume_hu: np.ndarray, output_path: str | Path, slices_per_row: int = 8
+) -> None:
     output_file = Path(output_path).expanduser().resolve()
     output_file.parent.mkdir(parents=True, exist_ok=True)
 
     slice_count = volume_hu.shape[0]
-    selected_indices = np.linspace(0, slice_count - 1, num=min(slice_count, slices_per_row), dtype=int)
+    selected_indices = np.linspace(
+        0, slice_count - 1, num=min(slice_count, slices_per_row), dtype=int
+    )
 
-    fig, axes = plt.subplots(2, len(selected_indices), figsize=(2.1 * len(selected_indices), 5))
+    fig, axes = plt.subplots(
+        2, len(selected_indices), figsize=(2.1 * len(selected_indices), 5)
+    )
     if len(selected_indices) == 1:
         axes = np.asarray([[axes[0]], [axes[1]]])
 
@@ -149,10 +161,15 @@ def save_day2_before_after(
     output_file.parent.mkdir(parents=True, exist_ok=True)
 
     # Slice index inside the full resampled volume.
-    z_idx = max(crop_bbox_zyx.z_min, min(crop_bbox_zyx.z_max - 1, resampled_volume_hu.shape[0] // 2))
+    z_idx = max(
+        crop_bbox_zyx.z_min,
+        min(crop_bbox_zyx.z_max - 1, resampled_volume_hu.shape[0] // 2),
+    )
 
     # Matching slice index in the cropped volume coordinates.
-    cropped_z_idx = int(np.clip(z_idx - crop_bbox_zyx.z_min, 0, cropped_volume_hu.shape[0] - 1))
+    cropped_z_idx = int(
+        np.clip(z_idx - crop_bbox_zyx.z_min, 0, cropped_volume_hu.shape[0] - 1)
+    )
 
     before_brain = apply_window(resampled_volume_hu[z_idx], *BRAIN_WINDOW)
     before_bone = apply_window(resampled_volume_hu[z_idx], *BONE_WINDOW)
@@ -185,7 +202,9 @@ def save_day2_before_after(
     axes[3].set_title("After clip+normalize\n[0, 1]")
     axes[3].axis("off")
 
-    fig.suptitle(f"Day 2 Preprocess QA (z={z_idx}, cropped-z={cropped_z_idx})", fontsize=12)
+    fig.suptitle(
+        f"Day 2 Preprocess QA (z={z_idx}, cropped-z={cropped_z_idx})", fontsize=12
+    )
     fig.tight_layout()
     fig.savefig(output_file, dpi=180)
     plt.close(fig)
@@ -219,7 +238,9 @@ def save_day3_slice_overlays(
 
     saved_files: list[Path] = []
     for z_idx in slice_indices:
-        background = apply_window(volume_hu[z_idx], center=BRAIN_WINDOW[0], width=BRAIN_WINDOW[1])
+        background = apply_window(
+            volume_hu[z_idx], center=BRAIN_WINDOW[0], width=BRAIN_WINDOW[1]
+        )
         brain_slice = brain_mask_3d[z_idx].astype(bool)
         bone_slice = bone_mask_3d[z_idx].astype(bool)
 
@@ -262,9 +283,13 @@ def save_day4_batch_viz(
     slice_indices = list(_to_numpy(batch["slice_index"]).tolist())
 
     if images.ndim != 4:
-        raise ValueError(f"Expected batch['image'] to have shape (B, 3, H, W), got {images.shape}.")
+        raise ValueError(
+            f"Expected batch['image'] to have shape (B, 3, H, W), got {images.shape}."
+        )
     if masks.ndim != 3:
-        raise ValueError(f"Expected batch['mask'] to have shape (B, H, W), got {masks.shape}.")
+        raise ValueError(
+            f"Expected batch['mask'] to have shape (B, H, W), got {masks.shape}."
+        )
 
     sample_count = min(int(images.shape[0]), int(max_items))
     fig, axes = plt.subplots(sample_count, 4, figsize=(12, 3.2 * sample_count))
@@ -275,7 +300,9 @@ def save_day4_batch_viz(
     for row_index in range(sample_count):
         for channel_index, channel_title in enumerate(channel_titles):
             axis = axes[row_index, channel_index]
-            axis.imshow(images[row_index, channel_index], cmap="gray", vmin=0.0, vmax=1.0)
+            axis.imshow(
+                images[row_index, channel_index], cmap="gray", vmin=0.0, vmax=1.0
+            )
             axis.set_title(channel_title, fontsize=10)
             axis.axis("off")
 
@@ -306,17 +333,27 @@ def save_day5_curves(
     epochs = np.asarray(history["epoch"], dtype=np.int32)
     fig, axes = plt.subplots(1, 2, figsize=(11, 4.2))
 
-    axes[0].plot(epochs, history["train_loss"], label="train", color="#264653", linewidth=2)
-    axes[0].plot(epochs, history["eval_loss"], label="eval", color="#E76F51", linewidth=2)
+    axes[0].plot(
+        epochs, history["train_loss"], label="train", color="#264653", linewidth=2
+    )
+    axes[0].plot(
+        epochs, history["eval_loss"], label="eval", color="#E76F51", linewidth=2
+    )
     axes[0].set_title("Loss")
     axes[0].set_xlabel("Epoch")
     axes[0].set_ylabel("Loss")
     axes[0].grid(alpha=0.25)
     axes[0].legend()
 
-    axes[1].plot(epochs, history["train_dice"], label="train Dice", color="#2A9D8F", linewidth=2)
-    axes[1].plot(epochs, history["eval_dice"], label="eval Dice", color="#E9C46A", linewidth=2)
-    axes[1].plot(epochs, history["eval_iou"], label="eval IoU", color="#F4A261", linewidth=2)
+    axes[1].plot(
+        epochs, history["train_dice"], label="train Dice", color="#2A9D8F", linewidth=2
+    )
+    axes[1].plot(
+        epochs, history["eval_dice"], label="eval Dice", color="#E9C46A", linewidth=2
+    )
+    axes[1].plot(
+        epochs, history["eval_iou"], label="eval IoU", color="#F4A261", linewidth=2
+    )
     axes[1].set_title("Segmentation Metrics")
     axes[1].set_xlabel("Epoch")
     axes[1].set_ylabel("Score")
@@ -355,14 +392,20 @@ def save_day5_prediction_overlays(
         axes[0].axis("off")
 
         axes[1].imshow(background, cmap="gray", vmin=0.0, vmax=1.0)
-        axes[1].imshow(np.ma.masked_where(predicted <= 0, predicted), cmap="viridis", alpha=0.55)
+        axes[1].imshow(
+            np.ma.masked_where(predicted <= 0, predicted), cmap="viridis", alpha=0.55
+        )
         axes[1].set_title("DL prediction")
         axes[1].axis("off")
 
         axes[2].imshow(background, cmap="gray", vmin=0.0, vmax=1.0)
-        axes[2].imshow(np.ma.masked_where(reference <= 0, reference), cmap="magma", alpha=0.45)
+        axes[2].imshow(
+            np.ma.masked_where(reference <= 0, reference), cmap="magma", alpha=0.45
+        )
         if np.any(predicted > 0):
-            axes[2].contour(predicted > 0, levels=[0.5], colors=["#00FF85"], linewidths=1.0)
+            axes[2].contour(
+                predicted > 0, levels=[0.5], colors=["#00FF85"], linewidths=1.0
+            )
         axes[2].set_title("Classical pseudo label + DL contour")
         axes[2].axis("off")
 
@@ -397,7 +440,9 @@ def save_day7_prediction_overlays(
         axes[0].axis("off")
 
         axes[1].imshow(background, cmap="gray", vmin=0.0, vmax=1.0)
-        axes[1].imshow(np.ma.masked_where(prediction <= 0, prediction), cmap="viridis", alpha=0.55)
+        axes[1].imshow(
+            np.ma.masked_where(prediction <= 0, prediction), cmap="viridis", alpha=0.55
+        )
         axes[1].set_title("ONNX prediction")
         axes[1].axis("off")
 
@@ -430,7 +475,9 @@ def save_report_slice_montage(
 
     row_count = max(len(slice_indices), 1)
     column_count = 4 if uncertainty is not None else 3
-    fig, axes = plt.subplots(row_count, column_count, figsize=(3.8 * column_count, 3.1 * row_count))
+    fig, axes = plt.subplots(
+        row_count, column_count, figsize=(3.8 * column_count, 3.1 * row_count)
+    )
     if row_count == 1:
         axes = np.asarray([axes])
 
@@ -444,19 +491,27 @@ def save_report_slice_montage(
         axes[row_index, 0].axis("off")
 
         axes[row_index, 1].imshow(background, cmap="gray", vmin=0.0, vmax=1.0)
-        axes[row_index, 1].imshow(np.ma.masked_where(predicted <= 0, predicted), cmap="viridis", alpha=0.55)
+        axes[row_index, 1].imshow(
+            np.ma.masked_where(predicted <= 0, predicted), cmap="viridis", alpha=0.55
+        )
         axes[row_index, 1].set_title("Prediction")
         axes[row_index, 1].axis("off")
 
         axes[row_index, 2].imshow(background, cmap="gray", vmin=0.0, vmax=1.0)
-        axes[row_index, 2].imshow(np.ma.masked_where(reference <= 0, reference), cmap="magma", alpha=0.45)
+        axes[row_index, 2].imshow(
+            np.ma.masked_where(reference <= 0, reference), cmap="magma", alpha=0.45
+        )
         if np.any(predicted > 0):
-            axes[row_index, 2].contour(predicted > 0, levels=[0.5], colors=["#00FF85"], linewidths=0.9)
+            axes[row_index, 2].contour(
+                predicted > 0, levels=[0.5], colors=["#00FF85"], linewidths=0.9
+            )
         axes[row_index, 2].set_title("Reference + contour")
         axes[row_index, 2].axis("off")
 
         if uncertainty is not None:
-            axes[row_index, 3].imshow(uncertainty[row_index], cmap="inferno", vmin=0.0, vmax=1.0)
+            axes[row_index, 3].imshow(
+                uncertainty[row_index], cmap="inferno", vmin=0.0, vmax=1.0
+            )
             axes[row_index, 3].set_title("Uncertainty")
             axes[row_index, 3].axis("off")
 

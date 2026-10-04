@@ -91,21 +91,26 @@ def resample_volume_to_spacing(
     - `target_spacing_zyx`: lower spacing values increase resolution and memory use.
     """
 
-    zoom_factors = tuple(
-        float(original) / float(target)
-        for original, target in zip(spacing_zyx, target_spacing_zyx, strict=True)
+    source_spacing = np.asarray(spacing_zyx, dtype=float)
+    target_spacing = np.asarray(target_spacing_zyx, dtype=float)
+    if np.any(source_spacing <= 0) or np.any(target_spacing <= 0):
+        raise ValueError("Spacing must be positive.")
+    shape = tuple(
+        np.maximum(
+            1,
+            np.rint(
+                (np.array(volume_hu.shape) - 1) * source_spacing / target_spacing
+            ).astype(int)
+            + 1,
+        )
     )
-
-    if np.allclose(zoom_factors, (1.0, 1.0, 1.0), atol=1e-4):
-        return volume_hu.astype(np.float32, copy=True)
-
-    resampled = ndimage.zoom(
+    return ndimage.affine_transform(
         volume_hu,
-        zoom=zoom_factors,
-        order=int(interpolation_order),
+        np.diag(target_spacing / source_spacing),
+        output_shape=shape,
+        order=interpolation_order,
         mode="nearest",
-    )
-    return resampled.astype(np.float32, copy=False)
+    ).astype(np.float32)
 
 
 def _largest_connected_component(mask: np.ndarray) -> np.ndarray:
@@ -113,7 +118,9 @@ def _largest_connected_component(mask: np.ndarray) -> np.ndarray:
     if component_count == 0:
         raise ValueError("Head mask is empty. Adjust threshold/morphology parameters.")
 
-    component_sizes = ndimage.sum(mask, labels=labels, index=np.arange(1, component_count + 1))
+    component_sizes = ndimage.sum(
+        mask, labels=labels, index=np.arange(1, component_count + 1)
+    )
     largest_component_id = int(np.argmax(component_sizes)) + 1
     return labels == largest_component_id
 
@@ -136,9 +143,13 @@ def create_head_mask(
     structure = ndimage.generate_binary_structure(rank=3, connectivity=1)
 
     if opening_iterations > 0:
-        mask = ndimage.binary_opening(mask, structure=structure, iterations=int(opening_iterations))
+        mask = ndimage.binary_opening(
+            mask, structure=structure, iterations=int(opening_iterations)
+        )
     if closing_iterations > 0:
-        mask = ndimage.binary_closing(mask, structure=structure, iterations=int(closing_iterations))
+        mask = ndimage.binary_closing(
+            mask, structure=structure, iterations=int(closing_iterations)
+        )
 
     return _largest_connected_component(mask)
 
@@ -169,7 +180,8 @@ def expand_bbox_with_margin(
     """Expand a bounding box by physical margin and clamp to volume boundaries."""
 
     margin_voxels = np.rint(
-        np.asarray(margin_mm_zyx, dtype=np.float32) / np.asarray(spacing_zyx, dtype=np.float32)
+        np.asarray(margin_mm_zyx, dtype=np.float32)
+        / np.asarray(spacing_zyx, dtype=np.float32)
     ).astype(np.int32)
     margin_z, margin_y, margin_x = [int(value) for value in margin_voxels]
 
@@ -296,12 +308,16 @@ def save_nifti_volume(
     output_file.parent.mkdir(parents=True, exist_ok=True)
 
     image = sitk.GetImageFromArray(volume.astype(np.float32))
-    image.SetSpacing((float(spacing_zyx[2]), float(spacing_zyx[1]), float(spacing_zyx[0])))
+    image.SetSpacing(
+        (float(spacing_zyx[2]), float(spacing_zyx[1]), float(spacing_zyx[0]))
+    )
     sitk.WriteImage(image, str(output_file), useCompression=True)
     return output_file
 
 
-def load_nifti_volume(path: str | Path) -> tuple[np.ndarray, tuple[float, float, float]]:
+def load_nifti_volume(
+    path: str | Path,
+) -> tuple[np.ndarray, tuple[float, float, float]]:
     if sitk is None:
         raise RuntimeError("SimpleITK is required to load NIfTI volumes.")
 
@@ -325,10 +341,61 @@ def save_processed_volume(
     raise ValueError(f"Unsupported output format for path: {output_file}")
 
 
-def load_processed_volume(path: str | Path) -> tuple[np.ndarray, tuple[float, float, float]]:
+def load_processed_volume(
+    path: str | Path,
+) -> tuple[np.ndarray, tuple[float, float, float]]:
     source_path = Path(path).expanduser().resolve()
     if _looks_like_nifti(source_path):
         return load_nifti_volume(source_path)
     if source_path.suffix.lower() == ".npz":
         return load_npz_volume(source_path)
     raise ValueError(f"Unsupported input format for path: {source_path}")
+
+
+def restore_prediction_to_source(prediction, result, source_shape):
+    """Undo model resize/crop/resample with nearest-neighbor label interpolation."""
+    prediction = np.asarray(prediction)
+    crop_shape = result.processed_volume.shape
+    if prediction.shape != crop_shape:
+        prediction = ndimage.zoom(
+            prediction, np.array(crop_shape) / np.array(prediction.shape), order=0
+        )
+    full = np.zeros(result.resampled_volume_hu.shape, dtype=np.uint8)
+    full[result.crop_bbox_zyx.as_slices()] = prediction
+    return ndimage.affine_transform(
+        full,
+        np.diag(
+            np.array(result.input_spacing_zyx) / np.array(result.resampled_spacing_zyx)
+        ),
+        output_shape=tuple(source_shape),
+        order=0,
+        mode="constant",
+        cval=0,
+    ).astype(np.uint8)
+
+
+def geometry_transform(metadata, result):
+    direction = np.array(metadata.direction_lps).reshape(3, 3)
+    bounds = result.crop_bbox_zyx
+    offset_xyz = (
+        np.array([bounds.x_min, bounds.y_min, bounds.z_min])
+        * np.array(result.resampled_spacing_zyx)[::-1]
+    )
+    return {
+        "source_origin_lps": list(metadata.origin_lps),
+        "direction_lps": list(metadata.direction_lps),
+        "source_spacing_zyx": list(metadata.spacing_zyx),
+        "target_spacing_zyx": list(result.resampled_spacing_zyx),
+        "source_shape_zyx": [metadata.slice_count, metadata.rows, metadata.columns],
+        "resampled_shape_zyx": list(result.resampled_volume_hu.shape),
+        "crop_bounds_inclusive_exclusive": bounds.to_dict(),
+        "crop_origin_lps": (
+            np.array(metadata.origin_lps) + direction @ offset_xyz
+        ).tolist(),
+        "forward_index_scale_zyx": (
+            np.array(metadata.spacing_zyx) / np.array(result.resampled_spacing_zyx)
+        ).tolist(),
+        "inverse_index_scale_zyx": (
+            np.array(result.resampled_spacing_zyx) / np.array(metadata.spacing_zyx)
+        ).tolist(),
+    }

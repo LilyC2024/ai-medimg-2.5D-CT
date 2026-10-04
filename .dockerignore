@@ -1,0 +1,12 @@
+.git
+.venv
+artifacts
+data
+data_processed
+outputs
+saved_models
+onnx
+**/__pycache__
+*.pt
+*.onnx
+.repair_*.py

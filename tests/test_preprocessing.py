@@ -40,7 +40,9 @@ class TestPreprocessing(unittest.TestCase):
         volume = np.full((8, 12, 12), -1000.0, dtype=np.float32)
         volume[:, 3:9, 2:10] = 50.0
 
-        mask = create_head_mask(volume, threshold_hu=-350.0, opening_iterations=0, closing_iterations=0)
+        mask = create_head_mask(
+            volume, threshold_hu=-350.0, opening_iterations=0, closing_iterations=0
+        )
         bbox = bbox_from_mask(mask)
         expanded = expand_bbox_with_margin(
             bbox=bbox,

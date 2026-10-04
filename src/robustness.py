@@ -23,9 +23,13 @@ def validate_spacing_zyx(
     messages: list[str] = []
     for axis_name, spacing in zip(("z", "y", "x"), spacing_zyx, strict=True):
         if not np.isfinite(spacing):
-            raise ValueError(f"Invalid {axis_name}-spacing: expected a finite value, got {spacing!r}.")
+            raise ValueError(
+                f"Invalid {axis_name}-spacing: expected a finite value, got {spacing!r}."
+            )
         if spacing <= 0.0:
-            raise ValueError(f"Invalid {axis_name}-spacing: expected a positive value, got {spacing!r}.")
+            raise ValueError(
+                f"Invalid {axis_name}-spacing: expected a positive value, got {spacing!r}."
+            )
         if spacing < min_spacing_mm:
             messages.append(
                 f"{axis_name}-spacing={spacing:.4f} mm is unusually small; verify DICOM spacing tags before training.",
@@ -86,8 +90,12 @@ def postprocess_binary_mask(
     if fill_holes:
         cleaned = ndimage.binary_fill_holes(cleaned)
     if smooth_iterations > 0:
-        cleaned = ndimage.binary_opening(cleaned, structure=structure, iterations=int(smooth_iterations))
-        cleaned = ndimage.binary_closing(cleaned, structure=structure, iterations=int(smooth_iterations))
+        cleaned = ndimage.binary_opening(
+            cleaned, structure=structure, iterations=int(smooth_iterations)
+        )
+        cleaned = ndimage.binary_closing(
+            cleaned, structure=structure, iterations=int(smooth_iterations)
+        )
     return cleaned.astype(bool, copy=False)
 
 
@@ -98,7 +106,9 @@ def postprocess_multiclass_prediction(
     class_configs: dict[int, LabelPostprocessConfig] | None = None,
 ) -> np.ndarray:
     if probabilities.ndim != 4:
-        raise ValueError(f"Expected probabilities with shape (C, Z, Y, X), got {probabilities.shape}.")
+        raise ValueError(
+            f"Expected probabilities with shape (C, Z, Y, X), got {probabilities.shape}."
+        )
     if predicted_labels.shape != probabilities.shape[1:]:
         raise ValueError(
             "Predicted labels and probabilities must align: "
@@ -128,9 +138,13 @@ def postprocess_multiclass_prediction(
     return refined
 
 
-def compute_entropy_uncertainty(probabilities: np.ndarray, *, epsilon: float = 1e-8) -> np.ndarray:
+def compute_entropy_uncertainty(
+    probabilities: np.ndarray, *, epsilon: float = 1e-8
+) -> np.ndarray:
     if probabilities.ndim < 2:
-        raise ValueError("Expected probabilities with at least 2 dimensions and class axis first.")
+        raise ValueError(
+            "Expected probabilities with at least 2 dimensions and class axis first."
+        )
     clipped = np.clip(probabilities.astype(np.float32, copy=False), epsilon, 1.0)
     entropy = -np.sum(clipped * np.log(clipped), axis=0)
     max_entropy = float(np.log(max(int(probabilities.shape[0]), 2)))

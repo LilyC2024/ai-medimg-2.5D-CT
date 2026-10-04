@@ -1,0 +1,19 @@
+{
+  "slice_count": 34,
+  "first_slice": {
+    "stored_min": -2000.0,
+    "raw_hu_min_including_padding": -3024.0,
+    "padding_value": -2000.0,
+    "padding_limit": -2000.0,
+    "slope": 1.0,
+    "intercept": -1024.0,
+    "simpleitk_hu_max_difference": 0.0
+  },
+  "max_simpleitk_hu_difference": 0.0,
+  "current_nonpadding_hu_range": [
+    -1024.0,
+    2170.0
+  ],
+  "independent_pydicom_jpeg_available": true,
+  "note": "pydicom stored pixels are preferred; SimpleITK already rescales. Padding excluded from intensity statistics. Independent JPEG comparison requires codecs extra if the decoder is absent."
+}

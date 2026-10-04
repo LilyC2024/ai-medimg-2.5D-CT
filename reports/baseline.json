@@ -1,0 +1,25 @@
+{
+  "head": "457ddbf70d65d62d0bfaa2589063ae8aceb00a23",
+  "status": [
+    "?? .repair_work.py",
+    "?? CT_Project_TODO.md",
+    "?? src/ai_medimg_playground.egg-info/"
+  ],
+  "python": "3.12.1 (tags/v3.12.1:2305ca5, Dec  7 2023, 22:03:25) [MSC v.1937 64 bit (AMD64)]",
+  "packages": {
+    "torch": "2.14.1+cpu",
+    "numpy": "2.5.2",
+    "pydicom": "3.0.2",
+    "SimpleITK": "2.5.6",
+    "onnx": "1.23.1",
+    "onnxruntime": "1.30.0"
+  },
+  "historical_results": "Not valid repaired-pipeline evidence",
+  "known_commands": [
+    "scripts/inspect_series.py",
+    "scripts/preprocess_series.py",
+    "scripts/classical_baseline.py",
+    "scripts/make_index.py"
+  ],
+  "command_history_note": "Earlier exact shell commands were not available; no reconstructed command is represented as historical evidence."
+}

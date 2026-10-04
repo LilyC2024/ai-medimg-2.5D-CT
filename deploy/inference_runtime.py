@@ -3,9 +3,11 @@ from __future__ import annotations
 import io
 import json
 import os
-os.environ.setdefault('MPLBACKEND', 'Agg')
+
+os.environ.setdefault("MPLBACKEND", "Agg")
 import sys
 import tempfile
+import time
 import zipfile
 from dataclasses import asdict, dataclass
 from pathlib import Path
@@ -17,16 +19,18 @@ import torch
 import torch.nn.functional as F
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-SRC_DIR = REPO_ROOT / "src"
-if str(SRC_DIR) not in sys.path:
-    sys.path.insert(0, str(SRC_DIR))
 
 from config import PreprocessConfig  # noqa: E402
 from data.ct25d_dataset import build_25d_stack  # noqa: E402
 from dicom_loader import load_dicom_series  # noqa: E402
 from calibration import apply_temperature  # noqa: E402
 from models.unet_small import UNetSmall, compute_segmentation_metrics  # noqa: E402
-from preprocessing import run_preprocessing_pipeline, save_nifti_volume  # noqa: E402
+from preprocessing import (
+    run_preprocessing_pipeline,
+    save_nifti_volume,
+    restore_prediction_to_source,
+    geometry_transform,
+)  # noqa: E402
 from robustness import (  # noqa: E402
     LabelPostprocessConfig,
     compute_entropy_uncertainty,
@@ -67,10 +71,19 @@ def set_deterministic_runtime(num_threads: int) -> None:
 
 
 def load_checkpoint(checkpoint_path: str | Path) -> dict[str, Any]:
-    return torch.load(Path(checkpoint_path).expanduser().resolve(), map_location="cpu")
+    return torch.load(
+        Path(checkpoint_path).expanduser().resolve(),
+        map_location="cpu",
+        weights_only=True,
+    )
 
 
 def build_model_from_checkpoint(checkpoint: dict[str, Any]) -> UNetSmall:
+    if (
+        checkpoint["model_config"].get("in_channels") != 3
+        or checkpoint["model_config"].get("num_classes") != 4
+    ):
+        raise ValueError("Unsupported checkpoint class/channel contract.")
     model = UNetSmall(**checkpoint["model_config"])
     model.load_state_dict(checkpoint["state_dict"])
     model.eval()
@@ -111,6 +124,9 @@ def export_checkpoint_to_onnx(
             do_constant_folding=True,
             dynamo=False,
         )
+    import onnx
+
+    onnx.checker.check_model(onnx.load(str(destination)))
     return destination
 
 
@@ -118,14 +134,22 @@ def load_and_preprocess_series(
     series_dir: str | Path,
     preprocess_config: PreprocessConfig,
 ) -> tuple[np.ndarray, tuple[float, float, float], dict[str, Any]]:
+    read_start = time.perf_counter()
     dicom_volume = load_dicom_series(series_dir)
+    read_seconds = time.perf_counter() - read_start
+    preprocess_start = time.perf_counter()
     result = run_preprocessing_pipeline(
         volume_hu=dicom_volume.volume_hu,
         spacing_zyx=dicom_volume.metadata.spacing_zyx,
         preprocess_config=preprocess_config,
     )
     preprocess_report = {
-        "series_dir": str(Path(series_dir).expanduser().resolve()),
+        "geometry": geometry_transform(dicom_volume.metadata, result),
+        "timings": {
+            "dicom_read_seconds": read_seconds,
+            "preprocessing_seconds": time.perf_counter() - preprocess_start,
+        },
+        "case_alias": "sample_001",
         "raw_shape_zyx": [int(v) for v in dicom_volume.volume_hu.shape],
         "processed_shape_zyx": [int(v) for v in result.processed_volume.shape],
         "input_spacing_zyx_mm": [float(v) for v in result.input_spacing_zyx],
@@ -142,13 +166,18 @@ def load_and_preprocess_series(
 
 
 def build_input_stack_volume(processed_volume: np.ndarray) -> np.ndarray:
-    stacks = [build_25d_stack(processed_volume, center_index=index) for index in range(int(processed_volume.shape[0]))]
+    stacks = [
+        build_25d_stack(processed_volume, center_index=index)
+        for index in range(int(processed_volume.shape[0]))
+    ]
     return np.stack(stacks, axis=0).astype(np.float32, copy=False)
 
 
 def _resize_stack_batch(batch: np.ndarray, height: int, width: int) -> np.ndarray:
     tensor = torch.from_numpy(batch.astype(np.float32, copy=False))
-    resized = F.interpolate(tensor, size=(height, width), mode="bilinear", align_corners=False)
+    resized = F.interpolate(
+        tensor, size=(height, width), mode="bilinear", align_corners=False
+    )
     return resized.numpy().astype(np.float32, copy=False)
 
 
@@ -176,22 +205,46 @@ def validate_onnx_equivalence(
     session = create_onnx_session(onnx_path, num_threads=num_threads)
 
     with torch.no_grad():
-        torch_logits = apply_temperature(model(torch.from_numpy(sample_batch)), temperature).cpu().numpy()
-    onnx_logits = _apply_temperature_numpy(session.run(["logits"], {"input": sample_batch.astype(np.float32, copy=False)})[0], temperature)
+        torch_logits = (
+            apply_temperature(model(torch.from_numpy(sample_batch)), temperature)
+            .cpu()
+            .numpy()
+        )
+    onnx_logits = _apply_temperature_numpy(
+        session.run(["logits"], {"input": sample_batch.astype(np.float32, copy=False)})[
+            0
+        ],
+        temperature,
+    )
 
     diff = np.abs(torch_logits - onnx_logits)
-    probability_diff = np.abs(_softmax_numpy(torch_logits) - _softmax_numpy(onnx_logits))
+    probability_diff = np.abs(
+        _softmax_numpy(torch_logits) - _softmax_numpy(onnx_logits)
+    )
     return {
         "sample_batch_shape": [int(v) for v in sample_batch.shape],
         "max_abs_diff": float(diff.max()),
         "mean_abs_diff": float(diff.mean()),
         "max_prob_diff": float(probability_diff.max()),
         "mean_prob_diff": float(probability_diff.mean()),
-        "within_tolerance": bool(diff.max() <= 1e-3 and probability_diff.max() <= 1e-4),
+        "mask_agreement": float(
+            np.mean(torch_logits.argmax(1) == onnx_logits.argmax(1))
+        ),
+        "within_tolerance": bool(
+            np.allclose(
+                _softmax_numpy(torch_logits),
+                _softmax_numpy(onnx_logits),
+                atol=1e-4,
+                rtol=1e-3,
+            )
+            and np.mean(torch_logits.argmax(1) == onnx_logits.argmax(1)) >= 0.999
+        ),
     }
 
 
-def create_onnx_session(onnx_path: str | Path, *, num_threads: int = 1) -> ort.InferenceSession:
+def create_onnx_session(
+    onnx_path: str | Path, *, num_threads: int = 1
+) -> ort.InferenceSession:
     session_options = ort.SessionOptions()
     session_options.intra_op_num_threads = max(int(num_threads), 1)
     session_options.inter_op_num_threads = 1
@@ -221,7 +274,9 @@ def run_onnx_segmentation(
     for start in range(0, int(stack_volume.shape[0]), int(batch_size)):
         batch = stack_volume[start : start + batch_size]
         resized = _resize_stack_batch(batch, model_height, model_width)
-        logits = _apply_temperature_numpy(session.run(["logits"], {"input": resized})[0], temperature)
+        logits = _apply_temperature_numpy(
+            session.run(["logits"], {"input": resized})[0], temperature
+        )
         probabilities = _softmax_numpy(logits)
         if tuple(probabilities.shape[-2:]) != tuple(original_hw):
             resized_probabilities = F.interpolate(
@@ -239,39 +294,7 @@ def run_onnx_segmentation(
     return np.concatenate(outputs, axis=0).astype(np.float32, copy=False)
 
 
-def apply_day6_postprocess(
-    probabilities_bchw: np.ndarray,
-    *,
-    brain_min_voxels: int = 256,
-    bone_min_voxels: int = 96,
-    overlap_min_voxels: int = 32,
-    smooth_iterations: int = 1,
-) -> np.ndarray:
-    predicted_labels = probabilities_bchw.argmax(axis=1).astype(np.uint8)
-    return postprocess_multiclass_prediction(
-        probabilities=np.transpose(probabilities_bchw, (1, 0, 2, 3)),
-        predicted_labels=predicted_labels,
-        class_configs={
-            1: LabelPostprocessConfig(
-                min_component_size=int(brain_min_voxels),
-                fill_holes=True,
-                smooth_iterations=int(smooth_iterations),
-                keep_largest_component=True,
-            ),
-            2: LabelPostprocessConfig(
-                min_component_size=int(bone_min_voxels),
-                fill_holes=False,
-                smooth_iterations=int(smooth_iterations),
-                keep_largest_component=True,
-            ),
-            3: LabelPostprocessConfig(
-                min_component_size=int(overlap_min_voxels),
-                fill_holes=True,
-                smooth_iterations=int(smooth_iterations),
-                keep_largest_component=False,
-            ),
-        },
-    ).astype(np.uint8, copy=False)
+from evaluation import apply_day6_postprocess
 
 
 def save_prediction_volume(
@@ -291,7 +314,9 @@ def save_prediction_volume(
         )
         return destination
     if output_format == "nii.gz":
-        return save_nifti_volume(prediction_volume.astype(np.float32), spacing_zyx, destination)
+        return save_nifti_volume(
+            prediction_volume.astype(np.float32), spacing_zyx, destination
+        )
     raise ValueError(f"Unsupported output format: {output_format}")
 
 
@@ -309,19 +334,40 @@ def run_deployment_inference(
     mask_output_format: str = "npz",
     save_overlays: bool = True,
     enable_postprocess: bool = True,
+    runtime_session=None,
+    runtime_checkpoint=None,
 ) -> DeploymentResult:
+    total_start = time.perf_counter()
     if export_onnx or not Path(onnx_path).expanduser().resolve().exists():
         export_checkpoint_to_onnx(checkpoint_path, onnx_path)
 
     set_deterministic_runtime(num_threads)
-    checkpoint = load_checkpoint(checkpoint_path)
+    checkpoint = (
+        runtime_checkpoint
+        if runtime_checkpoint is not None
+        else load_checkpoint(checkpoint_path)
+    )
     model_height = int(checkpoint["resize"]["height"])
     model_width = int(checkpoint["resize"]["width"])
     temperature = float(checkpoint.get("temperature", 1.0))
 
-    processed_volume, spacing_zyx, preprocess_report = load_and_preprocess_series(series_dir, preprocess_config)
+    processed_volume, spacing_zyx, preprocess_report = load_and_preprocess_series(
+        series_dir, preprocess_config
+    )
+    stack_start = time.perf_counter()
     stack_volume = build_input_stack_volume(processed_volume)
-    sample_batch = _resize_stack_batch(stack_volume[: min(4, int(stack_volume.shape[0]))], model_height, model_width)
+    stack_seconds = time.perf_counter() - stack_start
+    sample_batch = _resize_stack_batch(
+        stack_volume[
+            np.unique(
+                np.linspace(
+                    0, len(stack_volume) - 1, min(5, len(stack_volume)), dtype=int
+                )
+            )
+        ],
+        model_height,
+        model_width,
+    )
 
     validation_report: dict[str, Any] | None = None
     if validate_onnx:
@@ -333,7 +379,14 @@ def run_deployment_inference(
             temperature=temperature,
         )
 
-    session = create_onnx_session(onnx_path, num_threads=num_threads)
+    if validation_report is not None and not validation_report["within_tolerance"]:
+        raise RuntimeError("ONNX parity gate failed.")
+    session = (
+        runtime_session
+        if runtime_session is not None
+        else create_onnx_session(onnx_path, num_threads=num_threads)
+    )
+    inference_start = time.perf_counter()
     probabilities_bchw = run_onnx_segmentation(
         session,
         stack_volume,
@@ -343,23 +396,60 @@ def run_deployment_inference(
         original_hw=(int(processed_volume.shape[1]), int(processed_volume.shape[2])),
         temperature=temperature,
     )
+    inference_seconds = time.perf_counter() - inference_start
+    post_start = time.perf_counter()
     if enable_postprocess:
         prediction_volume = apply_day6_postprocess(probabilities_bchw)
     else:
         prediction_volume = probabilities_bchw.argmax(axis=1).astype(np.uint8)
 
-    uncertainty = compute_entropy_uncertainty(np.transpose(probabilities_bchw, (1, 0, 2, 3)))
+    post_seconds = time.perf_counter() - post_start
+    export_start = time.perf_counter()
+    uncertainty = compute_entropy_uncertainty(
+        np.transpose(probabilities_bchw, (1, 0, 2, 3))
+    )
     output_root = Path(output_dir).expanduser().resolve()
     output_root.mkdir(parents=True, exist_ok=True)
     mask_extension = "npz" if mask_output_format == "npz" else "nii.gz"
     mask_volume_path = output_root / f"prediction_mask.{mask_extension}"
+    cropped_prediction = prediction_volume
+    geometry = preprocess_report["geometry"]
+    from preprocessing import BoundingBox3D, PreprocessResult
+
+    result_geometry = PreprocessResult(
+        np.zeros(geometry["resampled_shape_zyx"], dtype=np.uint8),
+        processed_volume,
+        processed_volume,
+        tuple(geometry["source_spacing_zyx"]),
+        tuple(geometry["target_spacing_zyx"]),
+        BoundingBox3D(**geometry["crop_bounds_inclusive_exclusive"]),
+    )
+    restored = restore_prediction_to_source(
+        prediction_volume, result_geometry, geometry["source_shape_zyx"]
+    )
     saved_mask_path = save_prediction_volume(
-        prediction_volume,
-        spacing_zyx=spacing_zyx,
+        restored,
+        spacing_zyx=tuple(geometry["source_spacing_zyx"]),
         output_path=mask_volume_path,
         output_format=mask_output_format,
     )
 
+    if mask_output_format == "npz":
+        np.savez_compressed(
+            saved_mask_path,
+            predicted_labels=restored,
+            spacing_zyx=geometry["source_spacing_zyx"],
+            origin_lps=geometry["source_origin_lps"],
+            direction_lps=geometry["direction_lps"],
+        )
+    else:
+        import SimpleITK as sitk
+
+        image = sitk.GetImageFromArray(restored)
+        image.SetSpacing(tuple(geometry["source_spacing_zyx"][::-1]))
+        image.SetOrigin(tuple(geometry["source_origin_lps"]))
+        image.SetDirection(tuple(geometry["direction_lps"]))
+        sitk.WriteImage(image, str(saved_mask_path))
     overlay_dir = output_root / "overlays"
     saved_overlays = []
     if save_overlays:
@@ -371,10 +461,26 @@ def run_deployment_inference(
         )
 
     report = {
-        "series_dir": str(Path(series_dir).expanduser().resolve()),
+        "timings": {
+            **preprocess_report["timings"],
+            "stack_creation_seconds": stack_seconds,
+            "inference_seconds": inference_seconds,
+            "postprocessing_seconds": post_seconds,
+            "export_seconds": time.perf_counter() - export_start,
+            "end_to_end_seconds": time.perf_counter() - total_start,
+        },
+        "model_resize": {
+            "height": model_height,
+            "width": model_width,
+            "input_interpolation": "bilinear align_corners=False",
+            "inverse_label_interpolation": "nearest",
+        },
+        "case_alias": "sample_001",
         "checkpoint_path": str(Path(checkpoint_path).expanduser().resolve()),
         "onnx_path": str(Path(onnx_path).expanduser().resolve()),
-        "slice_count": int(prediction_volume.shape[0]),
+        "slice_count": int(restored.shape[0]),
+        "processed_slice_count": int(prediction_volume.shape[0]),
+        "source_shape_zyx": list(restored.shape),
         "processed_shape_zyx": [int(v) for v in processed_volume.shape],
         "processed_spacing_zyx_mm": [float(v) for v in spacing_zyx],
         "batch_size": int(batch_size),
@@ -385,7 +491,9 @@ def run_deployment_inference(
         "overlay_count": int(len(saved_overlays)),
         "postprocessing_enabled": bool(enable_postprocess),
         "calibration": checkpoint.get("calibration", {"temperature": temperature}),
-        "uncertainty_summary": summarize_uncertainty(uncertainty, foreground_mask=prediction_volume > 0),
+        "uncertainty_summary": summarize_uncertainty(
+            uncertainty, foreground_mask=prediction_volume > 0
+        ),
         "onnx_validation": validation_report,
         "class_voxel_counts": {
             str(class_index): int((prediction_volume == class_index).sum())
@@ -395,19 +503,25 @@ def run_deployment_inference(
     report_path = output_root / "day7_infer_report.json"
     preprocess_report_path = output_root / "day7_preprocess_report.json"
     report_path.write_text(json.dumps(report, indent=2), encoding="utf-8")
-    preprocess_report_path.write_text(json.dumps(preprocess_report, indent=2), encoding="utf-8")
+    preprocess_report_path.write_text(
+        json.dumps(preprocess_report, indent=2), encoding="utf-8"
+    )
 
     validation_report_path: Path | None = None
     if validation_report is not None:
         validation_report_path = output_root / "day7_onnx_validation.json"
-        validation_report_path.write_text(json.dumps(validation_report, indent=2), encoding="utf-8")
+        validation_report_path.write_text(
+            json.dumps(validation_report, indent=2), encoding="utf-8"
+        )
 
     return DeploymentResult(
         prediction_volume=prediction_volume,
-        probabilities_czyx=np.transpose(probabilities_bchw, (1, 0, 2, 3)).astype(np.float32, copy=False),
+        probabilities_czyx=np.transpose(probabilities_bchw, (1, 0, 2, 3)).astype(
+            np.float32, copy=False
+        ),
         processed_volume=processed_volume,
         processed_spacing_zyx=spacing_zyx,
-        raw_slice_count=int(prediction_volume.shape[0]),
+        raw_slice_count=int(restored.shape[0]),
         output_paths=RuntimePaths(
             mask_volume_path=saved_mask_path,
             overlay_dir=overlay_dir,
@@ -420,14 +534,22 @@ def run_deployment_inference(
 
 
 def load_reference_labels(processed_dir: str | Path) -> np.ndarray | None:
-    candidate = Path(processed_dir).expanduser().resolve() / "pseudo_labels" / "pseudo_labels_3d.npz"
+    candidate = (
+        Path(processed_dir).expanduser().resolve()
+        / "pseudo_labels"
+        / "pseudo_labels_3d.npz"
+    )
     if not candidate.exists():
         return None
     with np.load(candidate) as data:
         return data["pseudo_labels"].astype(np.uint8)
 
 
-def attach_reference_metrics(report: dict[str, Any], prediction_volume: np.ndarray, reference_labels: np.ndarray | None) -> dict[str, Any]:
+def attach_reference_metrics(
+    report: dict[str, Any],
+    prediction_volume: np.ndarray,
+    reference_labels: np.ndarray | None,
+) -> dict[str, Any]:
     if reference_labels is None:
         return report
     metrics = compute_segmentation_metrics(
@@ -441,11 +563,37 @@ def attach_reference_metrics(report: dict[str, Any], prediction_volume: np.ndarr
 
 
 def unzip_series_bytes(payload: bytes) -> Path:
-    temp_dir = Path(tempfile.mkdtemp(prefix="day7_dicom_"))
-    with zipfile.ZipFile(io.BytesIO(payload)) as archive:
-        archive.extractall(temp_dir)
-    candidates = [path for path in temp_dir.rglob("*") if path.is_file()]
-    if not candidates:
-        raise ValueError("Uploaded ZIP archive did not contain any files.")
-    dicom_dirs = sorted({path.parent for path in candidates})
-    return dicom_dirs[0]
+    import shutil
+
+    if len(payload) > 64 * 1024 * 1024:
+        raise ValueError("Upload exceeds 64 MiB.")
+    temp_dir = Path(tempfile.mkdtemp(prefix="ct25d_dicom_"))
+    try:
+        with zipfile.ZipFile(io.BytesIO(payload)) as archive:
+            files = [entry for entry in archive.infolist() if not entry.is_dir()]
+            if (
+                not files
+                or len(files) > 512
+                or sum(entry.file_size for entry in files) > 256 * 1024 * 1024
+            ):
+                raise ValueError("Archive is empty or exceeds decoded limits.")
+            for entry in archive.infolist():
+                name = entry.filename.replace("\\", "/")
+                if (
+                    name.startswith("/")
+                    or ":" in name
+                    or ".." in Path(name).parts
+                    or ((entry.external_attr >> 16) & 0o170000) == 0o120000
+                ):
+                    raise ValueError("Unsafe archive member.")
+                target = (temp_dir / name).resolve()
+                if not target.is_relative_to(temp_dir.resolve()):
+                    raise ValueError("Archive path escapes temporary root.")
+            archive.extractall(temp_dir)
+        directories = {p.parent for p in temp_dir.rglob("*") if p.is_file()}
+        if len(directories) != 1:
+            raise ValueError("Provide exactly one DICOM series directory.")
+        return directories.pop()
+    except Exception:
+        shutil.rmtree(temp_dir)
+        raise

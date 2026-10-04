@@ -24,7 +24,9 @@ def expected_calibration_error(
     confidences, predictions = flat_probs.max(dim=1)
     accuracies = predictions.eq(flat_targets)
 
-    boundaries = torch.linspace(0.0, 1.0, steps=num_bins + 1, device=probabilities.device)
+    boundaries = torch.linspace(
+        0.0, 1.0, steps=num_bins + 1, device=probabilities.device
+    )
     ece = torch.tensor(0.0, device=probabilities.device)
     for start, end in zip(boundaries[:-1], boundaries[1:], strict=True):
         in_bin = (confidences > start) & (confidences <= end)
@@ -53,18 +55,30 @@ def fit_temperature(
         loss.backward()
         return loss
 
-    optimizer.step(closure)
-    return float(torch.exp(log_temperature.detach()).item())
+    try:
+        optimizer.step(closure)
+        temperature = float(torch.exp(log_temperature.detach()).item())
+        if not __import__("math").isfinite(temperature) or temperature <= 0:
+            return 1.0
+        if negative_log_likelihood(
+            apply_temperature(logits, temperature), targets
+        ) > negative_log_likelihood(logits, targets):
+            return 1.0
+        return temperature
+    except (RuntimeError, ValueError):
+        return 1.0
 
 
-def summarize_temperature_scaling(logits: torch.Tensor, targets: torch.Tensor, temperature: float) -> dict[str, float]:
+def summarize_temperature_scaling(
+    logits: torch.Tensor, targets: torch.Tensor, temperature: float
+) -> dict[str, float]:
     before_probs = torch.softmax(logits, dim=1)
     after_logits = apply_temperature(logits, temperature)
     after_probs = torch.softmax(after_logits, dim=1)
     return {
-        'temperature': float(temperature),
-        'nll_before': negative_log_likelihood(logits, targets),
-        'nll_after': negative_log_likelihood(after_logits, targets),
-        'ece_before': expected_calibration_error(before_probs, targets),
-        'ece_after': expected_calibration_error(after_probs, targets),
+        "temperature": float(temperature),
+        "nll_before": negative_log_likelihood(logits, targets),
+        "nll_after": negative_log_likelihood(after_logits, targets),
+        "ece_before": expected_calibration_error(before_probs, targets),
+        "ece_after": expected_calibration_error(after_probs, targets),
     }

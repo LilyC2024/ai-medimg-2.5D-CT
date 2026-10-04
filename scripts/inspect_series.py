@@ -8,16 +8,15 @@ from pathlib import Path
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-SRC_DIR = REPO_ROOT / "src"
-if str(SRC_DIR) not in sys.path:
-    sys.path.insert(0, str(SRC_DIR))
 
 from config import load_app_config  # noqa: E402
 from dicom_loader import load_dicom_series, write_metadata_json  # noqa: E402
 
 
 def _build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Inspect a DICOM series and export Day 1 diagnostics.")
+    parser = argparse.ArgumentParser(
+        description="Inspect a DICOM series and export Day 1 diagnostics."
+    )
     parser.add_argument(
         "--series-dir",
         type=str,
@@ -62,7 +61,9 @@ def main() -> int:
     print(f"Series dir: {config.series_dir}")
     print(f"Slice count: {volume.metadata.slice_count}")
     print(f"Volume shape: {tuple(volume.volume_hu.shape)}")
-    print(f"HU min/max: {float(volume.volume_hu.min()):.2f} / {float(volume.volume_hu.max()):.2f}")
+    print(
+        f"HU min/max: {float(volume.volume_hu.min()):.2f} / {float(volume.volume_hu.max()):.2f}"
+    )
     print("Metadata:")
     print(json.dumps(volume.metadata.to_dict(), indent=2))
     print("Artifacts written:")

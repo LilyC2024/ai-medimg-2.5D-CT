@@ -56,12 +56,20 @@ class TestCT25DDataset(unittest.TestCase):
 
         self.assertEqual(set(assignments.keys()), {"a", "b", "c", "d", "e", "f"})
         self.assertTrue(set(assignments.values()).issubset({"train", "val", "test"}))
-        self.assertGreaterEqual(sum(split == "train" for split in assignments.values()), 1)
-        self.assertGreaterEqual(sum(split == "val" for split in assignments.values()), 1)
-        self.assertGreaterEqual(sum(split == "test" for split in assignments.values()), 1)
+        self.assertGreaterEqual(
+            sum(split == "train" for split in assignments.values()), 1
+        )
+        self.assertGreaterEqual(
+            sum(split == "val" for split in assignments.values()), 1
+        )
+        self.assertGreaterEqual(
+            sum(split == "test" for split in assignments.values()), 1
+        )
 
     def test_single_case_slice_splits_create_holdouts_and_buffer(self) -> None:
-        assignments = assign_single_case_slice_splits(depth=29, val_ratio=0.15, test_ratio=0.15, context_radius=1)
+        assignments = assign_single_case_slice_splits(
+            depth=29, val_ratio=0.15, test_ratio=0.15, context_radius=1
+        )
 
         self.assertEqual(len(assignments), 29)
         self.assertIn("train", assignments)
@@ -81,7 +89,9 @@ class TestCT25DDataset(unittest.TestCase):
             label_path = tmp_path / "pseudo_labels_3d.npz"
             index_path = tmp_path / "index.csv"
 
-            save_npz_volume(volume, spacing_zyx=(1.0, 1.0, 1.0), output_path=volume_path)
+            save_npz_volume(
+                volume, spacing_zyx=(1.0, 1.0, 1.0), output_path=volume_path
+            )
             np.savez_compressed(label_path, pseudo_labels=labels)
 
             pd.DataFrame(
@@ -117,17 +127,38 @@ class TestCT25DDataset(unittest.TestCase):
                     RandomIntensityJitter25D(probability=1.0),
                 ],
             )
-            dataset_a = CT25DDataset(index_csv_path=index_path, split="train", transforms=transforms, seed=123)
-            dataset_b = CT25DDataset(index_csv_path=index_path, split="train", transforms=transforms, seed=123)
-            dataset_c = CT25DDataset(index_csv_path=index_path, split="train", transforms=transforms, seed=999)
+            dataset_a = CT25DDataset(
+                index_csv_path=index_path,
+                split="train",
+                transforms=transforms,
+                seed=123,
+            )
+            dataset_b = CT25DDataset(
+                index_csv_path=index_path,
+                split="train",
+                transforms=transforms,
+                seed=123,
+            )
+            dataset_c = CT25DDataset(
+                index_csv_path=index_path,
+                split="train",
+                transforms=transforms,
+                seed=999,
+            )
 
             sample_a = dataset_a[0]
             sample_b = dataset_b[0]
             sample_c = dataset_c[0]
 
-        self.assertTrue(np.allclose(sample_a["image"].numpy(), sample_b["image"].numpy()))
-        self.assertTrue(np.array_equal(sample_a["mask"].numpy(), sample_b["mask"].numpy()))
-        self.assertFalse(np.allclose(sample_a["image"].numpy(), sample_c["image"].numpy()))
+        self.assertTrue(
+            np.allclose(sample_a["image"].numpy(), sample_b["image"].numpy())
+        )
+        self.assertTrue(
+            np.array_equal(sample_a["mask"].numpy(), sample_b["mask"].numpy())
+        )
+        self.assertFalse(
+            np.allclose(sample_a["image"].numpy(), sample_c["image"].numpy())
+        )
         self.assertEqual(int(sample_a["mask"].max().item()), 3)
         self.assertEqual(int(sample_b["mask"].max().item()), 3)
 

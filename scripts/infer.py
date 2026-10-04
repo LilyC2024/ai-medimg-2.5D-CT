@@ -14,9 +14,6 @@ import torch.nn.functional as F
 from torch.utils.data import DataLoader
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-SRC_DIR = REPO_ROOT / "src"
-if str(SRC_DIR) not in sys.path:
-    sys.path.insert(0, str(SRC_DIR))
 
 from calibration import apply_temperature  # noqa: E402
 from data.ct25d_dataset import CT25DDataset  # noqa: E402
@@ -31,14 +28,27 @@ from visualization import save_day5_prediction_overlays  # noqa: E402
 
 
 def _build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Day 5 full-series inference for the lightweight 2.5D U-Net.")
-    parser.add_argument("--index-path", type=str, default=str(REPO_ROOT / "data_processed" / "index.csv"))
-    parser.add_argument("--checkpoint", type=str, default=str(REPO_ROOT / "saved_models" / "best.pt"))
+    parser = argparse.ArgumentParser(
+        description="Day 5 full-series inference for the lightweight 2.5D U-Net."
+    )
+    parser.add_argument(
+        "--index-path",
+        type=str,
+        default=str(REPO_ROOT / "data_processed" / "index.csv"),
+    )
+    parser.add_argument(
+        "--checkpoint", type=str, default=str(REPO_ROOT / "saved_models" / "best.pt")
+    )
     parser.add_argument("--output-dir", type=str, default=str(REPO_ROOT / "outputs"))
-    parser.add_argument("--processed-dir", type=str, default=str(REPO_ROOT / "data_processed"))
+    parser.add_argument(
+        "--processed-dir", type=str, default=str(REPO_ROOT / "data_processed")
+    )
+    parser.add_argument("--split", choices=["train", "val", "test"], default="test")
     parser.add_argument("--batch-size", type=int, default=4)
     parser.add_argument("--device", type=str, default="cpu")
-    parser.add_argument("--uncertainty-method", choices=["entropy", "tta", "none"], default="entropy")
+    parser.add_argument(
+        "--uncertainty-method", choices=["entropy", "tta", "none"], default="entropy"
+    )
     parser.add_argument("--disable-postprocess", action="store_true")
     parser.add_argument("--brain-min-voxels", type=int, default=256)
     parser.add_argument("--bone-min-voxels", type=int, default=96)
@@ -66,7 +76,9 @@ def _predict_probabilities(
     for dims in augmentations[1:]:
         flipped_images = torch.flip(resized_images, dims=dims)
         flipped_logits = apply_temperature(model(flipped_images), temperature)
-        probability_sum = probability_sum + torch.flip(torch.softmax(flipped_logits, dim=1), dims=dims)
+        probability_sum = probability_sum + torch.flip(
+            torch.softmax(flipped_logits, dim=1), dims=dims
+        )
     return probability_sum / float(len(augmentations))
 
 
@@ -101,7 +113,7 @@ def main() -> int:
     output_dir.mkdir(parents=True, exist_ok=True)
     processed_dir.mkdir(parents=True, exist_ok=True)
 
-    checkpoint = torch.load(checkpoint_path, map_location="cpu")
+    checkpoint = torch.load(checkpoint_path, map_location="cpu", weights_only=True)
     model = UNetSmall(**checkpoint["model_config"])
     model.load_state_dict(checkpoint["state_dict"])
     model.eval()
@@ -112,9 +124,27 @@ def main() -> int:
     resize_height = int(checkpoint["resize"]["height"])
     resize_width = int(checkpoint["resize"]["width"])
 
-    dataset = CT25DDataset(index_csv_path=index_path, split=None, transforms=None, seed=int(checkpoint.get("seed", 13)))
-    loader = DataLoader(dataset, batch_size=args.batch_size, shuffle=False, num_workers=0, pin_memory=False)
+    dataset = CT25DDataset(
+        index_csv_path=index_path,
+        split=args.split,
+        transforms=None,
+        seed=int(checkpoint.get("seed", 13)),
+    )
+    if not len(dataset):
+        raise ValueError("Requested split is empty.")
+    if dataset.index_df["series_instance_uid"].nunique() != 1:
+        raise ValueError(
+            "Evaluate one series per invocation to preserve volume geometry."
+        )
+    loader = DataLoader(
+        dataset,
+        batch_size=args.batch_size,
+        shuffle=False,
+        num_workers=0,
+        pin_memory=False,
+    )
 
+    all_probabilities = []
     all_predictions = []
     all_targets = []
     all_backgrounds = []
@@ -124,46 +154,35 @@ def main() -> int:
         for batch in loader:
             images = batch["image"].float()
             targets = batch["mask"].long()
-            resized_images = F.interpolate(images, size=(resize_height, resize_width), mode="bilinear", align_corners=False)
-            probabilities = _predict_probabilities(model, resized_images, device=device, uncertainty_method=args.uncertainty_method, temperature=temperature)
+            resized_images = F.interpolate(
+                images,
+                size=(resize_height, resize_width),
+                mode="bilinear",
+                align_corners=False,
+            )
+            probabilities = _predict_probabilities(
+                model,
+                resized_images,
+                device=device,
+                uncertainty_method=args.uncertainty_method,
+                temperature=temperature,
+            )
             probabilities = F.interpolate(
                 probabilities.cpu(),
                 size=targets.shape[-2:],
                 mode="bilinear",
                 align_corners=False,
             )
-            probabilities = probabilities / probabilities.sum(dim=1, keepdim=True).clamp_min(1e-6)
+            probabilities = probabilities / probabilities.sum(
+                dim=1, keepdim=True
+            ).clamp_min(1e-6)
             predictions = probabilities.argmax(dim=1)
 
-            if not args.disable_postprocess:
-                refined_labels = postprocess_multiclass_prediction(
-                    probabilities=probabilities.permute(1, 0, 2, 3).numpy(),
-                    predicted_labels=predictions.numpy(),
-                    class_configs={
-                        1: LabelPostprocessConfig(
-                            min_component_size=args.brain_min_voxels,
-                            fill_holes=True,
-                            smooth_iterations=args.smooth_iters,
-                            keep_largest_component=True,
-                        ),
-                        2: LabelPostprocessConfig(
-                            min_component_size=args.bone_min_voxels,
-                            fill_holes=False,
-                            smooth_iterations=args.smooth_iters,
-                            keep_largest_component=True,
-                        ),
-                        3: LabelPostprocessConfig(
-                            min_component_size=args.overlap_min_voxels,
-                            fill_holes=True,
-                            smooth_iterations=args.smooth_iters,
-                            keep_largest_component=False,
-                        ),
-                    },
-                )
-                predictions = torch.from_numpy(refined_labels.astype(np.int64))
+            uncertainty = compute_entropy_uncertainty(
+                probabilities.permute(1, 0, 2, 3).numpy()
+            )
 
-            uncertainty = compute_entropy_uncertainty(probabilities.permute(1, 0, 2, 3).numpy())
-
+            all_probabilities.append(probabilities)
             all_predictions.append(predictions)
             all_targets.append(targets)
             all_backgrounds.append(images[:, 1])
@@ -175,15 +194,52 @@ def main() -> int:
     background_volume = torch.cat(all_backgrounds, dim=0)
     uncertainty_volume = torch.cat(all_uncertainty, dim=0)
 
-    metrics = compute_segmentation_metrics(prediction_volume, target_volume, num_classes=4)
+    raw_metrics = compute_segmentation_metrics(
+        prediction_volume, target_volume, num_classes=4
+    )
+    if not args.disable_postprocess:
+        from evaluation import apply_day6_postprocess
+
+        # Split buffers can create gaps: never bridge nonadjacent centers in 3D morphology.
+        boundaries = (
+            [0]
+            + [
+                i
+                for i in range(1, len(all_slice_indices))
+                if all_slice_indices[i] != all_slice_indices[i - 1] + 1
+            ]
+            + [len(all_slice_indices)]
+        )
+        probabilities = torch.cat(all_probabilities).numpy()
+        refined = prediction_volume.numpy().copy()
+        for start, end in zip(boundaries[:-1], boundaries[1:]):
+            refined[start:end] = apply_day6_postprocess(
+                probabilities[start:end],
+                brain_min_voxels=args.brain_min_voxels,
+                bone_min_voxels=args.bone_min_voxels,
+                overlap_min_voxels=args.overlap_min_voxels,
+                smooth_iterations=args.smooth_iters,
+            )
+        prediction_volume = torch.from_numpy(refined)
+    metrics = compute_segmentation_metrics(
+        prediction_volume, target_volume, num_classes=4
+    )
     prediction_np = prediction_volume.numpy().astype(np.uint8)
     target_np = target_volume.numpy().astype(np.uint8)
     background_np = background_volume.numpy().astype(np.float32)
     uncertainty_np = uncertainty_volume.numpy().astype(np.float32)
-    uncertainty_summary = summarize_uncertainty(uncertainty_np, foreground_mask=prediction_np > 0)
+    uncertainty_summary = summarize_uncertainty(
+        uncertainty_np, foreground_mask=prediction_np > 0
+    )
     per_slice_metrics = _slice_metrics(prediction_np, target_np, all_slice_indices)
-    best_slices = sorted(per_slice_metrics, key=lambda item: (-float(item["dice"]), int(item["slice_index"])))[:3]
-    worst_slices = sorted(per_slice_metrics, key=lambda item: (float(item["dice"]), int(item["slice_index"])))[:3]
+    best_slices = sorted(
+        per_slice_metrics,
+        key=lambda item: (-float(item["dice"]), int(item["slice_index"])),
+    )[:3]
+    worst_slices = sorted(
+        per_slice_metrics,
+        key=lambda item: (float(item["dice"]), int(item["slice_index"])),
+    )[:3]
 
     prediction_path = processed_dir / "day5_predictions.npz"
     np.savez_compressed(
@@ -205,6 +261,12 @@ def main() -> int:
     )
 
     report = {
+        "split": args.split,
+        "raw_metrics": raw_metrics,
+        "teacher_self_agreement": compute_segmentation_metrics(
+            target_volume, target_volume, num_classes=4
+        ),
+        "teacher_comparison_note": "Teacher versus itself is tautological; no superiority claim without independent labels.",
         "checkpoint": str(checkpoint_path),
         "prediction_volume_path": str(prediction_path),
         "overlay_dir": str(overlay_dir),
@@ -235,7 +297,9 @@ def main() -> int:
     print(f"Saved predictions: {prediction_path}")
     print(f"Saved overlays: {overlay_dir}")
     print(f"Saved inference report: {report_path}")
-    print(f"Dice={metrics['dice']:.4f} IoU={metrics['iou']:.4f} temperature={temperature:.4f}")
+    print(
+        f"Dice={metrics['dice']:.4f} IoU={metrics['iou']:.4f} temperature={temperature:.4f}"
+    )
     return 0
 
 
