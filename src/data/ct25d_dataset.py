@@ -440,6 +440,13 @@ class CT25DDataset(Dataset):
         required={"split","patient_id","series_instance_uid","slice_index","depth","height","width","volume_path","label_volume_path"}
         if required-set(self.index_df.columns):
             raise ValueError("Malformed index: required columns are missing.")
+        for column in ("slice_index", "depth", "height", "width", "stack_prev_index", "stack_center_index", "stack_next_index"):
+            if column not in self.index_df:continue
+            values = pd.to_numeric(self.index_df[column],errors="raise").to_numpy()
+            if not np.isfinite(values).all() or np.any(values != np.floor(values)):
+                raise ValueError("Index dimensions and support references must be finite integers.")
+            if column in ("depth","height","width") and np.any(values<=0):
+                raise ValueError("Index dimensions must be positive.")
         if not set(self.index_df["split"]).issubset({"train","val","test","buffer"}):
             raise ValueError("Invalid split name.")
         if self.index_df.duplicated(["series_instance_uid","slice_index"]).any():

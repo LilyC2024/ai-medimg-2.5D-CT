@@ -212,3 +212,13 @@ class Repairs(unittest.TestCase):
                     )
                 ),
             )
+
+    def test_missing_decode_tags_fail_clearly(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            generate(tmp)
+            path = next(Path(tmp).glob("*.dcm"))
+            ds = pydicom.dcmread(path)
+            del ds.BitsAllocated
+            ds.save_as(path, enforce_file_format=True)
+            with self.assertRaisesRegex(ValueError, "Missing required technical tags"):
+                load_dicom_series(tmp)

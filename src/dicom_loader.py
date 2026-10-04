@@ -84,6 +84,12 @@ def load_dicom_series(series_dir):
         "RescaleSlope",
         "RescaleIntercept",
         "PixelData",
+        "SamplesPerPixel",
+        "PhotometricInterpretation",
+        "BitsAllocated",
+        "BitsStored",
+        "HighBit",
+        "PixelRepresentation",
     )
     for file in files:
         ds = pydicom.dcmread(file)
@@ -97,7 +103,8 @@ def load_dicom_series(series_dir):
         ):
             raise ValueError("Series dimensions exceed supported limits.")
         if (
-            ds.Modality != "CT"
+            ds.PhotometricInterpretation not in ("MONOCHROME1", "MONOCHROME2")
+            or ds.Modality != "CT"
             or int(ds.get("NumberOfFrames", 1)) != 1
             or int(ds.get("SamplesPerPixel", 1)) != 1
         ):
@@ -158,7 +165,12 @@ def load_dicom_series(series_dir):
     planes, valid_values, slopes, intercepts = [], [], [], []
     padding_count = 0
     for _, ds, file, _ in records:
-        stored = _decode_pixels(ds, file)
+        try:
+            stored = _decode_pixels(ds, file)
+        except (RuntimeError, AttributeError, NotImplementedError) as exc:
+            raise ValueError(
+                "Unable to decode CT pixels; provide valid supported DICOM or install codecs extra."
+            ) from exc
         if stored.shape != (int(ds.Rows), int(ds.Columns)):
             raise ValueError("Decoded dimensions disagree with header.")
         padding = np.zeros(stored.shape, dtype=bool)
