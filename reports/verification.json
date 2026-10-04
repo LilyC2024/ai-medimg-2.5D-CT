@@ -14,7 +14,17 @@
   "source_npz_nifti_geometry": "passed",
   "full_model_npu": "passed",
   "local_docker": "unavailable",
-  "hosted_ci": "pending push",
+  "hosted_ci": {
+    "status": "passed",
+    "tested_commit": "3b25016aab3c626ac003dc13018e7001d3b8bac4",
+    "run_url": "https://github.com/LilyC2024/ai-medimg-2.5D-CT/actions/runs/37233373549",
+    "jobs": {
+      "ubuntu_lint_tests_cpu_docker": "passed",
+      "windows_lint_tests": "passed"
+    }
+  },
   "data_acquisition_rights": "not established",
-  "release_tag": "withheld"
+  "release_tag": "withheld",
+  "cpu_container": "passed hosted Linux build and source-grid synthetic CLI inference",
+  "remote_head_verified": "3b25016aab3c626ac003dc13018e7001d3b8bac4"
 }

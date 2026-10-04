@@ -42,4 +42,4 @@ The complete U-Net executes on the Intel NPU with explicit device evidence. FP16
 - [Repair notes and remaining work](docs/release_notes.md)
 - [Detailed task status](CT_Project_TODO.md)
 
-CLI is the validated deployment path. The localhost API is experimental and returns a ZIP containing a mask and technical metadata. Docker is a CPU-only recipe; image build verification requires Docker. Code is MIT licensed; that license grants no rights to source data or third-party assets. Historical source and results remain recoverable in Git history.
+CLI is the validated deployment path. The localhost API is experimental and returns a ZIP containing a mask and technical metadata. The CPU Docker image was built and exercised by [Linux CI](https://github.com/LilyC2024/ai-medimg-2.5D-CT/actions/runs/37233373549). Code is MIT licensed; that license grants no rights to source data or third-party assets. Historical source and results remain recoverable in Git history.

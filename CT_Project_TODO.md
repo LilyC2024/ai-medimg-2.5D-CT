@@ -14,8 +14,8 @@ Open requirements are explicit:
 
 - Historical exact Windows commands were unavailable; baseline HEAD/status/versions and available command names are recorded without invented history.
 - Real-data source URL, acquisition terms and redistribution rights remain unknown. Original-file hashes stay local, and real overlays/models are not distributed.
-- Docker is unavailable locally. A Linux hosted CI job builds and runs the CPU image; its status is recorded separately after pushing.
-- Reviewable repair commits exist. Remote verification is recorded after push; a release tag is withheld while acquisition/rights and release gates remain open.
+- Docker is unavailable locally. Hosted Linux CI built and ran the CPU image successfully; hosted Windows/Linux lint and regression tests passed.
+- Reviewable repair commits exist. The repair branch was pushed and remote HEAD verified; a release tag is withheld while acquisition/rights and release gates remain open.
 - The clinical task is proposed only. Expert annotated multi-patient data, independent clinical evaluation, matched alternatives and a clinical product programme require external data and domain review.
 
 ## 1. Intended Outcome and Scope
@@ -215,7 +215,7 @@ Acceptance: the full-model NPU result is reproducible, with actual device eviden
 - [x] Initialize the model once; make readiness reflect successful model initialization rather than unconditional OK.
 - [x] Bind local examples to 127.0.0.1 by default; avoid logging identifying DICOM fields.
 - [x] Test one valid request, malformed/oversized inputs, and unavailable model behavior.
-- [ ] Provide a reproducible CPU Docker image only after the CLI works; document NPU deployment separately on Windows. Do not promise NPU passthrough in the CPU container.
+- [x] Provide a reproducible CPU Docker image only after the CLI works; document NPU deployment separately on Windows. Do not promise NPU passthrough in the CPU container.
 
 Acceptance: documented input limits and outputs match actual behavior; failed requests do not leave accumulating temporary data.
 
