@@ -66,6 +66,30 @@ def peak_memory():
     return None
 
 
+def plugged_in_state():
+    if platform.system() != "Windows":
+        return "unknown"
+    import ctypes
+    from ctypes import wintypes
+
+    class PowerStatus(ctypes.Structure):
+        _fields_ = [
+            ("ACLineStatus", wintypes.BYTE),
+            ("BatteryFlag", wintypes.BYTE),
+            ("BatteryLifePercent", wintypes.BYTE),
+            ("SystemStatusFlag", wintypes.BYTE),
+            ("BatteryLifeTime", wintypes.DWORD),
+            ("BatteryFullLifeTime", wintypes.DWORD),
+        ]
+
+    status = PowerStatus()
+    if not ctypes.windll.kernel32.GetSystemPowerStatus(ctypes.byref(status)):
+        return "unknown"
+    return {0: "battery", 1: "AC connected", 255: "unknown"}.get(
+        status.ACLineStatus, "unknown"
+    )
+
+
 def benchmark(model_path, input_path, output, runs=30):
     d = np.load(input_path)
     inputs = d["inputs"]
@@ -95,9 +119,14 @@ def benchmark(model_path, input_path, output, runs=30):
         "settings": {
             "threads": 1,
             "requests": 1,
-            "cache": "disabled",
+            "cache": "application cache disabled; driver/internal cache not reset",
             "power_mode": "Balanced (powercfg)",
-            "plugged_in": "unknown: Win32_Battery returned no instance",
+            "plugged_in": plugged_in_state(),
+        },
+        "memory_note": "Cumulative peak process working set; not incremental backend memory or NPU device RAM.",
+        "hardware": {
+            "cpu": "Intel Core Ultra 7 155U",
+            "npu_driver": "32.0.100.5540 (Win32_PnPSignedDriver verified)",
         },
         "pytorch_cpu": scores(reference.argmax(1), targets),
         "runtimes": {},

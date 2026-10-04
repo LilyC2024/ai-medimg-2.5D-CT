@@ -30,7 +30,7 @@ Windows prerequisite: supported Intel NPU driver plus `pip install -e ".[intel]"
 .\.venv\Scripts\python.exe scripts/benchmark_intel.py --onnx artifacts/real/model.onnx --inputs artifacts/real/runtime/runtime_inputs.npz --output reports/intel_benchmark.json --runs 30
 ```
 
-Output identifies EXECUTION_DEVICES, precision hint, first inference, compile time, warmup, p50/p95, throughput, process memory, probability/label differences and held-out Dice on the model grid. CPU has one thread and one request; NPU uses one request. Cache is disabled. CPU probability gates and NPU quality gates are separate; compiler failures are recorded. NPU-only device evidence is required for an NPU success claim. Timings are sequential warm measurements, not power/energy measurements or universal speedup claims.
+Output identifies EXECUTION_DEVICES, precision hint, first inference, compile time, warmup, p50/p95, throughput, process memory, probability/label differences and held-out Dice on the model grid. CPU has one thread and one request; NPU uses one request. Application model caching is disabled; driver/internal caches were not reset, so repeated compilation may be warm. CPU probability gates and NPU quality gates are separate; compiler failures are recorded. NPU-only device evidence is required for an NPU success claim. Timings are sequential warm measurements, not power/energy measurements or universal speedup claims.
 
 ## Experimental service and container
 
