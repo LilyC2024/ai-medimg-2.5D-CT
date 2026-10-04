@@ -1,8 +1,20 @@
-# CT 2.5D research prototype — 0.8.0
+# CT 2.5D research prototype â€” 0.8.0
 
 This project measures a compact U-Net's agreement with classical CT head-region pseudo labels. It is for software engineers and imaging researchers inspecting ingestion, geometry, training and runtime behavior. It does not diagnose lesions or demonstrate clinical accuracy.
 
 Raw DICOM, derived patient images and trained models are **not bundled in a clean checkout**. The local sample's acquisition source and redistribution permissions remain unverified. A synthetic fixture supports all required automated tests without external data. Historical results from commit `457ddbf` are superseded; do not compare them as if they used the corrected pipeline.
+
+## Updates on 4 October 2026
+
+Version 0.8.0 repairs the research pipeline and replaces the historical results with traceable evidence. The [dated change record](docs/release_notes.md) documents all implementation, packaging and documentation updates, verification results, and remaining research limitations.
+
+- Corrected DICOM rescale/padding handling and physical geometry, with source-grid prediction restoration.
+- Eliminated neighboring-slice split leakage, missing-validation fallback and mixed-split evaluation; made augmentation reproducible across epochs and metrics independent of batch size.
+- Bound checkpoint, preprocessing and ONNX contracts; verified CPU parity and full-model Intel NPU execution.
+- Added bounded experimental API uploads, downloadable outputs, synthetic Windows/Linux CI and verified CPU Docker inference.
+- Consolidated documentation and dependencies, added the MIT code license, and removed tracked local images/models while retaining them locally and in historical Git commits.
+
+All 30 required tests execute without skips; lint, clean-environment reproduction and Windows/Linux CI pass. The detailed TODO file has been retired; current verification is in [validation](docs/validation.md), and outstanding data/clinical requirements are in the [change record](docs/release_notes.md#remaining-research-and-publication-requirements).
 
 ## Verified Windows quickstart
 
@@ -39,7 +51,6 @@ The complete U-Net executes on the Intel NPU with explicit device evidence. FP16
 - [Requirements and validation](docs/validation.md)
 - [Model card](docs/model_card.md)
 - [Regulatory scope](docs/regulatory_scope.md)
-- [Repair notes and remaining work](docs/release_notes.md)
-- [Detailed task status](CT_Project_TODO.md)
+- [Dated changes and remaining requirements](docs/release_notes.md)
 
 CLI is the validated deployment path. The localhost API is experimental and returns a ZIP containing a mask and technical metadata. The CPU Docker image was built and exercised by [Linux CI](https://github.com/LilyC2024/ai-medimg-2.5D-CT/actions/runs/37233373549). Code is MIT licensed; that license grants no rights to source data or third-party assets. Historical source and results remain recoverable in Git history.

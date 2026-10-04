@@ -26,5 +26,9 @@
   "data_acquisition_rights": "not established",
   "release_tag": "withheld",
   "cpu_container": "passed hosted Linux build and source-grid synthetic CLI inference",
-  "remote_head_verified": "3b25016aab3c626ac003dc13018e7001d3b8bac4"
+  "remote_head_verified": "3b25016aab3c626ac003dc13018e7001d3b8bac4",
+  "documentation_updated_date": "2026-10-04",
+  "documentation_timezone": "Europe/Stockholm",
+  "version": "0.8.0",
+  "documentation_policy": "Dated upgrades and unresolved requirements are consolidated in docs/release_notes.md and docs/validation.md; CT_Project_TODO.md retired."
 }

@@ -14,6 +14,7 @@
 | Production sys.path changes | Installed modules and explicit deploy packaging replace them | CLI test runs from a different cwd |
 | Missing-artifact skip tests | Generated CT/checkpoint/ONNX replace private fixtures | Required synthetic tests execute; no all-skip success |
 | .vscode, .venv, egg-info, caches, artifacts | Local files ignored; no machine settings published | Staged-path and public-metadata inspection |
+| CT_Project_TODO.md | Retire completed engineering backlog after consolidating dated changes and open requirements | release_notes.md and validation.md retain status/evidence; original checklist remains in Git history |
 | src/.gitkeep | Obsolete placeholder | Real source files present |
 
 No source CT, sole historical checkpoint or local backup evidence was deleted. Ordinary cleanup does not rewrite Git history or erase previously committed identifiers. The src/ct25d destination is deferred: packaging of the tested existing modules is functional, and a namespace rewrite is not necessary for the correctness repairs.
