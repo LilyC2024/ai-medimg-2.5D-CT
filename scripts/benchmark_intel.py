@@ -53,6 +53,12 @@ def peak_memory():
     counters = Counters()
     counters.cb = ctypes.sizeof(counters)
     ctypes.windll.kernel32.GetCurrentProcess.restype = wintypes.HANDLE
+    ctypes.windll.psapi.GetProcessMemoryInfo.argtypes = [
+        wintypes.HANDLE,
+        ctypes.POINTER(Counters),
+        wintypes.DWORD,
+    ]
+    ctypes.windll.psapi.GetProcessMemoryInfo.restype = wintypes.BOOL
     if ctypes.windll.psapi.GetProcessMemoryInfo(
         ctypes.windll.kernel32.GetCurrentProcess(), ctypes.byref(counters), counters.cb
     ):
