@@ -1,0 +1,281 @@
+{
+  "schema_version": 1,
+  "case_alias": "sample_001",
+  "pipeline_version": "0.8.0",
+  "geometry": {
+    "source_origin_lps": [
+      -122.2,
+      -107.1,
+      -19.25
+    ],
+    "direction_lps": [
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0
+    ],
+    "source_spacing_zyx": [
+      5.0,
+      0.488281,
+      0.488281
+    ],
+    "target_spacing_zyx": [
+      5.0,
+      1.0,
+      1.0
+    ],
+    "source_shape_zyx": [
+      34,
+      512,
+      512
+    ],
+    "resampled_shape_zyx": [
+      34,
+      251,
+      251
+    ],
+    "crop_bounds_inclusive_exclusive": {
+      "z_min": 2,
+      "z_max": 32,
+      "y_min": 0,
+      "y_max": 239,
+      "x_min": 15,
+      "x_max": 223
+    },
+    "crop_origin_lps": [
+      -107.2,
+      -107.1,
+      -9.25
+    ],
+    "forward_index_scale_zyx": [
+      1.0,
+      0.488281,
+      0.488281
+    ],
+    "inverse_index_scale_zyx": [
+      1.0,
+      2.0480010485765368,
+      2.0480010485765368
+    ]
+  },
+  "preprocessing": {
+    "target_spacing_xy_mm": 1.0,
+    "target_spacing_z_mm": null,
+    "keep_z_if_coarse": true,
+    "coarse_z_threshold_mm": 3.0,
+    "resample_order": 1,
+    "head_threshold_hu": -350.0,
+    "mask_opening_iterations": 1,
+    "mask_closing_iterations": 2,
+    "crop_margin_mm_zyx": [
+      2.0,
+      10.0,
+      10.0
+    ],
+    "hu_clip_min": -1000.0,
+    "hu_clip_max": 1000.0,
+    "normalize_min": 0.0,
+    "normalize_max": 1.0,
+    "save_format": "nii.gz"
+  },
+  "pseudo_label_method": {
+    "version": "classical-v1",
+    "parameters": {
+      "bone_threshold_hu": -100.0,
+      "bone_opening_iterations": 1,
+      "bone_closing_iterations": 1,
+      "bone_min_component_voxels": 32,
+      "bone_keep_largest_component": true,
+      "brain_window_center": 40.0,
+      "brain_window_width": 120.0,
+      "brain_window_norm_min": 0.05,
+      "brain_window_norm_max": 0.95,
+      "brain_head_threshold_hu": -10.0,
+      "brain_opening_iterations": 0,
+      "brain_closing_iterations": 2,
+      "brain_fill_holes": true,
+      "brain_min_component_voxels": 256,
+      "brain_keep_largest_component": true,
+      "overlay_max_slices": null,
+      "overlay_min_representative_slices": 20
+    },
+    "selected_candidate": {
+      "method": "adaptive_brain_threshold_sweep",
+      "selected_params": {
+        "window_center": 40.0,
+        "window_width": 80.0,
+        "norm_min": 0.05,
+        "norm_max": 0.95,
+        "head_threshold_hu": -300.0
+      },
+      "selected_score": 4.100263695061608,
+      "selected_head_ratio": 0.571126085481099,
+      "selected_bone_overlap_ratio": 0.033201485802528866,
+      "selected_stats": {
+        "voxel_count": 365214,
+        "volume_ml": 365.214,
+        "non_empty_slice_count": 26,
+        "slice_coverage_ratio": 0.8666666666666667,
+        "connected_components_3d": 1,
+        "largest_component_ratio": 1.0,
+        "max_contiguous_run_slices": 26,
+        "run_count": 1
+      },
+      "candidate_count": 60,
+      "top_candidates": [
+        {
+          "rank": 1,
+          "score": 4.100263695061608,
+          "head_ratio": 0.571126085481099,
+          "bone_overlap_ratio": 0.033201485802528866,
+          "params": {
+            "window_center": 40.0,
+            "window_width": 80.0,
+            "norm_min": 0.05,
+            "norm_max": 0.95,
+            "head_threshold_hu": -300.0
+          },
+          "stats": {
+            "voxel_count": 365214,
+            "volume_ml": 365.214,
+            "non_empty_slice_count": 26,
+            "slice_coverage_ratio": 0.8666666666666667,
+            "connected_components_3d": 1,
+            "largest_component_ratio": 1.0,
+            "max_contiguous_run_slices": 26,
+            "run_count": 1
+          }
+        },
+        {
+          "rank": 2,
+          "score": 4.100263695061608,
+          "head_ratio": 0.571126085481099,
+          "bone_overlap_ratio": 0.033201485802528866,
+          "params": {
+            "window_center": 40.0,
+            "window_width": 80.0,
+            "norm_min": 0.05,
+            "norm_max": 0.95,
+            "head_threshold_hu": -200.0
+          },
+          "stats": {
+            "voxel_count": 365214,
+            "volume_ml": 365.214,
+            "non_empty_slice_count": 26,
+            "slice_coverage_ratio": 0.8666666666666667,
+            "connected_components_3d": 1,
+            "largest_component_ratio": 1.0,
+            "max_contiguous_run_slices": 26,
+            "run_count": 1
+          }
+        },
+        {
+          "rank": 3,
+          "score": 4.100263695061608,
+          "head_ratio": 0.571126085481099,
+          "bone_overlap_ratio": 0.033201485802528866,
+          "params": {
+            "window_center": 40.0,
+            "window_width": 80.0,
+            "norm_min": 0.05,
+            "norm_max": 0.95,
+            "head_threshold_hu": -100.0
+          },
+          "stats": {
+            "voxel_count": 365214,
+            "volume_ml": 365.214,
+            "non_empty_slice_count": 26,
+            "slice_coverage_ratio": 0.8666666666666667,
+            "connected_components_3d": 1,
+            "largest_component_ratio": 1.0,
+            "max_contiguous_run_slices": 26,
+            "run_count": 1
+          }
+        },
+        {
+          "rank": 4,
+          "score": 4.100263695061608,
+          "head_ratio": 0.571126085481099,
+          "bone_overlap_ratio": 0.033201485802528866,
+          "params": {
+            "window_center": 40.0,
+            "window_width": 80.0,
+            "norm_min": 0.05,
+            "norm_max": 0.95,
+            "head_threshold_hu": -50.0
+          },
+          "stats": {
+            "voxel_count": 365214,
+            "volume_ml": 365.214,
+            "non_empty_slice_count": 26,
+            "slice_coverage_ratio": 0.8666666666666667,
+            "connected_components_3d": 1,
+            "largest_component_ratio": 1.0,
+            "max_contiguous_run_slices": 26,
+            "run_count": 1
+          }
+        },
+        {
+          "rank": 5,
+          "score": 4.100263695061608,
+          "head_ratio": 0.571126085481099,
+          "bone_overlap_ratio": 0.033201485802528866,
+          "params": {
+            "window_center": 40.0,
+            "window_width": 80.0,
+            "norm_min": 0.05,
+            "norm_max": 0.95,
+            "head_threshold_hu": -10.0
+          },
+          "stats": {
+            "voxel_count": 365214,
+            "volume_ml": 365.214,
+            "non_empty_slice_count": 26,
+            "slice_coverage_ratio": 0.8666666666666667,
+            "connected_components_3d": 1,
+            "largest_component_ratio": 1.0,
+            "max_contiguous_run_slices": 26,
+            "run_count": 1
+          }
+        }
+      ]
+    }
+  },
+  "shape_zyx": [
+    30,
+    239,
+    208
+  ],
+  "checksums": {
+    "volume.npz": "0bfc70572f1375c9effde5d80ded04533c0968921112db81824388b794524f6c",
+    "labels.npz": "d3d17b94dd298bf6927fda4617648ea0ae36e91e399cee55f56769ce4eaf953a",
+    "index.csv": "870e8f80157d4396db5d5efd29f17ed446e4df14125bd9070270c9701966a646"
+  },
+  "split_counts": {
+    "test": 4,
+    "train": 18,
+    "val": 4,
+    "buffer": 4
+  },
+  "excluded_centers": [
+    18,
+    19,
+    24,
+    25
+  ],
+  "class_counts": {
+    "0": 921416,
+    "1": 870,
+    "2": 204730,
+    "3": 364344
+  },
+  "quality_flags": [],
+  "limitations": "Single-series demonstration; no unseen-patient claim; visual review and permissions remain separate.",
+  "preprocessing_fingerprint": "33c575b8aeaf0c23118f98cb4b8a27bcd2e834713c916ce73ba9994b9be1b4ef",
+  "artifact_policy": "Image/model paths identify ignored local artifacts; not bundled downloads."
+}

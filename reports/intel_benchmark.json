@@ -1,0 +1,167 @@
+{
+  "schema_version": 1,
+  "model_sha256": "7fd5a44767355235cd6647fc8abfabc5631111a242d698843e00513e073d9a57",
+  "input_sha256": "02074ea1836a26611db4f353700a122a6faea5dbc3fdac159d13ee7b35056670",
+  "input_shape": [
+    4,
+    3,
+    256,
+    256
+  ],
+  "split": "test",
+  "metric_grid": "256x256 model grid, nearest resized teacher labels",
+  "sample_count": 4,
+  "warmup": 3,
+  "repeats": 30,
+  "versions": {
+    "openvino": "2026.3.1",
+    "onnxruntime": "1.30.0",
+    "numpy": "2.5.3"
+  },
+  "os": "Windows-11-10.0.26200-SP0",
+  "thresholds": {
+    "cpu_atol": 0.0001,
+    "cpu_rtol": 0.001,
+    "cpu_mask_agreement": 0.999,
+    "npu_absolute_dice_drop": 0.01
+  },
+  "settings": {
+    "threads": 1,
+    "requests": 1,
+    "cache": "application cache disabled; driver/internal cache not reset",
+    "power_mode": "Balanced (powercfg)",
+    "plugged_in": "AC connected"
+  },
+  "memory_note": "Cumulative peak process working set; not incremental backend memory or NPU device RAM.",
+  "hardware": {
+    "cpu": "Intel Core Ultra 7 155U",
+    "npu_driver": "32.0.100.5540 (Win32_PnPSignedDriver verified)"
+  },
+  "pytorch_cpu": {
+    "dice": 0.3015925607313808,
+    "per_class_dice": {
+      "1": 0.0,
+      "2": 0.7735779816513761,
+      "3": 0.13119970054276622
+    }
+  },
+  "runtimes": {
+    "onnxruntime_cpu": {
+      "status": "executed",
+      "execution_devices": [
+        "CPUExecutionProvider"
+      ],
+      "precision_hint": "FP32",
+      "compile_seconds": 0.009859099999630416,
+      "first_inference_seconds": 0.05335220000051777,
+      "p50_ms": 50.5103000004965,
+      "p95_ms": 62.315275000082686,
+      "throughput_stacks_s": 18.977041322348875,
+      "metrics": {
+        "dice": 0.3015925607313808,
+        "per_class_dice": {
+          "1": 0.0,
+          "2": 0.7735779816513761,
+          "3": 0.13119970054276622
+        }
+      },
+      "absolute_dice_drop": 0.0,
+      "max_probability_difference": 4.172325134277344e-07,
+      "mean_probability_difference": 1.5994043423006588e-08,
+      "max_logit_difference": 2.384185791015625e-06,
+      "mask_agreement": 1.0,
+      "cpu_gate": true,
+      "npu_dice_gate": true,
+      "observed_peak_process_memory_bytes": 263700480
+    },
+    "openvino_cpu": {
+      "status": "executed",
+      "execution_devices": [
+        "CPU"
+      ],
+      "precision_hint": "<Type: 'float32'>",
+      "compile_seconds": 0.0734241000000111,
+      "first_inference_seconds": 0.04278689999955532,
+      "p50_ms": 42.365950000203156,
+      "p95_ms": 43.65443499987123,
+      "throughput_stacks_s": 23.732596293787363,
+      "metrics": {
+        "dice": 0.3015925607313808,
+        "per_class_dice": {
+          "1": 0.0,
+          "2": 0.7735779816513761,
+          "3": 0.13119970054276622
+        }
+      },
+      "absolute_dice_drop": 0.0,
+      "max_probability_difference": 4.76837158203125e-07,
+      "mean_probability_difference": 1.7558139830953223e-08,
+      "max_logit_difference": 2.6226043701171875e-06,
+      "mask_agreement": 1.0,
+      "cpu_gate": true,
+      "npu_dice_gate": true,
+      "observed_peak_process_memory_bytes": 282710016
+    },
+    "openvino_npu": {
+      "status": "executed",
+      "execution_devices": [
+        "NPU"
+      ],
+      "precision_hint": "<Type: 'float16'>",
+      "compile_seconds": 0.4275520000001052,
+      "first_inference_seconds": 0.014347199999974691,
+      "p50_ms": 4.941649999636866,
+      "p95_ms": 6.20874999976877,
+      "throughput_stacks_s": 195.79369871183417,
+      "metrics": {
+        "dice": 0.3015126600809583,
+        "per_class_dice": {
+          "1": 0.0,
+          "2": 0.7735622107602291,
+          "3": 0.13097576948264572
+        }
+      },
+      "absolute_dice_drop": 7.990065042251526e-05,
+      "max_probability_difference": 0.0005231499671936035,
+      "mean_probability_difference": 2.9382070351857692e-05,
+      "max_logit_difference": 0.002157449722290039,
+      "mask_agreement": 0.9999427795410156,
+      "cpu_gate": false,
+      "npu_dice_gate": true,
+      "observed_peak_process_memory_bytes": 307884032
+    }
+  },
+  "passed": true,
+  "benchmark_git_commit": "d2bc89f6f6145cabd2268a38ad8607b13a11bd1c",
+  "benchmark_script_sha256": "d95cd929270dc37573457b3c1a0e2255178f4aae62e5e25a465d87cffe6543b8",
+  "pytorch_cpu_latency": {
+    "sample_batch_shape": [
+      4,
+      3,
+      256,
+      256
+    ],
+    "max_abs_diff": 2.384185791015625e-06,
+    "mean_abs_diff": 6.502698113308725e-08,
+    "max_prob_diff": 4.172325134277344e-07,
+    "mean_prob_diff": 1.5994043423006588e-08,
+    "mask_agreement": 1.0,
+    "within_tolerance": true,
+    "opset": 17,
+    "exporter": "torch.onnx.export legacy TorchScript dynamo=False",
+    "input_contract": [
+      "dynamic CPU batch",
+      3,
+      256,
+      256
+    ],
+    "torch_version": "2.14.1+cpu",
+    "pytorch_cpu_p50_ms": 69.08254999962082,
+    "pytorch_cpu_p95_ms": 74.08305000021754,
+    "warmup": 3,
+    "repeats": 30,
+    "threads": 1,
+    "schema_version": 1,
+    "artifact_policy": "Image/model paths identify ignored local artifacts; not bundled downloads."
+  }
+}

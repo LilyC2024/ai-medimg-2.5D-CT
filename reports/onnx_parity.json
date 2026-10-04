@@ -1,0 +1,30 @@
+{
+  "sample_batch_shape": [
+    4,
+    3,
+    256,
+    256
+  ],
+  "max_abs_diff": 2.384185791015625e-06,
+  "mean_abs_diff": 6.502698113308725e-08,
+  "max_prob_diff": 4.172325134277344e-07,
+  "mean_prob_diff": 1.5994043423006588e-08,
+  "mask_agreement": 1.0,
+  "within_tolerance": true,
+  "opset": 17,
+  "exporter": "torch.onnx.export legacy TorchScript dynamo=False",
+  "input_contract": [
+    "dynamic CPU batch",
+    3,
+    256,
+    256
+  ],
+  "torch_version": "2.14.1+cpu",
+  "pytorch_cpu_p50_ms": 69.08254999962082,
+  "pytorch_cpu_p95_ms": 74.08305000021754,
+  "warmup": 3,
+  "repeats": 30,
+  "threads": 1,
+  "schema_version": 1,
+  "artifact_policy": "Image/model paths identify ignored local artifacts; not bundled downloads."
+}

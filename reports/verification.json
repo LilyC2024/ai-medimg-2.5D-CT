@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "implementation_commit": "d2bc89f6f6145cabd2268a38ad8607b13a11bd1c",
+  "required_tests_run": 30,
+  "skipped": 0,
+  "errors": 0,
+  "failures": 0,
+  "lint": "passed",
+  "fresh_environment_installation": "passed: Python 3.12 CPU torch plus recorded constraints, no inherited system site packages",
+  "separate_local_clone": "passed",
+  "synthetic_cli_and_api": "passed generated DICOM/checkpoint/ONNX, valid/malformed/oversized/unavailable-model and cleanup checks",
+  "readme_synthetic_workflow": "passed final contract workflow in separate checkout and fresh environment: generate, prepare, train, export, CPU CLI",
+  "real_root_relocation": "passed with identical labels",
+  "source_npz_nifti_geometry": "passed",
+  "full_model_npu": "passed",
+  "local_docker": "unavailable",
+  "hosted_ci": "pending push",
+  "data_acquisition_rights": "not established",
+  "release_tag": "withheld"
+}

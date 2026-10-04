@@ -1,0 +1,148 @@
+{
+  "split": "test",
+  "raw_metrics": {
+    "sample_count": 4,
+    "aggregation": "global voxel counts; foreground macro mean",
+    "empty_class_handling": "both empty: null and excluded; all foreground empty: summary zero",
+    "dice": 0.3032477796077728,
+    "iou": 0.23448918759822845,
+    "per_class_dice": {
+      "1": 0.0,
+      "2": 0.7731146812438965,
+      "3": 0.1366286426782608
+    },
+    "per_class_iou": {
+      "1": 0.0,
+      "2": 0.6301441788673401,
+      "3": 0.07332335412502289
+    }
+  },
+  "teacher_self_agreement": {
+    "sample_count": 4,
+    "aggregation": "global voxel counts; foreground macro mean",
+    "empty_class_handling": "both empty: null and excluded; all foreground empty: summary zero",
+    "dice": 1.0,
+    "iou": 1.0,
+    "per_class_dice": {
+      "1": null,
+      "2": 1.0,
+      "3": 1.0
+    },
+    "per_class_iou": {
+      "1": null,
+      "2": 1.0,
+      "3": 1.0
+    }
+  },
+  "teacher_comparison_note": "Teacher versus itself is tautological; no superiority claim without independent labels.",
+  "checkpoint": "artifacts/real/models/best.pt",
+  "prediction_volume_path": "artifacts/real/eval/day5_predictions.npz",
+  "overlay_dir": "artifacts/real/eval/day5_overlays",
+  "overlay_count": 4,
+  "slice_count": 4,
+  "metrics": {
+    "sample_count": 4,
+    "aggregation": "global voxel counts; foreground macro mean",
+    "empty_class_handling": "both empty: null and excluded; all foreground empty: summary zero",
+    "dice": 0.14451302587985992,
+    "iou": 0.09225448220968246,
+    "per_class_dice": {
+      "1": 0.0,
+      "2": 0.43353909254074097,
+      "3": 0.0
+    },
+    "per_class_iou": {
+      "1": 0.0,
+      "2": 0.2767634391784668,
+      "3": 0.0
+    }
+  },
+  "per_slice_metrics": [
+    {
+      "slice_index": 26,
+      "dice": 0.0,
+      "iou": 0.0
+    },
+    {
+      "slice_index": 27,
+      "dice": 0.17719878256320953,
+      "iou": 0.12067443132400513
+    },
+    {
+      "slice_index": 28,
+      "dice": 0.24641351401805878,
+      "iou": 0.19544845819473267
+    },
+    {
+      "slice_index": 29,
+      "dice": 0.0,
+      "iou": 0.0
+    }
+  ],
+  "best_slices": [
+    {
+      "slice_index": 28,
+      "dice": 0.24641351401805878,
+      "iou": 0.19544845819473267
+    },
+    {
+      "slice_index": 27,
+      "dice": 0.17719878256320953,
+      "iou": 0.12067443132400513
+    },
+    {
+      "slice_index": 26,
+      "dice": 0.0,
+      "iou": 0.0
+    }
+  ],
+  "worst_slices": [
+    {
+      "slice_index": 26,
+      "dice": 0.0,
+      "iou": 0.0
+    },
+    {
+      "slice_index": 29,
+      "dice": 0.0,
+      "iou": 0.0
+    },
+    {
+      "slice_index": 27,
+      "dice": 0.17719878256320953,
+      "iou": 0.12067443132400513
+    }
+  ],
+  "uncertainty": {
+    "method": "none",
+    "summary": {
+      "mean": 0.6746041774749756,
+      "max": 0.9847575426101685,
+      "p95": 0.9282110333442688,
+      "per_slice_mean": [
+        0.8968995809555054,
+        0.9042322635650635,
+        0.9201393723487854,
+        0.9342901706695557
+      ]
+    }
+  },
+  "calibration": {
+    "temperature": 1.0,
+    "nll_before": 0.8124473690986633,
+    "nll_after": 0.8124473690986633,
+    "ece_before": 0.40486887097358704,
+    "ece_after": 0.40486887097358704
+  },
+  "postprocessing": {
+    "enabled": true,
+    "brain_min_voxels": 256,
+    "bone_min_voxels": 96,
+    "overlap_min_voxels": 32,
+    "smooth_iterations": 1
+  },
+  "best_eval_dice_from_checkpoint": 0.5781432390213013,
+  "reference_note": "Metrics are computed against Day 3 pseudo labels because no manual GT labels are included.",
+  "schema_version": 1,
+  "artifact_policy": "Image/model paths identify ignored local artifacts; not bundled downloads."
+}

@@ -1,0 +1,110 @@
+{
+  "timings": {
+    "dicom_read_seconds": 0.8648589000003994,
+    "preprocessing_seconds": 0.21242759999950067,
+    "stack_creation_seconds": 0.00967690000015864,
+    "inference_seconds": 1.5446800999998231,
+    "postprocessing_seconds": 0.3996641000003365,
+    "export_seconds": 0.3249478999996427,
+    "end_to_end_seconds": 5.334038999999393
+  },
+  "model_resize": {
+    "height": 256,
+    "width": 256,
+    "input_interpolation": "bilinear align_corners=False",
+    "inverse_label_interpolation": "nearest"
+  },
+  "case_alias": "sample_001",
+  "checkpoint_path": "artifacts/real/models/best.pt",
+  "onnx_path": "artifacts/real/model.onnx",
+  "slice_count": 34,
+  "processed_slice_count": 30,
+  "source_shape_zyx": [
+    34,
+    512,
+    512
+  ],
+  "processed_shape_zyx": [
+    30,
+    239,
+    208
+  ],
+  "processed_spacing_zyx_mm": [
+    5.0,
+    1.0,
+    1.0
+  ],
+  "batch_size": 1,
+  "num_threads": 1,
+  "mask_output_format": "npz",
+  "mask_volume_path": "artifacts/real/prediction/prediction_mask.npz",
+  "overlay_dir": "artifacts/real/prediction/overlays",
+  "overlay_count": 0,
+  "postprocessing_enabled": true,
+  "calibration": {
+    "temperature": 1.0,
+    "nll_before": 0.8124473690986633,
+    "nll_after": 0.8124473690986633,
+    "ece_before": 0.40486887097358704,
+    "ece_after": 0.40486887097358704
+  },
+  "uncertainty_summary": {
+    "mean": 0.7146163582801819,
+    "max": 0.994636058807373,
+    "p95": 0.9307702779769897,
+    "per_slice_mean": [
+      0.8801522254943848,
+      0.8877202868461609,
+      0.8820249438285828,
+      0.8717854022979736,
+      0.8652353286743164,
+      0.8539199233055115,
+      0.8445090055465698,
+      0.8368636965751648,
+      0.8304900527000427,
+      0.8281055092811584,
+      0.8294944763183594,
+      0.8256464004516602,
+      0.8212298154830933,
+      0.8187658786773682,
+      0.8177140951156616,
+      0.8181851506233215,
+      0.8201653361320496,
+      0.8238237500190735,
+      0.8292901515960693,
+      0.8354640007019043,
+      0.8424931764602661,
+      0.8503825068473816,
+      0.858762264251709,
+      0.8684030771255493,
+      0.8784686326980591,
+      0.8861802816390991,
+      0.8968995809555054,
+      0.9042322635650635,
+      0.9201394319534302,
+      0.9342901706695557
+    ]
+  },
+  "onnx_validation": {
+    "sample_batch_shape": [
+      5,
+      3,
+      256,
+      256
+    ],
+    "max_abs_diff": 2.384185791015625e-06,
+    "mean_abs_diff": 8.536501638900518e-08,
+    "max_prob_diff": 4.172325134277344e-07,
+    "mean_prob_diff": 1.754630218897546e-08,
+    "mask_agreement": 1.0,
+    "within_tolerance": true
+  },
+  "class_voxel_counts": {
+    "0": 940639,
+    "1": 16837,
+    "2": 170059,
+    "3": 363825
+  },
+  "schema_version": 1,
+  "artifact_policy": "Image/model paths identify ignored local artifacts; not bundled downloads."
+}

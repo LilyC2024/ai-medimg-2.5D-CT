@@ -1,0 +1,166 @@
+{
+  "provenance": {
+    "git_commit": "dfde7b4ca0bb178b0b8769115dbd93c5061e76ac",
+    "split_sha256": "870e8f80157d4396db5d5efd29f17ed446e4df14125bd9070270c9701966a646",
+    "working_tree_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "source_sha256": {
+      "src/calibration.py": "be9ee51d2491e8ce5be73caacaebb85b3b4d126e010060e303428e158e9572b3",
+      "src/config.py": "182e7763c0593afdf0e2204ff62006583bdfd28300df4260d3925f28dd953969",
+      "src/dicom_loader.py": "dc47f26758fac9b8248e39d0c6206480fc9ca84ad18bcbc7ad216399f545904a",
+      "src/evaluation.py": "fbbc5d7466f614eeb33b65594a5121bb893d81b6106279a830e5b0dcd44f938a",
+      "src/preprocessing.py": "4e7a35d253badcaae992dfa0730ed343d0d61044eab764da669cd6643cd7d7ff",
+      "src/public_metadata.py": "2133be67ddab857b45e2a4b14e93a6b75b35fd3abf6338adb6c5a8582563c3e2",
+      "src/robustness.py": "d2e86f458135dc335b7ea42c82e9638709db588a6ab4093065b0583d28943fe9",
+      "src/visualization.py": "ddb37112405ceebd29d859ebbcd50c8a8ad3fffa3c3894a4e7788564d801d73a",
+      "src/baselines/classical_seg.py": "5b9669dfb821d3f6fcffc20cc03866d15cc794575cd68bebde1be01d88a40936",
+      "src/baselines/__init__.py": "d0466d0a9c45faf56239f55f1d8222433f9a62f8c5328247ef918582391c17c1",
+      "src/data/ct25d_dataset.py": "0adbd8858b7957dcf4615adf40cfe72e2f6c48bb8d656030ea384b1d4b08f204",
+      "src/data/__init__.py": "d9905761d82b5c72d4512a529cea03f942a8fad409148271ada47af77a0f5f84",
+      "src/models/unet_small.py": "40d19473a9e57bb3fd15d8eedfac33b8a8728b1f3e507d794fd30833e741a7fb",
+      "src/models/__init__.py": "ef8e8bf686a196b58b1d86622b90fc03d4dc1ea7101a42938be494bb64266c6d",
+      "scripts/benchmark_intel.py": "d95cd929270dc37573457b3c1a0e2255178f4aae62e5e25a465d87cffe6543b8",
+      "scripts/check.py": "29f956ffb355d37bdbc39d09a8b1e86b98369184c55ec2fb5e22a190ebb0c13b",
+      "scripts/classical_baseline.py": "3403676137fcc077557ab8f3ec120448783d8e42935361abd59e7c89aa33e321",
+      "scripts/export_verified.py": "669bdea0c8b52ce2256323f9d80d949926f09eff6e40a26cf5780154bff8ced9",
+      "scripts/generate_fixture.py": "d4af1ecd61201af3066bcf18737299a3e1ee6ec5311fe568170e80fa863fdd38",
+      "scripts/infer.py": "2e0f2f965c01158e8fc2f2d2fa89f755129defe17233ac996f21eaed15505915",
+      "scripts/inspect_series.py": "d0dd0eda01c737e28829076b5074d827bd30ddad3848aa812086a4e7d8d9a759",
+      "scripts/make_index.py": "3403676137fcc077557ab8f3ec120448783d8e42935361abd59e7c89aa33e321",
+      "scripts/prepare_case.py": "fef78d0a48a0b4af3d7c0f612fbd7cbf6a7b12ab21234b946b8700c204d27efa",
+      "scripts/preprocess_series.py": "3403676137fcc077557ab8f3ec120448783d8e42935361abd59e7c89aa33e321",
+      "scripts/report.py": "35b6843c53f0069d495fb79644438e0d3182d4058acb46cc5290c06359aaf8c4",
+      "scripts/train.py": "3e282a68c23f830e7ebb750f4dfd9b0ba620373bfea44008356a41fd2250f2e2",
+      "configs/baseline.json": "c8e6718b8e694f92c69d562352fc49d8c417577b0d157ec25ed78bc8fae3443c"
+    },
+    "pipeline_version": "0.8.0",
+    "selection": "validation foreground macro Dice",
+    "configuration": {
+      "config": "configs/baseline.json",
+      "index_path": "artifacts/real/processed/index.csv",
+      "output_dir": "artifacts/real/train",
+      "model_dir": "artifacts/real/models",
+      "epochs": 8,
+      "batch_size": 2,
+      "learning_rate": 0.001,
+      "seed": 13,
+      "num_workers": 0,
+      "num_threads": 4,
+      "image_size": "256,256",
+      "base_channels": 16,
+      "rotation_deg": 7.5,
+      "disable_intensity_jitter": false,
+      "device": "cpu"
+    }
+  },
+  "checkpoint_sha256": "57e70b359d983d567553ec4002bbf82530cb01a15f948f13a9c1dba49df1adee",
+  "index_path": "artifacts/real/processed/index.csv",
+  "best_checkpoint_path": "artifacts/real/models/best.pt",
+  "curves_path": "artifacts/real/train/day5_curves.png",
+  "calibration_report_path": "artifacts/real/train/day5_calibration_report.json",
+  "seed": 13,
+  "epochs": 8,
+  "batch_size": 2,
+  "learning_rate": 0.001,
+  "resize": {
+    "height": 256,
+    "width": 256
+  },
+  "device": "cpu",
+  "eval_split": "val",
+  "train_samples": 18,
+  "eval_samples": 4,
+  "best_eval_dice": 0.5781432390213013,
+  "class_weights": [
+    0.006841427180916071,
+    3.953806161880493,
+    0.026925979182124138,
+    0.012426505796611309
+  ],
+  "history": {
+    "epoch": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8
+    ],
+    "train_loss": [
+      0.9371297028329637,
+      0.7859432035022311,
+      0.7442827622095743,
+      0.7120607693990072,
+      0.6710628271102905,
+      0.6746188534630669,
+      0.6316921843422784,
+      0.5999300678571066
+    ],
+    "train_dice": [
+      0.4294644296169281,
+      0.5300560593605042,
+      0.5446837544441223,
+      0.5414561629295349,
+      0.5435907244682312,
+      0.5450770258903503,
+      0.5503556132316589,
+      0.5490681529045105
+    ],
+    "train_iou": [
+      0.3195725679397583,
+      0.43902695178985596,
+      0.4586222171783447,
+      0.4531312882900238,
+      0.45533260703086853,
+      0.4575304090976715,
+      0.46415743231773376,
+      0.4619537889957428
+    ],
+    "eval_loss": [
+      1.1264342069625854,
+      0.9777029752731323,
+      0.8181823194026947,
+      0.6994480788707733,
+      0.6780577301979065,
+      0.6470999121665955,
+      0.6132390201091766,
+      0.6050165891647339
+    ],
+    "eval_dice": [
+      0.0,
+      0.42327019572257996,
+      0.5489541888237,
+      0.5781432390213013,
+      0.57034832239151,
+      0.5650591254234314,
+      0.57514888048172,
+      0.5604149699211121
+    ],
+    "eval_iou": [
+      0.0,
+      0.3270992040634155,
+      0.46951326727867126,
+      0.5117435455322266,
+      0.4996953010559082,
+      0.4908757209777832,
+      0.5063650608062744,
+      0.48338428139686584
+    ]
+  },
+  "temperature": 1.0,
+  "calibration": {
+    "temperature": 1.0,
+    "nll_before": 0.8124473690986633,
+    "nll_after": 0.8124473690986633,
+    "ece_before": 0.40486887097358704,
+    "ece_after": 0.40486887097358704
+  },
+  "train_seconds": 26.058308399999987,
+  "notes": [
+    "Pseudo labels from Day 3 are used as supervision targets.",
+    "When only one series is available, Day 4 now creates buffered intra-series holdout slices for evaluation."
+  ],
+  "schema_version": 1,
+  "artifact_policy": "Image/model paths identify ignored local artifacts; not bundled downloads."
+}

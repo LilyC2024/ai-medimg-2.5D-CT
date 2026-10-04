@@ -1,0 +1,117 @@
+{
+  "geometry": {
+    "source_origin_lps": [
+      -122.2,
+      -107.1,
+      -19.25
+    ],
+    "direction_lps": [
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0
+    ],
+    "source_spacing_zyx": [
+      5.0,
+      0.488281,
+      0.488281
+    ],
+    "target_spacing_zyx": [
+      5.0,
+      1.0,
+      1.0
+    ],
+    "source_shape_zyx": [
+      34,
+      512,
+      512
+    ],
+    "resampled_shape_zyx": [
+      34,
+      251,
+      251
+    ],
+    "crop_bounds_inclusive_exclusive": {
+      "z_min": 2,
+      "z_max": 32,
+      "y_min": 0,
+      "y_max": 239,
+      "x_min": 15,
+      "x_max": 223
+    },
+    "crop_origin_lps": [
+      -107.2,
+      -107.1,
+      -9.25
+    ],
+    "forward_index_scale_zyx": [
+      1.0,
+      0.488281,
+      0.488281
+    ],
+    "inverse_index_scale_zyx": [
+      1.0,
+      2.0480010485765368,
+      2.0480010485765368
+    ]
+  },
+  "timings": {
+    "dicom_read_seconds": 0.8648589000003994,
+    "preprocessing_seconds": 0.21242759999950067
+  },
+  "case_alias": "sample_001",
+  "raw_shape_zyx": [
+    34,
+    512,
+    512
+  ],
+  "processed_shape_zyx": [
+    30,
+    239,
+    208
+  ],
+  "input_spacing_zyx_mm": [
+    5.0,
+    0.488281,
+    0.488281
+  ],
+  "processed_spacing_zyx_mm": [
+    5.0,
+    1.0,
+    1.0
+  ],
+  "crop_bbox_zyx": {
+    "z_min": 2,
+    "z_max": 32,
+    "y_min": 0,
+    "y_max": 239,
+    "x_min": 15,
+    "x_max": 223
+  },
+  "dicom_validation_messages": [],
+  "preprocess_config": {
+    "target_spacing_xy_mm": 1.0,
+    "target_spacing_z_mm": null,
+    "keep_z_if_coarse": true,
+    "coarse_z_threshold_mm": 3.0,
+    "resample_order": 1,
+    "head_threshold_hu": -350.0,
+    "mask_opening_iterations": 1,
+    "mask_closing_iterations": 2,
+    "crop_margin_mm_zyx": [
+      2.0,
+      10.0,
+      10.0
+    ],
+    "hu_clip_min": -1000.0,
+    "hu_clip_max": 1000.0,
+    "normalize_min": 0.0,
+    "normalize_max": 1.0,
+    "save_format": "nii.gz"
+  }
+}
