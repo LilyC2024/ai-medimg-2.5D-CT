@@ -2,6 +2,8 @@
 
 from pathlib import Path
 import argparse
+import hashlib
+import json
 import numpy as np
 from pydicom.dataset import FileDataset, FileMetaDataset
 from pydicom.uid import ExplicitVRLittleEndian, CTImageStorage, generate_uid
@@ -10,6 +12,8 @@ from pydicom.uid import ExplicitVRLittleEndian, CTImageStorage, generate_uid
 def generate(destination, depth=20, size=48, oblique=False, compressed=False):
     destination = Path(destination)
     destination.mkdir(parents=True, exist_ok=True)
+    if any(destination.iterdir()):
+        raise ValueError("Synthetic generation requires an empty destination")
     series, study = generate_uid(), generate_uid()
     row = np.array([1.0, 0.0, 0.0])
     col = np.array([0.0, 0.0, 1.0] if oblique else [0.0, 1.0, 0.0])
@@ -58,6 +62,13 @@ def generate(destination, depth=20, size=48, oblique=False, compressed=False):
 
             ds.compress(RLELossless)
         ds.save_as(destination / f"{depth - i:03d}.dcm", enforce_file_format=True)
+    # A separate identity manifest keeps non-DICOM files out of the series.
+    # This is a software provenance check, not de-identification of real data.
+    manifest = {"schema": "ct25d-generated-synthetic-v1", "synthetic": True,
+                "files": {p.name: hashlib.sha256(p.read_bytes()).hexdigest()
+                          for p in sorted(destination.iterdir())}}
+    destination.with_name(destination.name + ".synthetic.json").write_text(
+        json.dumps(manifest, sort_keys=True), encoding="utf-8")
     return destination
 
 

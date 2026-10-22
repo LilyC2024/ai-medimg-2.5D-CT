@@ -1,0 +1,66 @@
+{
+  "date": "2026-10-22",
+  "scope": "Generated-synthetic software integration only; no clinical validation",
+  "ct_local_tests": {
+    "passed": 32,
+    "seconds": 10.708,
+    "command": "python -m unittest discover -s tests -v"
+  },
+  "ct_lint": "passed",
+  "dependency_consistency": "passed",
+  "ct_python": "3.12.15",
+  "cross_project_smoke": {
+    "status": "passed",
+    "command": "MHCRA .venv/bin/python scripts/smoke_imaging.py",
+    "real_ct_inference": true,
+    "cloud_inference": false,
+    "imaging_approval_issued": false,
+    "final_report_approval_issued": false
+  },
+  "synthetic_demonstration": {
+    "source_grid_zyx": [
+      20,
+      48,
+      48
+    ],
+    "source_spacing_zyx_mm": [
+      5.0,
+      1.0,
+      1.0
+    ],
+    "source_grid_voxel_counts": [
+      40218,
+      128,
+      5734,
+      0
+    ],
+    "candidate_volumes_mm3": [
+      201090.0,
+      640.0,
+      28670.0,
+      0.0
+    ],
+    "preview_artifact_count": 41,
+    "acquisition_date": null,
+    "epochs": 12,
+    "base_channels": 4,
+    "resize": {
+      "height": 32,
+      "width": 32
+    },
+    "validation_samples": 2,
+    "training_samples": 8,
+    "validation_foreground_macro_dice_against_heuristic_teacher": 0.2567726671695709,
+    "onnx_parity_passed": true,
+    "postprocessing_enabled": false,
+    "checkpoint_sha256": "4ab65ffc043239d881f64dd684bc4409ffc37d6588428e7c38cdc09c39afa9b8",
+    "onnx_sha256": "8aed3f9f8887c02be15c362da05f718c4587a410a4b4aa90846de37fa48e432c"
+  },
+  "limitations": [
+    "One generated synthetic series; no unseen-patient or clinical accuracy claim.",
+    "Weak teacher agreement; heuristic candidate classes, not verified anatomy or lesions.",
+    "Producer-declared portable provenance cannot independently authenticate model execution.",
+    "Images are outside MHCRA LLM reasoning and cannot lower safety escalation.",
+    "Raw DICOM, masks, models, runtime databases and approvals are not published."
+  ]
+}

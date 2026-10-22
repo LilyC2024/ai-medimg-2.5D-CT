@@ -62,3 +62,12 @@ The final documentation commit retires the backlog and consolidates this dated r
 - Exact shell commands from the original Windows session were unavailable; [baseline evidence](../reports/baseline.json) records this without inventing history. Local Docker is unavailable; its verification was performed by hosted Linux CI. Namespace migration to `src/ct25d` is deferred because the tested installed modules already work.
 
 A release tag and public patient/model asset distribution remain withheld until acquisition and publication requirements are resolved. The code license is MIT and grants no rights to source data or third-party assets.
+# 22 October 2026 — MHCRA workbench support
+
+- Added `deploy.mhcra_bridge`: explicit synthetic identity, geometry-preserving
+  review bundles, all-slice source/overlay previews and source-grid measurements.
+- Added a generated-series hash manifest and a complete tiny-model demo command.
+- Kept the general CT research CLI/API contracts unchanged. The workbench bridge
+  is synthetic-only, disables postprocessing explicitly and requires ONNX parity.
+- Added export/identity/tamper regressions. Results are recorded in
+  `reports/mhcra_integration.json` after the coordinated integration checks.

@@ -9,3 +9,11 @@ Raw test agreement is weak overall (approximately 0.303 foreground macro Dice), 
 Deployment: graph-checked ONNX CPU and full-model Intel NPU execution are measured. CPU parity and FP16 NPU results use different declared gates. Uncertainty is a model behavior summary, not validated clinical confidence. Thick slices, crop extremes, small classes, motion/metal and parameter sensitivity may cause failure. Unsupported geometry fails explicitly rather than being accepted silently.
 
 Human verification: no clinical expert review is claimed. An AI coding agent inspected code, generated fixtures, repaired implementation, ran tests and local experiments, and visually inspected a local pseudo-label contact sheet. The user selected MIT for code. Source-data permissions and any human approval of labels remain open. This project has no CE claim and must not support patient diagnosis.
+
+MHCRA integration: the optional synthetic workbench generates a separate tiny
+32×32/base-width-4 model trained for 12 epochs. It is distinct from the 256×256
+research baseline above. Its masks, source-grid candidate counts and overlays are
+inspection artifacts; acceptance in MHCRA does not convert them into clinical
+findings. Execution/provenance metadata in portable bundles is producer-declared.
+See [the integration contract](mhcra-workbench.md) and
+[recorded software checks](../reports/mhcra_integration.json).

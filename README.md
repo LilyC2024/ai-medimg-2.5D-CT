@@ -186,6 +186,17 @@ Checkpoints store architecture, resize/preprocessing contracts, data hashes and 
 
 ## Deployment interfaces
 
+### MHCRA shared workbench
+
+![Synthetic source slices, candidate overlays and source-grid counts for MHCRA](docs/images/mhcra-synthetic-workbench.png)
+
+The [MHCRA integration guide](docs/mhcra-workbench.md) adds a synthetic-only
+inspection bundle and a one-command generated demo. It includes source/overlay
+previews, source-grid candidate measurements and hashed provenance for inspection
+beside MHCRA's patient history. CT inference stays in its own local environment;
+imaging acceptance and final clinical-report approval remain separate human steps.
+The integration does not add lesion diagnosis or clinically validated anatomy.
+
 ### CPU CLI
 
 The CLI explicitly selects ONNX Runtime's CPU provider and validates parity by default. ONNX uses opset 17, fixed checkpoint spatial dimensions and dynamic CPU batch. Provisional CPU gates require probability agreement at atol=1e-4/rtol=1e-3 and at least 99.9% mask agreement; failures exit nonzero.
