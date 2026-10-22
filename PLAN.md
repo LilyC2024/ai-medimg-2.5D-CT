@@ -32,6 +32,9 @@ accelerator execution is inferred from synthetic fixtures or historical results.
    public-content review and GitHub publication. Local gates passed: 68 CT tests,
    120 unchanged MHCRA tests, actual pretrained CPU smoke, random-weight tiled
    forward, real upstream trainer construction (not training), lint, dependency,
-   compilation and Markdown link checks. Initial release published; its real
-   pretrained CI smoke passed. Windows found a default-codec failure; explicit
-   UTF-8 IO and portability regressions passed locally. Repaired hosted CI pending.
+   compilation and Markdown link checks. Published implementation 5bb2c9b passed
+   repaired hosted Windows/Linux suites, actual pretrained phantom smoke and
+   Linux Docker new/legacy checks. The initial Windows default-codec failure was
+   fixed with explicit UTF-8 IO and portability regressions. Complete; clinical
+   accuracy, GPU training and new-detector NPU execution remain explicitly outside
+   the demonstrated results, not silently marked passed.

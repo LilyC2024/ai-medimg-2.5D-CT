@@ -26,6 +26,7 @@ clinical sensitivity, cancer diagnosis accuracy or reading-time study is claimed
 | Device inventory | CPU-only torch; CUDA unavailable; OpenVINO not installed |
 | Companion compatibility | Unchanged MHCRA suite: 120 passed in 32.72s |
 | Local Docker attempt | Blocked: account lacks access to Docker daemon socket; no local container pass claimed |
+| Hosted release CI | Windows and Linux regression jobs, real pretrained phantom smoke and Linux Docker checks all passed at implementation commit 5bb2c9b |
 
 [Pretrained smoke JSON](reports/lung_pretrained_smoke.json) records versions,
 checkpoint/recipe hashes, candidate count and report gate. Timing is a small
@@ -64,6 +65,17 @@ formatting and full F-category lint checks were added. Hosted matrix fail-fast i
 disabled so Windows errors do not cancel independent Linux/container evidence.
 The initial run's pretrained smoke passed; its Windows failure and cancelled Linux
 container step are not presented as successful release validation.
+
+## Published validation
+
+[Repaired release CI](https://github.com/LilyC2024/ai-medimg-2.5D-CT/actions/runs/39850836849)
+passed all three jobs for implementation commit
+`5bb2c9b79191001387468d8094280442352b21ab`: Windows and Linux full suites,
+source/documentation/style/dependency checks, fixture and legacy MHCRA producer
+commands, actual pretrained phantom inference, and Linux CPU Docker build/run
+for both the new nodule demo and retained legacy ONNX path. No GPU/NPU or patient
+data execution occurred in those jobs. The earlier failed run is superseded.
+The following documentation-only publication record does not change tested code.
 
 ## Unexecuted / limitations
 

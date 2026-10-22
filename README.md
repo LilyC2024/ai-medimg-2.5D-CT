@@ -117,6 +117,9 @@ recorded separately. GPU training and new-detector NPU inference were not execut
 on the CPU-only development host. Historical benchmarks and phantom success do not
 demonstrate clinical detection performance. [Actual evaluation](EVALUATION.md).
 
+Release checks: **68 local tests**, unchanged companion **120 tests**, and
+[hosted Windows/Linux, Docker and pretrained-smoke checks passed](https://github.com/LilyC2024/ai-medimg-2.5D-CT/actions/runs/39850836849).
+
 ## Documentation and project map
 
 | Need | Detailed guide |
