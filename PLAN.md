@@ -29,7 +29,9 @@ accelerator execution is inferred from synthetic fixtures or historical results.
    Actual GPU training/NPU inference and clinical cohort evaluation are unexecuted.
 5. Documentation/release: concise root overview and detailed module/folder guides,
    architecture figure, actual evaluation record, both compatibility suites,
-   public-content review and GitHub publication. Local gates passed: 66 CT tests,
+   public-content review and GitHub publication. Local gates passed: 68 CT tests,
    120 unchanged MHCRA tests, actual pretrained CPU smoke, random-weight tiled
    forward, real upstream trainer construction (not training), lint, dependency,
-   compilation and Markdown link checks. GitHub publication/hosted CI pending.
+   compilation and Markdown link checks. Initial release published; its real
+   pretrained CI smoke passed. Windows found a default-codec failure; explicit
+   UTF-8 IO and portability regressions passed locally. Repaired hosted CI pending.

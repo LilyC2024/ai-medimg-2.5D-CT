@@ -21,6 +21,8 @@
   OpenVINO/NPU evidence separate from unexecuted new-detector acceleration.
 - Split the oversized root README into a short overview and linked subject guides;
   added an API/folder reference and reproducible generated illustration.
+- Fixed Windows default-encoding failures with explicit UTF-8 text IO, Unicode
+  regressions, consistent formatting and independent platform CI execution.
 
 ## Removed and retained
 

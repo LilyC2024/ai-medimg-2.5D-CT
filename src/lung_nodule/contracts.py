@@ -1,4 +1,5 @@
 """Versioned immutable-by-convention records; all persisted data is revalidated."""
+
 from __future__ import annotations
 
 import hashlib
@@ -6,7 +7,14 @@ import json
 from typing import Annotated, Literal
 
 import numpy as np
-from pydantic import BaseModel, ConfigDict, Field, StrictBool, StrictInt, model_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    StrictBool,
+    StrictInt,
+    model_validator,
+)
 
 Digest = Annotated[str, Field(pattern=r"^[a-f0-9]{64}$")]
 Identifier = Annotated[str, Field(pattern=r"^[A-Za-z0-9_-]{1,64}$")]
@@ -20,8 +28,11 @@ def digest(value) -> str:
     """Canonical content identity; consistency check, not source authenticity."""
     if isinstance(value, BaseModel):
         value = value.model_dump(mode="json")
-    return hashlib.sha256(json.dumps(value, sort_keys=True, separators=(",", ":"),
-                                     allow_nan=False).encode()).hexdigest()
+    return hashlib.sha256(
+        json.dumps(
+            value, sort_keys=True, separators=(",", ":"), allow_nan=False
+        ).encode()
+    ).hexdigest()
 
 
 class Geometry(Record):
@@ -32,22 +43,32 @@ class Geometry(Record):
 
     @model_validator(mode="after")
     def valid_geometry(self):
-        if min(self.shape_zyx) < 1 or max(self.shape_zyx) > 1024 or np.prod(self.shape_zyx) > 128 * 1024**2:
+        if (
+            min(self.shape_zyx) < 1
+            or max(self.shape_zyx) > 1024
+            or np.prod(self.shape_zyx) > 128 * 1024**2
+        ):
             raise ValueError("Unsupported source volume dimensions")
         if min(self.spacing_zyx_mm) <= 0 or len(self.direction_lps) != 9:
             raise ValueError("Invalid physical geometry")
         direction = np.array(self.direction_lps).reshape(3, 3)
-        if not np.allclose(direction.T @ direction, np.eye(3), atol=1e-5) or not np.isclose(np.linalg.det(direction), 1, atol=1e-5):
+        if not np.allclose(
+            direction.T @ direction, np.eye(3), atol=1e-5
+        ) or not np.isclose(np.linalg.det(direction), 1, atol=1e-5):
             raise ValueError("Direction must be a right-handed orthonormal LPS matrix")
         return self
 
     def to_lps(self, points_zyx):
         """Map source voxel centers to physical LPS millimetres, including obliquity."""
         xyz = np.asarray(points_zyx, dtype=float)[..., ::-1]
-        return (xyz * np.array(self.spacing_zyx_mm)[::-1]) @ np.array(self.direction_lps).reshape(3, 3).T + self.origin_lps_mm
+        return (xyz * np.array(self.spacing_zyx_mm)[::-1]) @ np.array(
+            self.direction_lps
+        ).reshape(3, 3).T + self.origin_lps_mm
 
     def from_lps(self, points_lps):
-        xyz = (np.asarray(points_lps) - self.origin_lps_mm) @ np.array(self.direction_lps).reshape(3, 3)
+        xyz = (np.asarray(points_lps) - self.origin_lps_mm) @ np.array(
+            self.direction_lps
+        ).reshape(3, 3)
         return (xyz / np.array(self.spacing_zyx_mm)[::-1])[..., ::-1]
 
 
@@ -91,18 +112,30 @@ class Study(Record):
     sources: Annotated[list[SourceSlice], Field(min_length=2, max_length=512)]
     model: ModelProvenance
     candidates: Annotated[list[Candidate], Field(max_length=300)]
-    protocol_attestation: Literal["synthetic-phantom", "adult-noncontrast-chest-complete"]
+    protocol_attestation: Literal[
+        "synthetic-phantom", "adult-noncontrast-chest-complete"
+    ]
 
     @model_validator(mode="after")
     def consistent(self):
-        if len(self.sources) != self.geometry.shape_zyx[0] or [s.index for s in self.sources] != list(range(len(self.sources))):
-            raise ValueError("Every source slice must occur exactly once in physical order")
+        if len(self.sources) != self.geometry.shape_zyx[0] or [
+            s.index for s in self.sources
+        ] != list(range(len(self.sources))):
+            raise ValueError(
+                "Every source slice must occur exactly once in physical order"
+            )
         if len({s.sop_uid_sha256 for s in self.sources}) != len(self.sources):
             raise ValueError("Duplicate source SOP identity")
-        if self.source_sha256 != digest({"geometry": self.geometry.model_dump(mode="json"),
-                                         "sources": [s.model_dump(mode="json") for s in self.sources]}):
+        if self.source_sha256 != digest(
+            {
+                "geometry": self.geometry.model_dump(mode="json"),
+                "sources": [s.model_dump(mode="json") for s in self.sources],
+            }
+        ):
             raise ValueError("Source identity mismatch")
-        if (self.input_kind == "generated-synthetic") != (self.protocol_attestation == "synthetic-phantom"):
+        if (self.input_kind == "generated-synthetic") != (
+            self.protocol_attestation == "synthetic-phantom"
+        ):
             raise ValueError("Input/protocol attestation mismatch")
         if self.model.synthetic_fixture and self.input_kind != "generated-synthetic":
             raise ValueError("Fixture detector cannot process research patient data")
@@ -110,7 +143,9 @@ class Study(Record):
         if len(set(ids)) != len(ids):
             raise ValueError("Duplicate candidate identity")
         for c in self.candidates:
-            if min(c.box_zyx[:3]) < 0 or np.any(np.array(c.box_zyx[3:]) > np.array(self.geometry.shape_zyx) - 1):
+            if min(c.box_zyx[:3]) < 0 or np.any(
+                np.array(c.box_zyx[3:]) > np.array(self.geometry.shape_zyx) - 1
+            ):
                 raise ValueError("Candidate outside source voxel centers")
             if c.score < self.model.score_threshold:
                 raise ValueError("Candidate below recorded threshold")
@@ -123,7 +158,12 @@ class Caliper(Record):
 
     def length_mm(self, geometry):
         points = np.array([self.start_zyx, self.end_zyx])
-        if np.any(points < 0) or np.any(points > np.array(geometry.shape_zyx) - 1) or not np.isclose(points[0, 0], points[1, 0]) or points[0, 0] != int(points[0, 0]):
+        if (
+            np.any(points < 0)
+            or np.any(points > np.array(geometry.shape_zyx) - 1)
+            or not np.isclose(points[0, 0], points[1, 0])
+            or points[0, 0] != int(points[0, 0])
+        ):
             raise ValueError("Caliper endpoints must lie on one source slice")
         length = float(np.linalg.norm(np.diff(geometry.to_lps(points), axis=0)))
         if length <= 0:
@@ -148,23 +188,42 @@ class Review(Record):
     @model_validator(mode="before")
     @classmethod
     def literal_booleans(cls, value):
-        if isinstance(value, dict) and any(value.get(k) is not True for k in ("qualified_reviewer_attestation", "approved")):
-            raise ValueError("Explicit reviewer approval and qualification attestation required")
+        if isinstance(value, dict) and any(
+            value.get(k) is not True
+            for k in ("qualified_reviewer_attestation", "approved")
+        ):
+            raise ValueError(
+                "Explicit reviewer approval and qualification attestation required"
+            )
         return value
 
     def verify(self, study):
         if self.study_digest != digest(study):
             raise ValueError("Review is stale or belongs to a different study")
-        if sorted(d.candidate_id for d in self.decisions) != sorted(c.candidate_id for c in study.candidates):
+        if sorted(d.candidate_id for d in self.decisions) != sorted(
+            c.candidate_id for c in study.candidates
+        ):
             raise ValueError("Review every candidate exactly once")
         if any(d.decision == "uncertain" for d in self.decisions):
             raise ValueError("Uncertain candidates block completed review")
         for decision in self.decisions:
             if decision.caliper:
                 if decision.decision != "accept":
-                    raise ValueError("Only accepted candidates may carry reviewed calipers")
+                    raise ValueError(
+                        "Only accepted candidates may carry reviewed calipers"
+                    )
                 decision.caliper.length_mm(study.geometry)
-                candidate = next(c for c in study.candidates if c.candidate_id == decision.candidate_id)
-                points = np.array([decision.caliper.start_zyx, decision.caliper.end_zyx])
-                if np.any(points < candidate.box_zyx[:3]) or np.any(points > candidate.box_zyx[3:]):
-                    raise ValueError("Caliper must reference the reviewed candidate box")
+                candidate = next(
+                    c
+                    for c in study.candidates
+                    if c.candidate_id == decision.candidate_id
+                )
+                points = np.array(
+                    [decision.caliper.start_zyx, decision.caliper.end_zyx]
+                )
+                if np.any(points < candidate.box_zyx[:3]) or np.any(
+                    points > candidate.box_zyx[3:]
+                ):
+                    raise ValueError(
+                        "Caliper must reference the reviewed candidate box"
+                    )

@@ -3,6 +3,7 @@
 This is an engineering metric, not the official LUNA16 scorer: no challenge
 excluded-nodule categories or bootstrap intervals are inferred from absent data.
 """
+
 from __future__ import annotations
 
 import json
@@ -60,12 +61,21 @@ class DatasetManifest(Record):
                 raise ValueError("Identical image bytes leak across splits")
             groups[c.patient_id], hashes[c.image_sha256] = c.split, c.split
             if not c.annotations_complete:
-                raise ValueError("Incomplete annotations cannot be treated as whole-volume negatives")
+                raise ValueError(
+                    "Incomplete annotations cannot be treated as whole-volume negatives"
+                )
             path = Path(c.image)
-            if path.is_absolute() or ".." in path.parts or "\\" in c.image or not c.image.endswith((".nii", ".nii.gz")):
+            if (
+                path.is_absolute()
+                or ".." in path.parts
+                or "\\" in c.image
+                or not c.image.endswith((".nii", ".nii.gz"))
+            ):
                 raise ValueError("Use dataset-relative NIfTI image paths")
         if {c.split for c in self.cases} != {"training", "validation", "test"}:
-            raise ValueError("Separate nonempty training, validation and test cohorts required")
+            raise ValueError(
+                "Separate nonempty training, validation and test cohorts required"
+            )
         return self
 
 
@@ -80,15 +90,24 @@ def validate_dataset(manifest_path, dataset_root):
         if not path.is_relative_to(root) or sha256(path) != case.image_sha256:
             raise ValueError("Dataset image identity/path mismatch")
         image = nib.load(path)
-        if len(image.shape) != 3 or np.prod(image.shape) > 256 * 1024**2 or not np.isfinite(image.affine).all() or abs(np.linalg.det(image.affine[:3,:3])) < 1e-9:
+        if (
+            len(image.shape) != 3
+            or np.prod(image.shape) > 256 * 1024**2
+            or not np.isfinite(image.affine).all()
+            or abs(np.linalg.det(image.affine[:3, :3])) < 1e-9
+        ):
             raise ValueError("Invalid 3D image affine")
         # Upstream training config expects pre-resampled NIfTI; inference resamples raw DICOM.
-        if not np.allclose(nib.affines.voxel_sizes(image.affine), [.703125,.703125,1.25], atol=1e-4):
-            raise ValueError("Training NIfTI must be resampled to .703125/.703125/1.25mm")
+        if not np.allclose(
+            nib.affines.voxel_sizes(image.affine), [0.703125, 0.703125, 1.25], atol=1e-4
+        ):
+            raise ValueError(
+                "Training NIfTI must be resampled to .703125/.703125/1.25mm"
+            )
         for nodule in case.nodules:
-            ras = np.array(nodule.center_lps_mm) * [-1,-1,1]
-            center = np.linalg.solve(image.affine[:3,:3], ras-image.affine[:3,3])
-            if np.any(center < 0) or np.any(center > np.array(image.shape)-1):
+            ras = np.array(nodule.center_lps_mm) * [-1, -1, 1]
+            center = np.linalg.solve(image.affine[:3, :3], ras - image.affine[:3, 3])
+            if np.any(center < 0) or np.any(center > np.array(image.shape) - 1):
                 raise ValueError("Truth nodule center falls outside source volume")
     return manifest
 
@@ -106,16 +125,33 @@ def prepare_training_image(series, destination, *, approval=None):
     image.SetSpacing(geometry.spacing_zyx_mm[::-1])
     image.SetOrigin(geometry.origin_lps_mm)
     image.SetDirection(geometry.direction_lps)
-    spacing = [.703125,.703125,1.25]
-    size = [int(round((n-1)*old/new))+1 for n,old,new in zip(image.GetSize(),image.GetSpacing(),spacing)]
+    spacing = [0.703125, 0.703125, 1.25]
+    size = [
+        int(round((n - 1) * old / new)) + 1
+        for n, old, new in zip(image.GetSize(), image.GetSpacing(), spacing)
+    ]
     if np.prod(size) > 256 * 1024**2:
         raise ValueError("Prepared image exceeds 256Mi voxel allocation limit")
-    output = sitk.Resample(image, size, sitk.Transform(), sitk.sitkLinear,
-                           image.GetOrigin(), spacing, image.GetDirection(), -1000., sitk.sitkFloat32)
+    output = sitk.Resample(
+        image,
+        size,
+        sitk.Transform(),
+        sitk.sitkLinear,
+        image.GetOrigin(),
+        spacing,
+        image.GetDirection(),
+        -1000.0,
+        sitk.sitkFloat32,
+    )
     destination.parent.mkdir(parents=True, exist_ok=True)
     sitk.WriteImage(output, str(destination))
-    return {"image_sha256":sha256(destination),"source_sha256":identity,"input_kind":kind,
-            "spacing_xyz_mm":spacing,"units":"HU; no intensity normalization"}
+    return {
+        "image_sha256": sha256(destination),
+        "source_sha256": identity,
+        "input_kind": kind,
+        "spacing_xyz_mm": spacing,
+        "units": "HU; no intensity normalization",
+    }
 
 
 def launch_training(*, manifest_path, dataset_root, model_dir, output, epochs=1):
@@ -136,42 +172,76 @@ def launch_training(*, manifest_path, dataset_root, model_dir, output, epochs=1)
     output.mkdir(parents=True, exist_ok=False)
     records = {}
     for split in ("training", "validation"):
-        records[split] = [{"image": c.image, "box": [[*n.center_lps_mm, n.diameter_mm, n.diameter_mm, n.diameter_mm] for n in c.nodules],
-                          "label": [0]*len(c.nodules)} for c in manifest.cases if c.split == split]
+        records[split] = [
+            {
+                "image": c.image,
+                "box": [
+                    [*n.center_lps_mm, n.diameter_mm, n.diameter_mm, n.diameter_mm]
+                    for n in c.nodules
+                ],
+                "label": [0] * len(c.nodules),
+            }
+            for c in manifest.cases
+            if c.split == split
+        ]
     datalist = output / "datalist.json"
-    datalist.write_text(json.dumps(records, indent=2))
+    datalist.write_text(json.dumps(records, indent=2), encoding="utf-8")
     # Override the upstream 95/5 within-list split with the declared validation cohort.
-    overrides = {"bundle_root": str(Path(model_dir).resolve()), "device": "$torch.device('cuda:0')",
-        "dataset_dir": str(Path(dataset_root).resolve()), "data_list_file_path": str(datalist),
-        "epochs": epochs, "val_interval": min(5, epochs), "amp": True, "ckpt_dir": str(output / "checkpoints"), "output_dir": str(output / "logs"),
+    overrides = {
+        "bundle_root": str(Path(model_dir).resolve()),
+        "device": "$torch.device('cuda:0')",
+        "dataset_dir": str(Path(dataset_root).resolve()),
+        "data_list_file_path": str(datalist),
+        "epochs": epochs,
+        "val_interval": min(5, epochs),
+        "amp": True,
+        "ckpt_dir": str(output / "checkpoints"),
+        "output_dir": str(output / "logs"),
         "train#dataset#data": "$@train_datalist",
-        "validate#dataset#data": "$monai.data.load_decathlon_datalist(@data_list_file_path,is_segmentation=True,data_list_key='validation',base_dir=@dataset_dir)"}
+        "validate#dataset#data": "$monai.data.load_decathlon_datalist(@data_list_file_path,is_segmentation=True,data_list_key='validation',base_dir=@dataset_dir)",
+    }
     # ConfigParser nested overrides are materialized, not encoded as flat keys.
-    config = json.loads((Path(model_dir) / "configs/train.json").read_text())
-    config.update({k:v for k,v in overrides.items() if "#" not in k})
+    config = json.loads(
+        (Path(model_dir) / "configs/train.json").read_text(encoding="utf-8")
+    )
+    config.update({k: v for k, v in overrides.items() if "#" not in k})
     config["train"]["dataset"]["data"] = overrides["train#dataset#data"]
     config["validate"]["dataset"]["data"] = overrides["validate#dataset#data"]
     config_path = output / "train.json"
-    config_path.write_text(json.dumps(config, indent=2))
-    command = [sys.executable, "-m", "monai.bundle", "run", "--config_file", str(config_path)]
-    run = {"schema": "lung-nodule-training-run-v1", "status": "running", "device_requested": "cuda:0",
-           "dataset_manifest_sha256": sha256(manifest_path), "model_registration": registration,
-           "training_config_sha256": sha256(config_path), "test_cohort_used": False,
-           "initialization": "upstream training initialization; not automatic fine-tuning", "epochs": epochs}
+    config_path.write_text(json.dumps(config, indent=2), encoding="utf-8")
+    command = [
+        sys.executable,
+        "-m",
+        "monai.bundle",
+        "run",
+        "--config_file",
+        str(config_path),
+    ]
+    run = {
+        "schema": "lung-nodule-training-run-v1",
+        "status": "running",
+        "device_requested": "cuda:0",
+        "dataset_manifest_sha256": sha256(manifest_path),
+        "model_registration": registration,
+        "training_config_sha256": sha256(config_path),
+        "test_cohort_used": False,
+        "initialization": "upstream training initialization; not automatic fine-tuning",
+        "epochs": epochs,
+    }
     record = output / "run.json"
-    record.write_text(json.dumps(run, indent=2))
+    record.write_text(json.dumps(run, indent=2), encoding="utf-8")
     try:
         subprocess.run(command, cwd=Path(model_dir).resolve(), check=True)
     except BaseException:
         run["status"] = "failed-or-interrupted"
-        record.write_text(json.dumps(run, indent=2))
+        record.write_text(json.dumps(run, indent=2), encoding="utf-8")
         raise
     run["status"] = "completed-unvalidated-research-training"
-    record.write_text(json.dumps(run, indent=2))
+    record.write_text(json.dumps(run, indent=2), encoding="utf-8")
     return output
 
 
-def froc(cases, operating_points=(.125, .25, .5, 1., 2., 4., 8.)):
+def froc(cases, operating_points=(0.125, 0.25, 0.5, 1.0, 2.0, 4.0, 8.0)):
     """Center-distance matching on complete volumes; duplicates count as false positives.
 
     Input per scan: truths[{center_lps_mm,diameter_mm}], predictions[{center_lps_mm,score}].
@@ -189,7 +259,11 @@ def froc(cases, operating_points=(.125, .25, .5, 1., 2., 4., 8.)):
         for truth in c["truths"]:
             NoduleTruth.model_validate(truth)
         for pred in c["predictions"]:
-            if len(pred["center_lps_mm"]) != 3 or not np.isfinite([*pred["center_lps_mm"], pred["score"]]).all() or not 0 <= pred["score"] <= 1:
+            if (
+                len(pred["center_lps_mm"]) != 3
+                or not np.isfinite([*pred["center_lps_mm"], pred["score"]]).all()
+                or not 0 <= pred["score"] <= 1
+            ):
                 raise ValueError("Invalid prediction center/score")
             thresholds.add(float(pred["score"]))
     curve = []
@@ -200,23 +274,42 @@ def froc(cases, operating_points=(.125, .25, .5, 1., 2., 4., 8.)):
             truths = case["truths"]
             matched = 0
             if preds and truths:
-                distances = np.linalg.norm(np.array([p["center_lps_mm"] for p in preds])[:,None,:] - np.array([t["center_lps_mm"] for t in truths])[None,:,:], axis=2)
-                edges = distances <= np.array([t["diameter_mm"]/2 for t in truths])
+                distances = np.linalg.norm(
+                    np.array([p["center_lps_mm"] for p in preds])[:, None, :]
+                    - np.array([t["center_lps_mm"] for t in truths])[None, :, :],
+                    axis=2,
+                )
+                edges = distances <= np.array([t["diameter_mm"] / 2 for t in truths])
                 rows, cols = linear_sum_assignment(-edges.astype(int))
-                matched = int(edges[rows,cols].sum())
+                matched = int(edges[rows, cols].sum())
             hits += matched
-            false += len(preds)-matched
-        curve.append({"threshold": None if np.isinf(threshold) else threshold,
-                      "sensitivity": hits/total, "false_positives_per_scan": false/len(cases)})
-    sensitivities = [max(p["sensitivity"] for p in curve if p["false_positives_per_scan"] <= fp) for fp in operating_points]
-    return {"schema": "research-center-froc-v1", "scans": len(cases), "truth_nodules": total,
-            "operating_points_fp_per_scan": list(operating_points), "sensitivities": sensitivities,
-            "mean_sensitivity": float(np.mean(sensitivities)), "curve": curve,
-            "limitations": "Engineering center-distance FROC; not official LUNA scoring. No irrelevant-finding exclusions or bootstrap CIs. Cohort completeness is attested, not proven."}
+            false += len(preds) - matched
+        curve.append(
+            {
+                "threshold": None if np.isinf(threshold) else threshold,
+                "sensitivity": hits / total,
+                "false_positives_per_scan": false / len(cases),
+            }
+        )
+    sensitivities = [
+        max(p["sensitivity"] for p in curve if p["false_positives_per_scan"] <= fp)
+        for fp in operating_points
+    ]
+    return {
+        "schema": "research-center-froc-v1",
+        "scans": len(cases),
+        "truth_nodules": total,
+        "operating_points_fp_per_scan": list(operating_points),
+        "sensitivities": sensitivities,
+        "mean_sensitivity": float(np.mean(sensitivities)),
+        "curve": curve,
+        "limitations": "Engineering center-distance FROC; not official LUNA scoring. No irrelevant-finding exclusions or bootstrap CIs. Cohort completeness is attested, not proven.",
+    }
 
 
 def main(argv=None):
     import argparse
+
     p = argparse.ArgumentParser(description=__doc__)
     sub = p.add_subparsers(dest="command", required=True)
     for command in ("validate", "train"):
@@ -237,14 +330,30 @@ def main(argv=None):
     a = p.parse_args(argv)
     if a.command == "validate":
         manifest = validate_dataset(a.manifest, a.dataset_root)
-        print(json.dumps({"cases":len(manifest.cases),"manifest_digest":digest(manifest)}))
+        print(
+            json.dumps(
+                {"cases": len(manifest.cases), "manifest_digest": digest(manifest)}
+            )
+        )
     elif a.command == "train":
-        print(launch_training(manifest_path=a.manifest,dataset_root=a.dataset_root,model_dir=a.model_dir,output=a.output,epochs=a.epochs))
+        print(
+            launch_training(
+                manifest_path=a.manifest,
+                dataset_root=a.dataset_root,
+                model_dir=a.model_dir,
+                output=a.output,
+                epochs=a.epochs,
+            )
+        )
     elif a.command == "prepare-image":
-        print(json.dumps(prepare_training_image(a.series,a.output,approval=a.approval)))
+        print(
+            json.dumps(prepare_training_image(a.series, a.output, approval=a.approval))
+        )
     else:
-        result = froc(json.loads(Path(a.input).read_text()))
-        Path(a.output).write_text(json.dumps(result,indent=2,allow_nan=False))
+        result = froc(json.loads(Path(a.input).read_text(encoding="utf-8")))
+        Path(a.output).write_text(
+            json.dumps(result, indent=2, allow_nan=False), encoding="utf-8"
+        )
         print(json.dumps(result))
 
 

@@ -14,6 +14,7 @@ clinical sensitivity, cancer diagnosis accuracy or reading-time study is claimed
 | Research gate | 29 cumulative new tests passed; later UI/launcher regressions added |
 | Intermediate full suite | 63 tests passed, 18.43s, including 32 legacy compatibility tests |
 | Final expanded regression | 66 tests passed, 19.50s on the final local rerun; includes actual random-weight network/sliding-window forward and allocation/anisotropic-resolution regressions |
+| Windows portability repair regression | 68 tests passed, 19.69s; explicit UTF-8 IO, Unicode review round trip and simulated cp1252 documentation regression |
 | Lint | Ruff passed on src/scripts/deploy/tests |
 | Dependency consistency | pip check passed |
 | Real pretrained weights | Official ~80MB checkpoint loaded strictly with tensor-only torch.load |
@@ -55,6 +56,14 @@ network construction and real pretrained inference. Setup, Docker and CI now
 install that backend pair together. Upstream Orientation defaults emit a future
 warning; other warnings come from the retained FastAPI/legacy ONNX export path.
 They are recorded rather than suppressed or mislabeled as clinical failures.
+
+The first hosted Windows run caught a UTF-8 documentation read using the platform
+default cp1252 codec. All new text-file IO now specifies UTF-8; regressions cover
+a simulated Windows default and Unicode reviewer/report round trips. New package
+formatting and full F-category lint checks were added. Hosted matrix fail-fast is
+disabled so Windows errors do not cancel independent Linux/container evidence.
+The initial run's pretrained smoke passed; its Windows failure and cancelled Linux
+container step are not presented as successful release validation.
 
 ## Unexecuted / limitations
 
