@@ -4,11 +4,12 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ai-medimg-playground"
-version = "0.8.0"
-description = "Research CT ingestion, geometry-preserving preprocessing, pseudo-label evaluation, 2.5D training, and verified CPU/Intel NPU inference."
+version = "0.9.0"
+description = "Local lung nodule research assistant: source-linked 3D candidates, physical measurements and human-reviewed reports."
 readme = "README.md"
 requires-python = ">=3.12,<3.13"
 license = "MIT"
+license-files = ["LICENSE", "THIRD_PARTY_NOTICES.md", "third_party/*.txt"]
 dependencies = [
   "matplotlib",
   "numpy",
@@ -20,10 +21,14 @@ dependencies = [
   "scipy",
   "SimpleITK",
   "tqdm",
+  "pydantic>=2,<3",
 ]
 
 [project.optional-dependencies]
 intel = ["openvino"]
+lung = ["monai>=1.4,<1.7", "nibabel>=5,<6", "torch", "torchvision"]
+training = ["monai>=1.4,<1.7", "nibabel>=5,<6", "torch", "torchvision", "pytorch-ignite", "tensorboard"]
+ui = ["streamlit>=1.40,<2"]
 codecs = ["pylibjpeg", "pylibjpeg-libjpeg"]
 ml = [
   "fastapi",
@@ -39,9 +44,13 @@ dev = [
   "httpx",
 ]
 
+[project.scripts]
+lung-nodule = "lung_nodule.cli:main"
+lung-research = "lung_nodule.research:main"
+
 [tool.setuptools]
 package-dir = {"" = "src", "deploy" = "deploy"}
-packages = ["data", "models", "baselines", "deploy"]
+packages = ["data", "models", "baselines", "deploy", "lung_nodule"]
 py-modules = ["calibration", "config", "dicom_loader", "preprocessing", "robustness", "visualization", "public_metadata", "evaluation"]
 
 

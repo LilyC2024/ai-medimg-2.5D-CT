@@ -1,3 +1,5 @@
+> Legacy tissue-mask / MHCRA v1 reference. The active lung-nodule documentation starts at [docs/README.md](README.md). Historical results below must not be attributed to the new detector.
+
 # Model card — prototype 0.8.0
 
 Intended use: engineer/researcher inspection of agreement with versioned classical CT head-region pseudo labels. Input: supported regular single-frame monochrome CT, normalized/resized ordered neighboring slices. Output: four heuristic candidate classes on the source image grid. Architecture and label semantics are documented in architecture.md.

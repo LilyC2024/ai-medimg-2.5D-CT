@@ -1,3 +1,5 @@
+> Legacy tissue-mask / MHCRA v1 reference. The active lung-nodule documentation starts at [docs/README.md](README.md). Historical results below must not be attributed to the new detector.
+
 # Reproduction commands
 
 Install with the README's Python 3.12 CPU commands first. Dependencies are defined by pyproject; `requirements.txt` forwards to it. Windows constraints record the measured versions, not a universal cross-platform lock. The environment evidence, source hashes and frozen index hashes link every run to its implementation. Historical checkpoint loading uses weights_only=True and exact architecture loading; no arbitrary-pickle compatibility fallback exists.

@@ -61,7 +61,9 @@ def _decode_pixels(dataset, path):
         return (_decode_with_simpleitk(path) - float(dataset.RescaleIntercept)) / slope
 
 
-def load_dicom_series(series_dir):
+def load_dicom_series(series_dir, *, max_voxels=64 * 1024 * 1024):
+    if type(max_voxels) is not int or not 1 <= max_voxels <= 128 * 1024 * 1024:
+        raise ValueError("Voxel allocation limit must be a positive integer <=128Mi")
     path = Path(series_dir).expanduser().resolve()
     if not path.is_dir():
         raise FileNotFoundError(
@@ -99,7 +101,7 @@ def load_dicom_series(series_dir):
         if (
             max(int(ds.Rows), int(ds.Columns)) > 1024
             or min(int(ds.Rows), int(ds.Columns)) < 1
-            or int(ds.Rows) * int(ds.Columns) * len(files) > 64 * 1024 * 1024
+            or int(ds.Rows) * int(ds.Columns) * len(files) > max_voxels
         ):
             raise ValueError("Series dimensions exceed supported limits.")
         if (

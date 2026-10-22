@@ -1,1 +1,1 @@
--e .[ml]
+-e .[ml,lung,ui]

@@ -1,0 +1,22 @@
+{
+  "schema": "lung-local-smoke-v1",
+  "input": "generated 32x64x64 chest-like phantom; not clinical evaluation",
+  "detector": {
+    "name": "MONAI LUNA16 3D RetinaNet",
+    "checkpoint_sha256": "b5e79231466adae93a6fe8e8594029e9add142914e223b879aa0343bb2402d01",
+    "config_sha256": "4994fee8f606873471bf2d96d59d1333a5e2a235fdd5e23c47a7ea021be10deb",
+    "execution_device": "cpu",
+    "software_versions": {
+      "torch": "2.14.1+cpu",
+      "monai": "1.6.1",
+      "numpy": "2.5.4",
+      "torchvision": "0.29.1+cpu"
+    },
+    "synthetic_fixture": false,
+    "score_threshold": 0.15
+  },
+  "candidate_count": 1,
+  "report_without_review_blocked": true,
+  "review_approval_issued": false,
+  "elapsed_seconds": 6.08055112400325
+}

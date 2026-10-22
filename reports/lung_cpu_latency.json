@@ -1,0 +1,33 @@
+{
+  "schema": "lung-full-volume-latency-v1",
+  "model": {
+    "name": "MONAI LUNA16 3D RetinaNet",
+    "checkpoint_sha256": "b5e79231466adae93a6fe8e8594029e9add142914e223b879aa0343bb2402d01",
+    "config_sha256": "4994fee8f606873471bf2d96d59d1333a5e2a235fdd5e23c47a7ea021be10deb",
+    "execution_device": "cpu",
+    "software_versions": {
+      "torch": "2.14.1+cpu",
+      "monai": "1.6.1",
+      "numpy": "2.5.4",
+      "torchvision": "0.29.1+cpu"
+    },
+    "synthetic_fixture": false,
+    "score_threshold": 0.15
+  },
+  "source_sha256": "ad1cd1c851b788ce72880069fe6a948d66292af374ccd8897f1afbc25dec8204",
+  "shape_zyx": [
+    32,
+    64,
+    64
+  ],
+  "input_kind": "generated-synthetic",
+  "model_load_seconds": 4.8831980929971905,
+  "first_run_seconds": 1.7691205699957209,
+  "warmup_runs": 1,
+  "runs": 3,
+  "threads": 4,
+  "p50_seconds": 3.28792839700327,
+  "p95_seconds": 3.3237918885955877,
+  "candidate_snapshot_sha256": "14b1cc38275fcfa255c7d9ece9581245003b7408e643788efa1ab5a2a37de8fc",
+  "scope": "DICOM IO, hashing, preprocessing, inference and source mapping; no review/export; no diagnostic accuracy metric"
+}

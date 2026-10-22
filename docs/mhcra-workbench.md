@@ -1,3 +1,5 @@
+> Legacy tissue-mask / MHCRA v1 reference. The active lung-nodule documentation starts at [docs/README.md](README.md). Historical results below must not be attributed to the new detector.
+
 # MHCRA local imaging workbench
 
 ![Actual generated synthetic slices, unvalidated overlays and source-grid counts](images/mhcra-synthetic-workbench.png)

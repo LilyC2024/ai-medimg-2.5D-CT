@@ -1,3 +1,5 @@
+> Legacy tissue-mask / MHCRA v1 reference. The active lung-nodule documentation starts at [docs/README.md](README.md). Historical results below must not be attributed to the new detector.
+
 # Architecture and contracts
 
 Input is one regular CT DICOM series. Output is a source-grid uint8 label mask with class IDs 0–3 plus numeric geometry. Users are engineers and research reviewers. Clinical users and diagnostic use are outside the current intended purpose.

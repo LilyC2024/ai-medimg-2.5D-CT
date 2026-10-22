@@ -1,3 +1,5 @@
+> Legacy tissue-mask / MHCRA v1 reference. The active lung-nodule documentation starts at [docs/README.md](README.md). Historical results below must not be attributed to the new detector.
+
 # Preliminary regulatory scope
 
 Current intended purpose is an engineering research demonstration of agreement with heuristic labels. It is not supplied for diagnosis, treatment, patient triage or clinical decision making, and makes no CE claim. Calling software research does not itself settle legal qualification; actual intended purpose, claims and use must be assessed.

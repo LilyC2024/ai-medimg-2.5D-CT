@@ -1,3 +1,5 @@
+> Legacy tissue-mask / MHCRA v1 reference. The active lung-nodule documentation starts at [docs/README.md](README.md). Historical results below must not be attributed to the new detector.
+
 # Requirements to evidence
 
 Verified on 4 October 2026 (Europe/Stockholm), for research prototype 0.8.0.

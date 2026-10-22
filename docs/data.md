@@ -1,3 +1,5 @@
+> Legacy tissue-mask / MHCRA v1 reference. The active lung-nodule documentation starts at [docs/README.md](README.md). Historical results below must not be attributed to the new detector.
+
 # Data and public metadata
 
 No real image data is distributed in the repository. The local 34-slice series has 512 x 512 pixels and spacing z/y/x = 5 / 0.488281 / 0.488281 mm. Its source URL, acquisition terms, ownership, and permitted redistribution have not been supplied. Do not assert a dataset license or offer a download for it. A reviewer must provide a permitted CT series, or run the synthetic fixture.

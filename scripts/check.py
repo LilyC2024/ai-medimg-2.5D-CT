@@ -8,9 +8,10 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def main():
+    subprocess.run([sys.executable, str(ROOT / "scripts/check_docs.py")], cwd=ROOT, check=True)
     for args in (
         ("ruff", "check", "src", "scripts", "deploy", "tests"),
-        ("unittest", "discover", "-s", "tests", "-v"),
+        ("pytest", "-q"),
     ):
         subprocess.run([sys.executable, "-m", *args], cwd=ROOT, check=True)
     return 0
