@@ -85,8 +85,9 @@ compatible; the optional callback receives `starting`, `model` (pretrained only)
 `source`, `detect` and `export`. It supplies progress, never review approval.
 
 LOVISA applies a 110-second process watchdog and exposes cancellation. Its viewer
-checks the full accepted source once per view and each requested preview on
-access; acceptance/final reports still fully revalidate. No schema, model,
+verifies accepted-study loading and the selected-view resolver, then checks each
+requested preview on access instead of revalidating the archive per image.
+Acceptance/final reports still fully revalidate. No schema, model,
 training workflow or standalone CLI time limit changed.
 
 Local generated 32×64×64 producer/receiver smokes took 1.65s (fixture) and 12.43s

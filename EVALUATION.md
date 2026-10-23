@@ -90,3 +90,12 @@ Actual local fixture/pretrained CPU producer-receiver smokes completed in 1.65s 
 12.43s using generated 32×64×64 input and no human approvals. GPU/NPU execution
 and clinical accuracy remain untested. LOVISA owns its 110-second UI watchdog;
 standalone CT training/full-volume processing retain their existing workflow.
+
+[Hosted CT run 39938445818](https://github.com/LilyC2024/ai-medimg-2.5D-CT/actions/runs/39938445818)
+passed at `5ba347cf6cd66b1931eaad3cd7d8cb27d4136606`: Windows/Linux regression,
+actual pretrained inference/bridge and Linux container. The follow-up
+verification record clarifies fixed viewer validation passes; code is unchanged.
+
+[Hosted LOVISA run 39938918945](https://github.com/LilyC2024/Medical-AI/actions/runs/39938918945)
+passed at `3c5e2d5e8a30c76c0cfda5f1925c740d004bbc5f`: Python 3.10/3.12 and actual
+fixture/pretrained/legacy transfers against the pinned CT revision above.
