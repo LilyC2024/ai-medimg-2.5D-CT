@@ -25,4 +25,4 @@ nodules/cancer. Detector score is not malignancy risk.
 
 The fixture finder and legacy four-class 2.5D U-Net are different components/tasks.
 Neither phantom success nor legacy Dice/NPU timing demonstrates this detector's
-clinical performance. LOVISA receives a synthetic research appendix, not a diagnosis.
+clinical performance. LOVISA accepts a reviewed synthetic study into its clinical summary; this is not a diagnosis.

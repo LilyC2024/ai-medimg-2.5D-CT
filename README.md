@@ -15,7 +15,7 @@ probabilities; no-candidate output does not exclude disease.
 | Project | Main responsibility | Output |
 | --- | --- | --- |
 | **This CT project** | Inspect supported CT, propose candidates and review measurements | Source-linked image annotations and research summary |
-| **[LOVISA](https://github.com/LilyC2024/Medical-AI)** — Medical History & Clinical Reasoning Assistant | Organize synthetic longitudinal history, identify gaps and prepare hypotheses for clinician review | Seven-section report with an optional accepted CT research appendix |
+| **[LOVISA](https://github.com/LilyC2024/Medical-AI)** — Medical History & Clinical Reasoning Assistant | Organize synthetic longitudinal history, identify gaps and prepare hypotheses for clinician review | Concise clinical summary with accepted CT inspection, pictures and a brief clinician note |
 
 LOVISA was formerly called **MHCRA AI**. CT uses a computer-vision model and
 Python reporting; LOVISA alone uses local Ollama for constrained clinical
@@ -37,7 +37,7 @@ flowchart LR
     V --> R[Explicit CT review and research summary]
     D --> B[Bounded synthetic bundle for LOVISA]
     B --> I[LOVISA authenticated imaging acceptance]
-    I --> A[Research appendix]
+    I --> A[Combined clinical summary and CT pictures]
     A --> F[LOVISA final clinical approval]
 ```
 

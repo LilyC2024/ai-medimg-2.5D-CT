@@ -4,6 +4,24 @@ Software execution and clinical performance are separate. The recorded data are
 generated CT-like phantoms; no new patient accuracy or reader-time benefit is
 claimed. [Validation commands](docs/validation.md).
 
+## LOVISA concise-report documentation alignment — 23 October 2026
+
+Updated README and integration/model-card guides to describe LOVISA's one-section
+summary, accepted CT inspection/pictures, previewed clinician note and offline HTML
+export. Existing `mhcra-*` contracts, detector, measurements, training and
+standalone research report are unchanged.
+
+Local checks: **81 tests passed in 22.42s**, with 11 existing dependency/legacy
+export warnings; all **25** maintained Markdown files passed local-target checks.
+LOVISA's new report implementation passed **220 tests in 79.04s** and the exact
+shared-contract check. Its actual pretrained CPU transfer verified one generated
+candidate and 66 artifacts without issuing approvals. Report/example tests use
+scripted model/reviewer identities; they are not clinical validation.
+
+This is a documentation-only publication. Existing producer-code hosted results
+remain applicable; LOVISA's release checks exercise the pinned producer again.
+[Current report guide](https://github.com/LilyC2024/Medical-AI/blob/main/docs/REPORTS.md).
+
 ## Current documentation update
 
 The companion is now named **LOVISA — Medical History & Clinical Reasoning

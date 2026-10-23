@@ -24,9 +24,13 @@ Volumes are heuristic candidate voxels, not lesions. Postprocessing is explicitl
 disabled; producer parity/execution metadata remains a declaration to the receiver.
 
 LOVISA validates patient/study association and every bounded artifact. Authenticated
-imaging acceptance and final clinical-report approval are separate. The appendix
+imaging acceptance and final clinical-report approval are separate. The combined report
 cannot change safety escalation or enter the LLM. Use new immutable study/output
 IDs. Never relabel nodule boxes as tissue masks.
 
 [Current LOVISA user guide](https://github.com/LilyC2024/Medical-AI/blob/main/docs/IMAGING.md)
 · [Recorded legacy integration](../reports/mhcra_integration.json).
+
+LOVISA now includes this accepted inspection in one concise clinical summary,
+with representative pictures, a previewed clinician note and an offline HTML
+download. [Report guide](https://github.com/LilyC2024/Medical-AI/blob/main/docs/REPORTS.md).

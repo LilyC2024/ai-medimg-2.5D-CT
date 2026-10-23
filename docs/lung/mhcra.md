@@ -14,8 +14,9 @@ so existing links/integrations continue to work.
 
 CT takes source pixels to candidate boxes and human-selected distances. This
 illustration uses generated pixels and a non-ML finder; it is not detector accuracy.
-LOVISA takes history to a source-linked seven-section draft and final clinician
-review. Its [original workflow and technical pictures](https://github.com/LilyC2024/Medical-AI/blob/main/docs/ILLUSTRATIONS.md)
+LOVISA creates one concise Clinical summary with history hypotheses, accepted CT
+inspection, representative pictures and a brief clinician note. Detailed source
+links stay in its evidence package; final clinician approval remains mandatory. Its [original workflow and technical pictures](https://github.com/LilyC2024/Medical-AI/blob/main/docs/ILLUSTRATIONS.md)
 explain its four specialists, local Ollama and approval gates; the pictures retain
 the former MHCRA AI label.
 
@@ -33,7 +34,7 @@ its hypothesis catalog. CT is not a fifth LLM specialist.
 
 | Format/capability | Support |
 | --- | --- |
-| mhcra-lung-nodules-v2 | Implemented source HU, all-slice previews, candidates/calipers and research appendix |
+| mhcra-lung-nodules-v2 | Implemented source HU, all-slice previews, candidates/calipers and combined report |
 | mhcra-imaging-v1 | Retained legacy tissue-mask path |
 | incomplete mhcra-lung-nodules-v1 | Re-export original workspace; cannot migrate by renaming schema |
 | Public-research/full-size CT, training and FROC | Standalone CT only; LOVISA accepts bounded generated-synthetic data |
@@ -42,8 +43,9 @@ its hypothesis catalog. CT is not a fifth LLM specialist.
 
 Install CT in its own Python 3.12 `.venv`; keep LOVISA's environment separate.
 LOVISA discovers a sibling checkout or uses `MHCRA_CT_ROOT`; installed weights use
-`MHCRA_CT_MODEL_DIR`. Its UI offers fixture, installed-pretrained CPU/CUDA and legacy
-modes. Inference downloads nothing and never silently changes device.
+`MHCRA_CT_MODEL_DIR`; `MHCRA_CT_DEVICE` chooses `cpu` (default) or `cuda` for the
+installed detector. The UI offers fixture, installed detector and legacy modes;
+paths/device settings stay in local configuration. Inference downloads nothing and never silently changes device.
 
 ```bash
 # From CT: pending review, no human approval issued.
@@ -94,3 +96,23 @@ Local generated 32×64×64 producer/receiver smokes took 1.65s (fixture) and 12.
 (installed pretrained CPU). These individual runs do not establish diagnostic
 accuracy, full-volume performance or GPU/NPU support. See the
 [LOVISA response-budget guide](https://github.com/LilyC2024/Medical-AI/blob/main/docs/PERFORMANCE.md).
+
+## Include inspection in the clinical report
+
+In LOVISA, inspect the study and choose **Include reviewed CT in report** before
+completing safety preparation. That preparation freezes the report's CT snapshot.
+A study accepted later requires a new report; **Start a new report with CT** opens
+that route for the same patient. Zero/rejected candidates do not establish a
+normal CT, and missing calipers remain missing.
+
+The Clinical summary includes candidate decisions and reviewed calipers, with
+representative verified source/annotation pictures. A reviewer previews a brief
+note before approving the changed text. The final HTML download embeds CT pictures
+for offline use; Markdown contains the concise text, and JSON retains full original
+citations, study provenance and decisions. At most three representative study
+pictures/calipers are shown; all studies remain in the evidence package and viewer.
+No CT image/measurement is interpreted by LOVISA's LLM.
+
+[Current report guide and clearly labelled scripted example](https://github.com/LilyC2024/Medical-AI/blob/main/docs/REPORTS.md).
+This updates documentation only; CT contracts, detector, measurements, training
+and standalone research reports are unchanged.
