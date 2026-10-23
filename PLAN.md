@@ -12,7 +12,7 @@ clinical accuracy or actual accelerator execution. [Evidence](EVALUATION.md).
 | Initial publication | Portable docs/code, actual smokes and hosted release | 68 tests; Windows/Linux, pretrained smoke and Linux Docker passed |
 | Nodule producer | Shared ML-free nodule-v2, HU/all-slice previews and pending bridge | 26 producer/review checks |
 | LOVISA consumer/joint release | Authenticated candidate/caliper acceptance and appendix | 81 CT / 146 LOVISA tests; actual fixture/pretrained/legacy transfers and hosted checks |
-| LOVISA documentation alignment | Two-project explanation, reused illustrations and concise linked guides | Local checks passed: 81 CT / 146 LOVISA tests and 25 Markdown files per repo; hosted publication pending |
+| LOVISA documentation alignment | Two-project explanation, reused illustrations and concise linked guides | Complete: 81 CT / 146 LOVISA tests, 25 Markdown files per repo and published updates; all hosted checks passed |
 
 The existing detector, package layout and exchange names stay stable in the
 LOVISA documentation pass. No patient-data validation, model retraining or new

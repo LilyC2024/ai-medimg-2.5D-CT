@@ -12,8 +12,17 @@ measurement role and retain the existing `mhcra-*` contracts. No detector, weigh
 training or schema changes are part of this documentation pass. Local checks for this pass: **81 tests passed in 23.90s**, Ruff/active-package
 format passed, and all 25 maintained Markdown files passed local-target checks.
 LOVISA passed 146 tests in 42.35s plus actual local gemma4:e2b smoke; the
-ML-free contract/renderer/report still match exactly. Hosted results follow
-after publication.
+ML-free contract/renderer/report still match exactly. Hosted results passed as recorded below.
+
+### Hosted documentation release
+
+[CT run 39929548618](https://github.com/LilyC2024/ai-medimg-2.5D-CT/actions/runs/39929548618)
+passed for `281c2446d39736075d41aec74ceb9c9fb9002411`: Windows/Linux regression,
+maintained-document links, actual pretrained/fixture bridges and Linux container.
+[LOVISA run 39929551523](https://github.com/LilyC2024/Medical-AI/actions/runs/39929551523)
+passed for `a37a716b7933a671532ef090781255929bbd1b97`: Python 3.10/3.12,
+contract equality and actual fixture/pretrained/legacy transfers. This final
+record changes documentation only; no GPU/patient-performance result is implied.
 
 ## Verified v0.10 compatibility
 
