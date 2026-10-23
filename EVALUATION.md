@@ -134,3 +134,7 @@ verification record clarifies fixed viewer validation passes; code is unchanged.
 [Hosted LOVISA run 39938918945](https://github.com/LilyC2024/Medical-AI/actions/runs/39938918945)
 passed at `3c5e2d5e8a30c76c0cfda5f1925c740d004bbc5f`: Python 3.10/3.12 and actual
 fixture/pretrained/legacy transfers against the pinned CT revision above.
+
+## Final public-research publication checks
+
+Tested producer `b73a72188efda899f9d0a0d321f905002bc7dac3` passed its [hosted workflow](https://github.com/LilyC2024/ai-medimg-2.5D-CT/actions/runs/40014638635). The CT workflow passed all configured jobs. The follow-up changes in this section and PLAN.md are documentation only. No datasets, weights, accounts or generated research-image reports were published.
