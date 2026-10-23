@@ -1,141 +1,111 @@
-# Local lung nodule research assistant
+# Lung CT Research Assistant
 
-**v0.10.0 — local 3D CT candidate detection, source-linked annotations, reviewable
-measurements and a short human-reviewed research report.** Repository name retained
-for continuity: `ai-medimg-2.5D-CT`.
+**Local lung-nodule candidates, source annotations, reviewable measurements and a
+brief evidence-linked research report.** Version 0.10.0; repository name:
+`ai-medimg-2.5D-CT`.
 
-The active detector is a pretrained **MONAI 3D RetinaNet lung nodule model**.
-The earlier 2.5D tissue-mask experiment remains a documented engineering baseline
-and MHCRA compatibility layer; its Dice and Intel NPU timings are not lung-nodule
-results. [What changed](docs/lung/release.md).
+This project applies pretrained **MONAI 3D RetinaNet** to supported volumetric CT.
+A reviewer inspects source slices, accepts/rejects candidates and may place an
+in-plane caliper. Python preserves geometry and composes the short report.
+It is a research assistant, not a cancer-diagnosis system. Scores are not malignancy
+probabilities; no-candidate output does not exclude disease.
 
-**Research only.** This software does not diagnose cancer, exclude disease, issue
-management recommendations or replace full CT review. Detector scores are not
-malignancy probabilities. Clinical accuracy and time savings have not been
-established for this application. No patient data or weights are committed.
+## How it relates to LOVISA
 
-![Generated phantom source, candidate annotation and physical caliper](docs/images/lung-research-workflow.png)
+| Project | Main responsibility | Output |
+| --- | --- | --- |
+| **This CT project** | Inspect supported CT, propose candidates and review measurements | Source-linked image annotations and research summary |
+| **[LOVISA](https://github.com/LilyC2024/Medical-AI)** — Medical History & Clinical Reasoning Assistant | Organize synthetic longitudinal history, identify gaps and prepare hypotheses for clinician review | Seven-section report with an optional accepted CT research appendix |
 
-The figure uses generated CT-like pixels and an explicitly labeled **non-ML
-fixture finder**. It demonstrates software behavior, not pretrained-model accuracy
-or a clinician-approved finding. Real pretrained inference has a separate
-[executed local smoke record](reports/lung_pretrained_smoke.json).
+LOVISA was formerly called **MHCRA AI**. CT uses a computer-vision model and
+Python reporting; LOVISA alone uses local Ollama for constrained clinical
+reasoning. No LLM reads CT pixels. Both run locally and keep human approval explicit.
 
-## What you can do
+## Understand the image workflow
 
-- Run downloaded, pinned pretrained weights offline on supported CT.
-- Inspect source slices and candidate boxes; accept, reject or hold each candidate.
-- Place and preview an in-plane caliper and calculate its physical length.
-  Detector box extents are never described as lesion diameters or volumes.
-- Complete a local reviewer attestation and export an evidence-linked summary.
-- Validate research dataset splits and launch the pinned upstream trainer on CUDA.
-- Reproduce CPU inference checks and retain the earlier OpenVINO deployment work.
+![Generated source CT, candidate annotation and source-plane caliper](docs/images/lung-research-workflow.png)
 
-Supported research input is one regular single-frame adult noncontrast chest CT
-series, with operator-attested complete coverage. DICOM geometry is checked;
-protocol and coverage are not automatically verified. Public research input needs
-an explicit approval file. Clinical uploads are unsupported. [Input/data rules](docs/lung/data.md).
+Read left to right: source pixels → amber candidate box → cyan caliper. The figure
+uses a generated phantom and **non-ML fixture finder**. Its 8 mm example demonstrates
+annotation/measurement behavior, not pretrained accuracy or clinician approval.
+
+```mermaid
+flowchart LR
+    CT[Supported local CT volume] --> Q[Source and geometry checks]
+    Q --> D[Local detector]
+    D --> V[Inspect candidates and calipers]
+    V --> R[Explicit CT review and research summary]
+    D --> B[Bounded synthetic bundle for LOVISA]
+    B --> I[LOVISA authenticated imaging acceptance]
+    I --> A[Research appendix]
+    A --> F[LOVISA final clinical approval]
+```
+
+Default standalone export requires CT review. The dedicated LOVISA bridge creates
+pending synthetic input so LOVISA can review it itself. Neither path approves the
+final clinical report. [Integration and original LOVISA pictures](docs/lung/mhcra.md).
 
 ## Start locally
 
-Python **3.12**. Reuse `.venv` if present; create it only if absent. Windows uses
-`.venv\Scripts\python.exe` wherever `.venv/bin/python` appears below.
+Use Python **3.12**; reuse `.venv` if present. Windows substitutes
+`.venv\Scripts\python.exe` for `.venv/bin/python`.
 
 ```bash
 git clone https://github.com/LilyC2024/ai-medimg-2.5D-CT.git
 cd ai-medimg-2.5D-CT
 python -m venv .venv
-# Reference CPU setup: matching torch/torchvision wheels are required.
 .venv/bin/python -m pip install torch==2.14.1+cpu torchvision==0.29.1+cpu --index-url https://download.pytorch.org/whl/cpu
-.venv/bin/python -m pip install -e ".[ml,lung,ui,dev]"
+.venv/bin/python -m pip install -e '.[ml,lung,ui,dev]'
 .venv/bin/python -m pip check
-```
-
-For CUDA, install matching CUDA torch/torchvision builds for the actual driver;
-do not install the CPU wheels first. Intel NPU is not CUDA training hardware.
-[Hardware setup](docs/lung/deployment.md).
-
-**Try the complete review workflow without downloading weights:**
-
-```bash
 .venv/bin/python -m lung_nodule.cli demo --output artifacts/lung-demo
 .venv/bin/python -m streamlit run src/lung_nodule/ui.py --server.address 127.0.0.1 --server.port 8502
 ```
 
-Open `http://127.0.0.1:8502`; the default workspace is
-`artifacts/lung-demo/workspace`. This deterministic fixture demo leaves review
-pending. It is not trained detection. [Review walkthrough](docs/lung/review.md).
+Open [localhost:8502](http://127.0.0.1:8502); workspace:
+`artifacts/lung-demo/workspace`. This fixture demo needs no weights and stays
+unreviewed. [Review walkthrough](docs/lung/review.md).
 
-**Run actual pretrained inference on that generated CT:**
+For actual pretrained inference, explicitly install the pinned official weights
+once, then run locally:
 
 ```bash
-# Explicit setup-only download of official weights, recipe, training code and licenses.
 .venv/bin/python -m lung_nodule.cli fetch-model --output models/luna16
-# Use a new output directory for every inference run.
 .venv/bin/python -m lung_nodule.cli detect --series artifacts/lung-demo/series --model-dir models/luna16 --device cpu --patient-alias synthetic --study-id pretrained-demo --output artifacts/pretrained-demo
 ```
 
-Set the UI workspace to `artifacts/pretrained-demo`. For approved public research
-DICOM add `--approval path/to/research-approval.json`. Use `--device cuda` only on
-an available CUDA GPU. Unavailable devices fail without silent fallback. No
-weights or data download during inference.
+Use a new output directory per run. For CUDA install matching CUDA torch/torchvision
+builds instead of the CPU wheels; select `--device cuda` only when available.
+[Hardware and deployment](docs/lung/deployment.md).
 
-## How it works
+## Scope and evidence
 
-```mermaid
-flowchart LR
-    CT[Supported local CT] --> Q[Approval, identity and geometry checks]
-    Q --> D[MONAI 3D detector]
-    D --> M[Boxes mapped to original source grid]
-    M --> V[Inspect source, candidates and calipers]
-    V --> R[Explicit reviewer decisions and attestation]
-    R --> O[Evidence-linked research report]
-```
+Supported research input is a regular single-frame adult noncontrast chest CT
+series with operator-attested complete coverage. This is a **volume workflow**,
+not JPEG/screenshot diagnosis. Public research DICOM requires an explicit approval
+file; clinical uploads are unsupported. LOVISA accepts bounded generated-synthetic
+bundles only. [Data rules](docs/lung/data.md).
 
-Python preserves source identity, transforms coordinates and calculates distances.
-Report text is a deterministic template. **No LLM reads pixels, invents findings or
-approves the report.** An LLM is unnecessary for the short report in this release.
-[Architecture](docs/lung/architecture.md).
+The last compatibility release passed **81 CT tests**, **146 LOVISA tests**, actual
+local pretrained/fixture transfers and hosted Windows/Linux/container checks.
+These are software checks on generated pixels, not patient accuracy or time-savings
+results. No new model training, actual CUDA training or new-detector Intel NPU
+execution is claimed. [Actual evaluation](EVALUATION.md).
 
-MHCRA is a separate local history application. Its four runtime specialists and
-safety/clinician gates are unchanged. MHCRA v0.2 now consumes **mhcra-lung-nodules-v2**, including source HU,
-every-slice annotations and reviewable calipers. Authenticated MHCRA imaging
-acceptance and final clinical approval remain separate. The existing synthetic
-`mhcra-imaging-v1` tissue-mask bridge stays available. Incomplete nodule-v1
-archives need re-export; they cannot be relabeled as tissue masks. [Integration boundary and migration](docs/lung/mhcra.md).
+## Documentation
 
-## Verify and reproduce
-
-```bash
-.venv/bin/python scripts/check.py
-.venv/bin/python scripts/smoke_lung.py --output artifacts/fixture-smoke.json
-.venv/bin/python scripts/smoke_lung.py --model-dir models/luna16 --device cpu --output artifacts/pretrained-smoke.json
-.venv/bin/python scripts/lung_hardware.py --output artifacts/hardware.json
-```
-
-Tests use generated CT and scripted review attestations. Pretrained inference is
-recorded separately. GPU training and new-detector NPU inference were not executed
-on the CPU-only development host. Historical benchmarks and phantom success do not
-demonstrate clinical detection performance. [Actual evaluation](EVALUATION.md).
-
-Current compatibility checks: **81 CT tests**, companion **146 tests**, actual
-fixture/pretrained/legacy producer-consumer smokes and local Ollama smoke. See
-[EVALUATION.md](EVALUATION.md) for current outcomes and previous hosted checks.
-
-## Documentation and project map
-
-| Need | Detailed guide |
+| Need | Guide |
 | --- | --- |
-| Supported DICOM, approvals, datasets and licenses | [Data](docs/lung/data.md) |
-| Source inspection, calipers, approval and export | [Review](docs/lung/review.md) |
-| Model, coordinates and trust boundaries | [Architecture](docs/lung/architecture.md) |
-| Preparation, CUDA training and detection metrics | [Training/evaluation](docs/lung/training.md) |
-| CPU/CUDA/Intel NPU, latency, Docker, troubleshooting | [Deployment](docs/lung/deployment.md) |
-| Functions, classes, modules and folders | [Code reference](docs/lung/code-reference.md) |
-| MHCRA compatibility and the nodule exchange | [Integration](docs/lung/mhcra.md) |
-| Changes, removals and defensible CV descriptions | [Release record](docs/lung/release.md) |
-| Old U-Net, ONNX parity and measured Intel NPU work | [Legacy pipeline](docs/legacy-pipeline.md) |
+| Understand source data and approvals | [Data](docs/lung/data.md) |
+| Inspect candidates, calipers and reports | [Review](docs/lung/review.md) |
+| Understand model, coordinates and trust | [Architecture](docs/lung/architecture.md) |
+| Connect LOVISA | [Integration](docs/lung/mhcra.md) |
+| Prepare datasets, train on CUDA or evaluate | [Training](docs/lung/training.md) |
+| Install hardware/runtime or troubleshoot | [Deployment](docs/lung/deployment.md) |
+| Find functions and folders | [Code reference](docs/lung/code-reference.md) |
+| Understand changes and retained engineering work | [Release](docs/lung/release.md) / [Legacy pipeline](docs/legacy-pipeline.md) |
 
-[Full documentation index](docs/README.md) · [Model card](docs/lung/model-card.md) ·
-[Phase gates](PLAN.md) · [MIT code license](LICENSE) ·
-[Upstream model](https://github.com/Project-MONAI/model-zoo/tree/dev/models/lung_nodule_ct_detection)
+[Documentation index](docs/README.md) · [Model card](docs/lung/model-card.md) ·
+[Validation commands](docs/validation.md) · [MIT code license](LICENSE).
+The legacy 2.5D tissue-mask/ONNX/OpenVINO experiment remains reproducible; its
+Dice/NPU timings are separate historical results. Weights and patient data are
+not committed. Dependencies, model assets and datasets retain separate terms.

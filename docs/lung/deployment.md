@@ -1,8 +1,11 @@
-# Local deployment and hardware validation
+# Run the CT project on local hardware
 
 [Overview](../../README.md) · [Training](training.md) · [Actual results](../../EVALUATION.md)
 
-## Device matrix
+CT runs in its own Python 3.12 environment. LOVISA uses its separate environment
+and starts CT through a bounded local worker; see [Integration](mhcra.md).
+
+## Choose the execution device
 
 | Hardware | Active nodule workflow | Evidence/status |
 | --- | --- | --- |
@@ -16,7 +19,7 @@ The current development environment is Linux with CPU-only torch and no OpenVINO
 Do not infer current hardware from old report metadata. `scripts/lung_hardware.py`
 records devices actually visible. There is no AUTO/HETERO accelerator routing.
 
-## Dependencies
+## Install a matching runtime
 
 Reuse Python 3.12 .venv. Install matching torch/torchvision builds from the same
 backend index. The executed CPU pair is torch 2.14.1+cpu / torchvision 0.29.1+cpu,
@@ -33,7 +36,7 @@ Upstream training scripts are third-party executable code; review them and their
 license before launching training. Inference constructs the network locally and
 does not evaluate upstream JSON expressions.
 
-## Smoke and latency
+## Verify execution and measure latency
 
 ```bash
 .venv/bin/python scripts/smoke_lung.py --model-dir models/luna16 --device cpu --output artifacts/smoke.json
@@ -46,7 +49,7 @@ hashing, preprocessing, detection and source mapping. It excludes clinician revi
 Phantom latency does not predict full-size chest CT latency. Keep protocol, volume
 size, model hash, hardware, driver, precision and power state with comparisons.
 
-## Intel practice retained
+## Retained Intel engineering experiment
 
 The [legacy benchmark](../../scripts/benchmark_intel.py) compares identical fixed
 2.5D tensors across PyTorch/ONNX Runtime/OpenVINO and verifies NPU-only execution
@@ -56,7 +59,7 @@ Adapting 3D RetinaNet to Intel hardware requires a separate supported export,
 operator/shape audit, source-level candidate parity and measured device execution.
 Do not apply old 4.94ms per-stack timing to the new full-volume detector.
 
-## Containers and UI
+## Local container and review interface
 
 The CPU Docker image's default command is the new nodule CLI. Weights/data must
 be mounted locally; none are baked into the image.

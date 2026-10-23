@@ -1,12 +1,13 @@
-# Research preparation, GPU training and evaluation
+# Train and evaluate the lung CT model
 
 [Overview](../../README.md) · [Data permissions](data.md) · [Hardware](deployment.md)
 
-## Establish the experiment first
+## Define the research experiment
 
-This release supplies a pretrained inference path and a guarded upstream training
-launcher. It does not claim a newly trained or independently validated nodule
-model. Obtain permitted public labels, resolve reader annotations and freeze
+CT supplies pretrained inference and a guarded upstream training launcher.
+Training/evaluation stay in this project; LOVISA consumes only bounded synthetic
+research results. No newly trained or independently validated nodule model is
+claimed. Obtain permitted public labels, resolve reader annotations and freeze
 patient-separated training/validation/test cohorts before training. Audit overlap
 with the pretrained model before using it as a benchmark. Never split neighboring
 slices of the same patient between cohorts.
@@ -22,7 +23,7 @@ spacing .703125/.703125/1.25mm. It does not normalize HU, invent annotations or
 assign a patient/split. Save the printed image hash in the manifest. A generated
 phantom is supported for software tests but not clinical training claims.
 
-## Manifest
+## Keep labels, identities and splits explicit
 
 The manifest schema is in [research.py](../../src/lung_nodule/research.py).
 Illustrative one-case entry below must be expanded to all three nonempty cohorts;
@@ -61,7 +62,7 @@ truth centers outside the image. Completeness is attested, not independently pro
 .venv/bin/python -m lung_nodule.research validate --manifest data/research/manifest.json --dataset-root data/research/prepared
 ```
 
-## CUDA training
+## Launch training on actual CUDA hardware
 
 Install matching CUDA torch/torchvision wheels, then `pip install -e ".[training]"`.
 The referenced upstream configuration requires substantial GPU memory (its model
@@ -91,7 +92,7 @@ is tensor-only and strict; provenance identifies the supplied checkpoint. No
 clinical endorsement or automatic promotion follows from successful loading.
 End-to-end GPU training remains **unexecuted** on the CPU-only development host.
 
-## Detection evaluation
+## Evaluate detection separately from review
 
 The engineering FROC scorer consumes JSON containing one entry per complete scan:
 
@@ -125,3 +126,12 @@ Before usefulness claims, measure external patient/site performance, lesion-size
 and subtype failures, false positives, caliper error and report factual errors.
 A clinician reader study should include correction time and missed findings.
 No quantitative clinical acceptance threshold has been established here.
+
+
+## Relationship to LOVISA
+
+Do not put public datasets or training labels into LOVISA's fictional database.
+A successfully trained checkpoint is not automatically promoted into LOVISA or
+approved clinically. Validate its protocol, source mapping, candidate performance
+and report evidence separately before selecting it for a research run.
+[Integration boundary](mhcra.md).

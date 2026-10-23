@@ -1,4 +1,4 @@
-"""Synthetic-only, portable inspection bundles for the MHCRA local workbench."""
+"""Synthetic-only inspection bundles for LOVISA; retained MHCRA tissue-mask interface."""
 from __future__ import annotations
 
 import argparse

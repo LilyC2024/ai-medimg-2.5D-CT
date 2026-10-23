@@ -1,21 +1,26 @@
-> Legacy tissue-mask / MHCRA v1 reference. The active lung-nodule documentation starts at [docs/README.md](README.md). Historical results below must not be attributed to the new detector.
+# Legacy tissue-mask model card
 
-# Model card — prototype 0.8.0
+[Active lung model card](lung/model-card.md) · [Legacy architecture](architecture.md)
 
-Intended use: engineer/researcher inspection of agreement with versioned classical CT head-region pseudo labels. Input: supported regular single-frame monochrome CT, normalized/resized ordered neighboring slices. Output: four heuristic candidate classes on the source image grid. Architecture and label semantics are documented in architecture.md.
+| Item | Historical experiment |
+| --- | --- |
+| Task | Agreement with four heuristic head-region pseudo classes |
+| Model | Compact 2.5D U-Net; 482,788 parameters, base width 16, 256×256 |
+| Training | One CT series; 18 train, 4 validation, 4 test and 4 buffer centers; eight CPU epochs |
+| Selection | Validation foreground macro Dice; seed 13, Adam and CE/Dice loss |
+| Raw / postprocessed test agreement | ~0.303 / ~0.145 foreground macro Dice against the teacher |
+| Deployment evidence | Verified ONNX CPU and measured full-model Intel NPU on a fixed model grid |
+| Missing evidence | Expert labels, patient/site external validation, lesion diagnosis and clinical utility |
 
-Training: one CT series, 18 train centers, four validation centers, two-center buffer at each boundary. Seed 13, base width 16, 256x256, eight CPU epochs, Adam LR 0.001, CE+Dice. Model selection uses validation foreground macro Dice. Test is four contiguous centers from the same series, not independent patients. Sources, split and checkpoint hashes are in reports; no public artifact download is promised. Original best.pt is safely compatible with the architecture but is historical, unversioned evidence, and is not deployed as the repaired model.
+Broad teacher classes include nonbone tissue, class 1 is rare and overlap dominates
+central regions. Teacher agreement cannot establish medical accuracy or superiority
+to that teacher. Uncertainty is model behavior, not clinical confidence.
 
-Raw test agreement is weak overall (approximately 0.303 foreground macro Dice), and existing postprocessing reduces agreement (approximately 0.145). Class 1 is rare; teacher overlap dominates central tissue. The teacher's -100 HU bone threshold includes soft tissue. These limitations make anatomical naming unreliable. Teacher agreement cannot demonstrate superiority to the teacher. No clinical labels, lesion diagnosis, calibration generalization, site/scanner analysis or external validation exists.
+The separate LOVISA legacy fixture uses a tiny 32×32/base-width-4 model trained
+for 12 epochs; it is not the measured 256×256 baseline. Its tissue-mask output is
+not a nodule detector. [Bridge](mhcra-workbench.md).
 
-Deployment: graph-checked ONNX CPU and full-model Intel NPU execution are measured. CPU parity and FP16 NPU results use different declared gates. Uncertainty is a model behavior summary, not validated clinical confidence. Thick slices, crop extremes, small classes, motion/metal and parameter sensitivity may cause failure. Unsupported geometry fails explicitly rather than being accepted silently.
-
-Human verification: no clinical expert review is claimed. An AI coding agent inspected code, generated fixtures, repaired implementation, ran tests and local experiments, and visually inspected a local pseudo-label contact sheet. The user selected MIT for code. Source-data permissions and any human approval of labels remain open. This project has no CE claim and must not support patient diagnosis.
-
-MHCRA integration: the optional synthetic workbench generates a separate tiny
-32×32/base-width-4 model trained for 12 epochs. It is distinct from the 256×256
-research baseline above. Its masks, source-grid candidate counts and overlays are
-inspection artifacts; acceptance in MHCRA does not convert them into clinical
-findings. Execution/provenance metadata in portable bundles is producer-declared.
-See [the integration contract](mhcra-workbench.md) and
-[recorded software checks](../reports/mhcra_integration.json).
+An AI coding assistant implemented/reviewed software and tests. No independent
+expert clinical approval is claimed. Source sample permissions remain unresolved;
+code MIT terms grant no patient-data rights. Historical checkpoints/metrics are
+identified by their own records, not current lung-project performance.

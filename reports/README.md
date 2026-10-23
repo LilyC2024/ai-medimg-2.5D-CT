@@ -1,14 +1,15 @@
-# Evidence inventory
+# Recorded technical evidence
 
-Active lung evidence: [pretrained smoke](lung_pretrained_smoke.json) and
-[CPU phantom latency](lung_cpu_latency.json), plus the
-[evaluation record](../EVALUATION.md). The smoke uses generated pixels and proves
-local execution/report blocking, not clinical detection accuracy.
+[Current evaluation](../EVALUATION.md) separates software checks from clinical
+performance. [lung_pretrained_smoke.json](lung_pretrained_smoke.json) records actual
+local pretrained inference on generated CT and blocked unapproved reporting.
+[lung_cpu_latency.json](lung_cpu_latency.json) records phantom CPU latency, not
+full-scan clinical reading time.
 
-All other existing JSON reports and windows-constraints.txt describe the earlier
-head-region pseudo-label pipeline or its synthetic MHCRA v1 bridge. Their model,
-input and commit hashes identify historical experiments. Do not transfer their
-Dice, calibration, latency or Intel NPU results to the lung detector.
+Other existing JSON records describe the legacy 2.5D head-region pseudo-label or
+synthetic tissue-mask integration experiments. Their input/model/commit hashes
+identify those historical runs. Do not apply legacy Dice, calibration or Intel
+NPU results to the current lung detector. [Legacy evidence guide](../docs/validation.md).
 
-Local runs, actual reviewer records, weights and research images belong under
-ignored artifacts/, models/ and data/, not in this public folder.
+Commit no new patient images, local approvals, reviewer identities or weights here.
+Keep local runs under ignored `artifacts/`, `models/` and `data/`.

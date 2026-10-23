@@ -1,82 +1,53 @@
-# v0.10.0 — implemented MHCRA nodule compatibility
+# Lung project release and engineering record
 
-23 October 2026. [Overview](../../README.md) · [Checks](../../EVALUATION.md)
+[Overview](../../README.md) · [Evaluation](../../EVALUATION.md)
 
-- Replaced incomplete nodule-v1 export with **mhcra-lung-nodules-v2**: source HU,
-  every-slice previews, typed status/review, hashes and canonical report.
-- Added ML-free shared schema/NumPy rendering/validator; MHCRA vendors these with
-  drift checking, preserving exact behavior across Python/Pillow environments.
-- Added `deploy.mhcra_lung_bridge` for offline fixture/pretrained pending-review
-  bundles. No approval is simulated. Default standalone export stays review-gated.
-- Kept patient alias/study identity binding and strict synthetic-only exchange;
-  bounded export rejects oversized studies instead of silently cropping them.
-- Moved report template into `contracts.research_report`, keeping the workspace
-  wrapper compatible. Arbitrary producer prose fails receiver validation.
-- Added adversarial archive tests and CPU/Windows CI bridge commands. Updated
-  integration, API and review documentation. Existing detector/training/legacy
-  behavior remains available; dependency versions were inspected, not upgraded.
-- MHCRA now has an authenticated nodule viewer/caliper/acceptance path and a
-  source-linked appendix covered by final report approval. Its safety policy,
-  diagnostic catalog and image exclusion from the LLM remain unchanged.
+## Documentation update — LOVISA naming
 
-## Previous v0.9.0 lung research release
+The history application is now **LOVISA — Medical History & Clinical Reasoning
+Assistant**. Rewritten guides distinguish CT image analysis from LOVISA history/
+reasoning/report review, explain the reused pictures and separate current tools
+from legacy evidence. Existing repository, package and `mhcra-*` interfaces stay
+stable; no detector/schema/weight change is part of this documentation update.
 
+## v0.10.0 — implemented nodule interoperability
 
-22 October 2026. [Overview](../../README.md) · [Actual checks](../../EVALUATION.md)
+Added nodule-v2 exchange with bounded HU, every-slice previews, typed review/status,
+hash manifest and canonical report. ML-free contracts/NumPy rendering are shared
+with the LOVISA consumer and checked for drift. The dedicated bridge creates
+pending fixture/pretrained input without issuing approval. Default standalone
+export remains review-gated. Oversized exports fail rather than crop silently.
 
-## Changes
+LOVISA added authenticated candidate/caliper review and a source-linked appendix
+covered by separate final clinical approval. Legacy tissue-mask support remains.
+[Compatibility/migration](mhcra.md) · [Exact test/run evidence](../../EVALUATION.md).
 
-- Reframed the active deliverable from heuristic tissue segmentation to local lung
-  nodule candidate detection and human-reviewed research summaries.
-- Added pinned official MONAI 3D RetinaNet loading, strict tensor-state checks,
-  explicit CPU/CUDA devices and verified offline artifacts.
-- Added source geometry/identity, candidate, provenance, caliper and review schemas.
-  Source-grid box mapping transforms all eight corners through RAS/LPS affines.
-- Added a generated chest-like phantom and explicitly non-ML fixture finder.
-  Added separately executed real pretrained smoke; no newly trained model claimed.
-- Added source/overlay viewer, accept/reject/uncertain decisions, caliper previews,
-  source-hash evidence and approval-bound deterministic report export.
-- Added approved public research input separated from MHCRA synthetic records,
-  resampled HU NIfTI preparation, patient/hash-separated manifest validation,
-  upstream CUDA training launch and transparent engineering FROC scoring.
-- Added actual-device inventory and full-pipeline latency scripts. Kept historical
-  OpenVINO/NPU evidence separate from unexecuted new-detector acceleration.
-- Split the oversized root README into a short overview and linked subject guides;
-  added an API/folder reference and reproducible generated illustration.
-- Fixed Windows default-encoding failures with explicit UTF-8 text IO, Unicode
-  regressions, consistent formatting and independent platform CI execution.
+## v0.9.0 — lung research workflow
 
-## Removed and retained
+Introduced pinned MONAI 3D RetinaNet loading, offline tensor-only weights, explicit
+CPU/CUDA, RAS/LPS source-grid mapping, generated chest phantom, fixture finder,
+reviewable calipers and deterministic research reports. Added separate permitted
+public-research input, patient/hash-separated manifests, upstream CUDA training
+launcher, engineering FROC, device inventory and latency scripts.
 
-Removed scripts/report.py: obsolete Day 6 pseudo-label report generator whose
-anatomical naming and input filenames no longer represented the active workflow.
-Removed scripts/make_index.py: redundant compatibility alias for prepare_case.py.
-Updated scripts/check.py and CI to pytest so the new tests cannot be silently
-omitted by unittest discovery. The full old README moved to legacy-pipeline.md
-with corrected relative links and explicit historical labeling.
+Windows UTF-8 fixes and full pytest collection replaced incomplete unittest-only
+checks. Removed obsolete pseudo-label report generation/redundant index aliases;
+retained the DICOM loader, U-Net/ONNX/Intel tools and legacy bridge for reproducibility.
+Their metrics remain historical. [Legacy changes](../release_notes.md).
 
-Retained the shared loader, geometry tests, old 2.5D training/export, ONNX parity,
-OpenVINO benchmark and MHCRA v1 bridge because they have reproducibility or
-compatibility value. Removing them would break existing MHCRA consumers and erase
-useful engineering evidence. Historical report hashes remain historical.
+## Engineering and portfolio descriptions
 
-## CV and interview descriptions
+Supported description: “Built a local CT research assistant around pretrained
+MONAI 3D RetinaNet with source-preserving annotations, manual physical measurements,
+review-gated evidence-linked reporting and a validated synthetic connection to
+LOVISA's local history workflow.”
 
-Defensible: “Built a local CT research assistant around pretrained MONAI 3D
-RetinaNet, with geometry-preserving candidate overlays, source-bound manual
-measurements and human-reviewed evidence-linked reports; added patient-separated
-dataset validation and CPU/CUDA deployment workflows.”
+A separate claim may describe the measured historical 2.5D ONNX/OpenVINO Intel NPU
+experiment, with its original task/hardware/evidence. Do not claim clinically
+validated cancer detection, new-model NPU acceleration, upstream benchmark
+accuracy, a newly trained model or reduced clinician reading time.
 
-Also defensible with the historical context: “Implemented and measured a separate
-2.5D ONNX/OpenVINO deployment experiment on an Intel NPU, checking numeric/label
-parity and explicit device execution.” Cite the old task, hardware and evidence.
-
-Do not claim to have trained a clinically validated cancer detector, demonstrated
-new-model NPU acceleration, achieved upstream benchmark accuracy, or reduced
-doctors' reading time. No clinical reader study or new patient-data evaluation
-exists. Identify pretrained work and upstream contributions explicitly.
-
-Development used an AI coding assistant for implementation, test generation and
-documentation. This release did not run autonomous medical agents or independent
-human clinical review. The companion MHCRA's LangGraph specialists are separate
-runtime components, described in [integration](mhcra.md).
+AI coding assistance supported implementation, tests and documentation. Runtime
+CT has no LLM agents. LOVISA's sequential specialist roles are distinct from
+coding review subagents; neither software review nor scripted approval is clinical
+verification. [LOVISA architecture](https://github.com/LilyC2024/Medical-AI/blob/main/docs/ARCHITECTURE.md).

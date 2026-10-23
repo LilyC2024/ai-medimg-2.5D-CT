@@ -1,68 +1,63 @@
-# Input, research data and licensing
+# CT inputs, permissions and source evidence
 
-[Overview](../../README.md) · [Training](training.md)
+[Overview](../../README.md) · [Training](training.md) · [LOVISA integration](mhcra.md)
 
-## Supported input
+## Supported volume
 
-One directory containing only one regular single-frame monochrome DICOM CT series.
-Lung-path limits: 512 slices, 1024 pixels per in-plane dimension, 128Mi source
-voxels. The legacy loader default remains 64Mi. Resampling has a separate 256Mi
-voxel allocation limit and fails before an oversized output allocation.
-Reject localizers, multiframe images, mixed dimensions/series, duplicate/irregular
-positions and in-plane displacement/gantry tilt. Regular oblique geometry works.
-The nodule path requires consistent study/frame identities, unique SOP identities
-and at least two slices.
+One directory must contain one regular single-frame monochrome CT series.
+The lung path allows at most **512 slices**, **1024 pixels per plane dimension**
+and **128 Mi source voxels**; resampling has a separate **256 Mi voxel** limit.
+The legacy loader default is 64 Mi voxels. Oversized volumes fail before allocation;
+none are silently truncated.
 
-Public research input requires <=2.5mm slice spacing and <=1.5mm in-plane pixels.
-Intended protocol: complete adult noncontrast chest CT. The operator attests scope;
-software does not establish coverage from BodyPartExamined. Unsupported volumes
-fail, rather than being truncated. No screenshot or clinical upload service exists.
+Required geometry/identity checks reject localizers, multiframe CT, mixed dimensions,
+mixed studies/frames, duplicate SOP identities, irregular positions and gantry
+shift. Regular oblique geometry is supported; at least two slices are required.
+Public research input requires ≤2.5 mm slice spacing and ≤1.5 mm in-plane spacing.
 
-## Generated data
+Intended research protocol is complete adult noncontrast chest CT. Coverage and
+protocol are operator attestations, not automatic image classifications. A JPEG
+or single screenshot does not provide the required volume geometry. Clinical
+upload/diagnostic use is unsupported. [Scope](../regulatory_scope.md).
 
-The chest-like phantom has 32 slices, 64x64 pixels, 1.5x1x1mm spacing and an optional
-known 8mm sphere. The deterministic component finder is non-ML, rejects public
-research input, and uses score 1 as a fixture sentinel. Changed bytes invalidate
-the neighboring hash marker; a trusted operator can nevertheless rewrite markers.
+## Generated fixture
+
+The equation-generated phantom has 32×64×64 pixels, 1.5×1×1 mm spacing and an
+optional known 8 mm sphere. No patient pixels/headers are copied. The non-ML
+component finder uses score 1 as a fixture sentinel and rejects public input.
+A neighboring source-hash marker detects changed bytes, but is not independent
+proof of origin because a trusted local operator can rewrite it.
 
 ## Public research approval
 
-Obtain permitted deidentified research DICOM separately. Keep data outside Git and
-MHCRA's fictional patient database. No dataset downloads automatically. Create:
+Obtain permitted deidentified research data separately and keep it outside Git and
+LOVISA's fictional database. Nothing downloads a patient dataset automatically.
+Supply an approval file with the real dataset/version, terms and approving operator:
 
 ```json
 {
   "public_research_only": true,
-  "dataset": "Permitted public collection and version",
+  "dataset": "Permitted collection and version",
   "license": "Applicable terms and access permission",
   "approved_by": "Actual approving research operator",
   "protocol": "adult-noncontrast-chest-complete"
 }
 ```
 
-Pass `--approval path/to/file.json` to detection/preparation. This is an operator
-attestation, not proof of anonymization or ethics approval. Never mark real data
-synthetic. MHCRA nodule exchange rejects all public research input.
+Pass it using `--approval` to detection/preparation. This attests permission/scope;
+it does not independently prove anonymization or ethics approval. Never relabel
+public/clinical data as synthetic. LOVISA rejects public-research exchanges.
 
-## Dataset strategy
+## Dataset and licensing boundaries
 
-- [LUNA16](https://luna16.grand-challenge.org/Procedure/): volumetric location
-  benchmark and official folds; use official scoring for challenge claims.
-- [LIDC-IDRI](https://www.cancerimagingarchive.net/collection/lidc-idri/): original
-  DICOM and reader XML. Resolve reader disagreements explicitly. Subjective
-  malignancy ratings are not uniformly pathology-confirmed diagnoses.
-- [LUNA25](https://luna25.grand-challenge.org/overview-goals/): later malignancy-risk
-  research, not a substitute for whole-scan detection evaluation.
+LUNA16 location/fold evaluation, LIDC-IDRI reader annotations and later malignancy
+research answer different questions. Reader malignancy ratings are not uniformly
+pathology truth. The pretrained model uses LUNA16 development data: audit overlap
+before any independent evaluation. Split by patient, include genuinely annotated
+negatives and never interpret missing labels as negative truth.
 
-No real public dataset was imported/evaluated in this release. Audit overlap with
-the pretrained model's LUNA16 development data before claiming independent results.
-Split by patient, include genuine negatives, and never treat missing annotation as
-negative truth. LUNA irrelevant/excluded findings need official scorer handling.
-
-## Licenses and privacy
-
-Original code is MIT; upstream MONAI code/weights and datasets have separate
-licenses/notices. `fetch-model` retains official LICENSE and data-license files.
-Do not commit weights, patient images, original identifiers, research approvals,
-local reviewer names or workspaces. Public reports in this repository contain
-synthetic/technical results only. Dataset permission is separate from code licensing.
+No public patient cohort was imported/evaluated in the recorded release.
+[Training/evaluation protocol](training.md) separates implemented tooling from
+unexecuted experiments. Code is MIT; model assets/upstream code/datasets retain
+separate terms. `fetch-model` retains upstream licenses. Commit no patient images,
+original identifiers, weights, local approvals or reviewer workspaces.

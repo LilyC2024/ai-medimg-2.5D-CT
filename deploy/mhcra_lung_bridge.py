@@ -1,4 +1,4 @@
-"""Offline generated-synthetic nodule jobs for MHCRA; never approves any review."""
+"""Offline generated-synthetic nodule jobs for LOVISA; legacy MHCRA entry point, no approval."""
 
 import argparse
 from pathlib import Path

@@ -1,47 +1,62 @@
-> Legacy tissue-mask / MHCRA v1 reference. The active lung-nodule documentation starts at [docs/README.md](README.md). Historical results below must not be attributed to the new detector.
+# Reproduce the retained legacy experiment
 
-# Reproduction commands
+[Current lung setup](../README.md) · [Legacy synthetic quickstart](legacy-pipeline.md)
 
-Install with the README's Python 3.12 CPU commands first. Dependencies are defined by pyproject; `requirements.txt` forwards to it. Windows constraints record the measured versions, not a universal cross-platform lock. The environment evidence, source hashes and frozen index hashes link every run to its implementation. Historical checkpoint loading uses weights_only=True and exact architecture loading; no arbitrary-pickle compatibility fallback exists.
+Use Python 3.12 with the `ml` extras. `pyproject.toml` is authoritative;
+requirements.txt forwards to it. Windows constraints describe recorded versions,
+not a universal cross-platform lock. Run `python -m pytest -q`, not unittest alone,
+to collect both current and legacy tests.
 
-## Synthetic verification
+## Permitted-data baseline
 
-The README commands generate a tiny CT, prepare its labels/index, train a small smoke model, validate ONNX, and execute CLI. Tests generate their own axial/oblique/rescaled/RLE DICOM, checkpoint and ONNX files in temporary directories. Required tests execute without real files or pretrained assets. `python -m unittest discover -s tests -v` and lint must exit zero. CI runs these on Linux and Windows CPU; NPU is a local hardware job.
+Use the generated fixture or an independently permitted supported series. The
+historical real sample has no verified public download. From the repository root:
 
-## Real-data baseline
-
-Prerequisite: acquire a permitted supported CT using data.md; the local historical sample has no verified public download. These commands write ignored local artifacts:
-
-```powershell
-.\.venv\Scripts\python.exe scripts/prepare_case.py --series-dir data/dicom_series_01 --output-dir artifacts/real/processed
-.\.venv\Scripts\python.exe scripts/train.py --index-path artifacts/real/processed/index.csv --output-dir artifacts/real/train --model-dir artifacts/real/models
-.\.venv\Scripts\python.exe scripts/infer.py --index-path artifacts/real/processed/index.csv --checkpoint artifacts/real/models/best.pt --output-dir artifacts/real/eval --processed-dir artifacts/real/eval --split test --batch-size 1 --uncertainty-method none
-.\.venv\Scripts\python.exe scripts/export_verified.py --checkpoint artifacts/real/models/best.pt --index artifacts/real/processed/index.csv --onnx artifacts/real/model.onnx --output artifacts/real/runtime
-.\.venv\Scripts\python.exe deploy/cli_infer.py --series-dir data/dicom_series_01 --checkpoint artifacts/real/models/best.pt --onnx-path artifacts/real/model.onnx --output-dir artifacts/real/prediction --output-formats mask
+```bash
+.venv/bin/python scripts/prepare_case.py --series-dir data/permitted-series --output-dir artifacts/legacy/processed
+.venv/bin/python scripts/train.py --config configs/baseline.json --index-path artifacts/legacy/processed/index.csv --output-dir artifacts/legacy/train --model-dir artifacts/legacy/models
+.venv/bin/python scripts/infer.py --index-path artifacts/legacy/processed/index.csv --checkpoint artifacts/legacy/models/best.pt --output-dir artifacts/legacy/eval --processed-dir artifacts/legacy/eval --split test --batch-size 1 --uncertainty-method none
+.venv/bin/python scripts/export_verified.py --checkpoint artifacts/legacy/models/best.pt --index artifacts/legacy/processed/index.csv --onnx artifacts/legacy/model.onnx --output artifacts/legacy/runtime
+.venv/bin/python -m deploy.cli_infer --series-dir data/permitted-series --checkpoint artifacts/legacy/models/best.pt --onnx-path artifacts/legacy/model.onnx --output-dir artifacts/legacy/prediction --output-formats mask
 ```
 
-Preparation validates every reference, shape and class ID and saves transform/config/checksum metadata. Training rejects missing validation, writes loss/metric histories, checkpoint provenance and checksum, and selects using validation only. Inference writes raw and postprocessed global metrics, failure slices, local overlays and NPZ predictions. Export checks the graph and all held-out tensors; failed parity exits nonzero. CLI emits a source-grid mask with numeric geometry, a preprocessing report and runtime report. This CLI does not silently attach full-series metrics to a held-out report. Local overlays are not public assets.
+Frozen splits/hashes precede model selection. Move the processed directory intact;
+use explicit data_root when needed. `infer --split test` evaluates held-out centers;
+whole-series CLI output is a different artifact. Loading is tensor-only with exact
+architecture/preprocessing checks; there is no arbitrary pickle fallback.
 
-`CT25DDataset(index, data_root=...)` resolves references against an explicit root; otherwise references are relative to the index parent. Copy the complete processed directory to another location and run the same index command to test portability. Manifests are frozen and checksummed before training. Do not edit the split after selecting a checkpoint.
+## Intel NPU comparison
 
-## Intel NPU
+Use the recorded 256×256 graph and exported identical input/reference tensors.
+Install compatible OpenVINO/Intel driver separately (`.[intel]`):
 
-Windows prerequisite: supported Intel NPU driver plus `pip install -e ".[intel]"` in an environment compatible with OpenVINO. The measured machine is Core Ultra 7 155U with OpenVINO 2026.3.1 and driver evidence supplied in the initial setup. The benchmark can also run from an inference-only environment with numpy, onnxruntime and openvino, using tensors exported by the training environment.
-
-```powershell
-.\.venv\Scripts\python.exe scripts/benchmark_intel.py --onnx artifacts/real/model.onnx --inputs artifacts/real/runtime/runtime_inputs.npz --output reports/intel_benchmark.json --runs 30
+```bash
+.venv/bin/python scripts/benchmark_intel.py --onnx artifacts/legacy/model.onnx --inputs artifacts/legacy/runtime/runtime_inputs.npz --output artifacts/legacy/intel-benchmark.json --runs 30
 ```
 
-Output identifies EXECUTION_DEVICES, precision hint, first inference, compile time, warmup, p50/p95, throughput, process memory, probability/label differences and held-out Dice on the model grid. CPU has one thread and one request; NPU uses one request. Application model caching is disabled; driver/internal caches were not reset, so repeated compilation may be warm. CPU probability gates and NPU quality gates are separate; compiler failures are recorded. NPU-only device evidence is required for an NPU success claim. Timings are sequential warm measurements, not power/energy measurements or universal speedup claims.
+Historical hardware was Core Ultra 7 155U, driver 32.0.100.5540, OpenVINO 2026.3.1.
+The benchmark records explicit execution devices, compile/first/warm timings,
+precision and numeric/label/Dice agreement. NPU success requires NPU-only evidence.
+CPU/NPU gates differ. Cumulative process memory is not device RAM; caches/power/
+thread settings matter. This is not new-detector acceleration evidence.
 
-## Experimental service and container
+## Experimental legacy API and container
 
-Set CT25D_CHECKPOINT and CT25D_ONNX to the matching files, then:
+Set CT25D_CHECKPOINT and CT25D_ONNX to matching local artifacts, then launch
+`python -m uvicorn deploy.app:app --host 127.0.0.1 --port 8000`.
+`GET /health` stays 503 until initialization; `POST /predict` accepts one supported
+ZIP and returns source mask plus numeric technical metadata. Limits: 64 MiB
+compressed, 256 MiB expanded and 512 files. Invalid paths/geometry fail and temporary
+files are removed. This is a localhost experiment, not a clinical/multi-user API.
 
-```powershell
-.\.venv\Scripts\python.exe -m uvicorn deploy.app:app --host 127.0.0.1 --port 8000
+The current Docker image defaults to the **lung CLI**. To run legacy inference,
+override the entrypoint explicitly:
+
+```bash
+docker build -t lung-research .
+docker run --rm --entrypoint python -v "$PWD/artifacts/legacy:/work" lung-research -m deploy.cli_infer --series-dir /work/series --checkpoint /work/models/best.pt --onnx-path /work/model.onnx --output-dir /work/prediction --output-formats mask
 ```
 
-GET /health returns 503 until runtime initialization succeeds. POST /predict accepts one ZIP and returns downloadable prediction.zip containing source-grid mask and sanitized technical geometry. Upload limit 64 MiB; uncompressed archive limit 256 MiB; 512 files; image limits in data.md. Traversal, symlinks and ambiguous directories are rejected. Temporary extraction and output directories are removed on success/failure. Service tests cover valid, malformed, oversized and unavailable-model behavior. No production or multi-user service claim is made.
-
-Dockerfile is a CPU CLI recipe using Python 3.12 and CPU PyTorch, with patient/model artifacts excluded from build context. The Linux CI job builds and exercises the CPU image with generated synthetic inputs; a successful hosted result is required to close this gate. No Docker engine is installed on the local host. Mount permitted data and matching models at runtime; the CPU container does not promise Windows NPU passthrough.
+Use generated source in `/work/series` for this example. Models/data are mounted,
+not bundled. Hosted Linux CI exercised both paths. Local Docker verification was
+blocked by daemon access; no local container pass is claimed. [Evidence](validation.md).

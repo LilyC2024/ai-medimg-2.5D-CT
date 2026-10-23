@@ -1,11 +1,21 @@
-> Legacy tissue-mask / MHCRA v1 reference. The active lung-nodule documentation starts at [docs/README.md](README.md). Historical results below must not be attributed to the new detector.
+# Intended use and clinical boundary
 
-# Preliminary regulatory scope
+[Overview](../README.md) · [Model card](lung/model-card.md) · [LOVISA integration](lung/mhcra.md)
 
-Current intended purpose is an engineering research demonstration of agreement with heuristic labels. It is not supplied for diagnosis, treatment, patient triage or clinical decision making, and makes no CE claim. Calling software research does not itself settle legal qualification; actual intended purpose, claims and use must be assessed.
+The CT application is a local educational/research assistant for source-image
+inspection, candidate annotations and reviewable measurements. LOVISA organizes
+fictional histories and prepares a source-linked report for human review. Neither
+is supplied as a diagnostic, treatment, triage or automatic medical-decision system.
+No certification, regulatory clearance, cancer-diagnosis performance or clinical
+reader-time benefit is claimed.
 
-For a future medical purpose, EU MDR qualification/classification follows intended purpose. Software providing information for diagnostic or therapeutic decisions can fall under Rule 11: usually class IIa, with class IIb/III possible when the specified consequences reach serious deterioration/surgical intervention or death/irreversible deterioration. This is a preliminary scope discussion, not a classification determination. Consult current [European Commission MDCG 2019-11 Rev.1 guidance, June 2025](https://health.ec.europa.eu/document/download/b45335c5-1679-4c71-a91c-fc7a4d37f12b_en?filename=md_mdcg_2019_11_guidance_qualification_classification_software_en.pdf) and [MDR text](https://eur-lex.europa.eu/eli/reg/2017/745/oj).
+Calling an application research does not establish that a future clinical use is
+permitted. A clinical extension would need a separately defined intended purpose,
+qualified oversight, permitted representative data, risk/security/usability work
+and independent clinical/regulatory assessment. Current synthetic tests and
+historical NPU timing provide none of that clinical authorization.
 
-A clinical extension would require defined clinical purpose/users, clinical evaluation with suitable expert annotations and independent data, risk management, software lifecycle, usability, cybersecurity and post-market planning. The engineering backlog and NPU speed test supply none of those clinical/product approvals.
-
-Proposed research extension: adult noncontrast-head-CT intracranial hemorrhage segmentation for expert-reader research review. Users would be radiologists evaluating candidate lesion extent; missed lesions could delay review and false positives could distract readers. This proposal is separate from the current head-region teacher and needs clinician confirmation. Acquire a permitted multi-patient expert-annotated dataset before implementation; no dataset has been acquired here. Freeze patient splits, including all series per subject, assess scanners/sites, and reserve an external cohort. Compare matched-compute 2D, 2.5D and compact 3D baselines only after target and annotation QA are defined. These experiments and clinical requirements remain open.
+The former head-CT/hemorrhage research idea was exploratory and is not the current
+lung deliverable. Current development targets lung-nodule **candidates**, not all
+abnormalities, malignancy classification or management recommendations. Do not
+infer an unimplemented indication from an old project note.

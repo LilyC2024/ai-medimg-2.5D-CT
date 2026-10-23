@@ -1,64 +1,62 @@
-# Review, measurements and reporting
+# Review CT candidates and measurements
 
-[Overview](../../README.md) · [Contracts](code-reference.md)
+[Overview](../../README.md) · [LOVISA transfer](mhcra.md) · [Contracts](code-reference.md)
 
-1. Generate a fixture or run pretrained detection. Outputs remain unreviewed.
-2. Start the loopback UI and enter the workspace directory, not its parent.
-3. Jump to each candidate; inspect source and amber-box overlay across relevant
-   slices. Indices are zero-based; the visible source slice hash identifies evidence.
-   The display does not infer patient left/right markers.
-4. Accept/reject every candidate. Uncertain blocks completion. Acceptance means a
-   research candidate is retained; it does not diagnose malignancy.
-5. Optionally enable a caliper and enter source slice plus start/end row/column.
-   **Preview measurements** draws a cyan line and calculated length. Forms commit
-   widgets together: enabling a caliper may need a preview submission before the
-   coordinate inputs appear. Endpoints must lie within the candidate box.
-6. Enter the actual reviewer identifier and explicitly attest qualification and
-   image/measurement review. **Complete research review** persists approval only
-   after validation. Tests use scripted synthetic attestations, not real clinicians.
-7. Saved calipers and a report appear after success. Every download rechecks source
-   integrity and reconstructs text; editing report.md does not alter observations.
+## Standalone review
 
-The standalone UI has no login/credential registry and must remain local. This
-research attestation is not MHCRA's authenticated final clinical approval.
+1. Generate a fixture or run installed pretrained detection. Open its **workspace**
+   in the loopback Streamlit UI. Outputs start unreviewed.
+2. Jump to each candidate and inspect source slices plus amber boxes. Indices are
+   zero-based; the displayed source hash identifies evidence. No left/right or lobe
+   label is inferred.
+3. Accept or reject every candidate. “Uncertain” blocks completed review. Acceptance
+   retains a research candidate; it does not establish malignancy.
+4. Optionally enable an in-plane caliper and supply source slice, start/end row and
+   column. **Preview measurements** draws cyan and shows physical length. Form
+   inputs appear after a preview submission when the caliper is first enabled.
+5. Enter the actual reviewer identifier, attest qualification and image/measurement
+   review, then **Complete research review**. Validation precedes approval persistence.
+6. Download the summary. Each download rechecks source integrity and regenerates
+   text; editing report.md cannot change structured findings or approve a report.
 
-## Measurement semantics
+The UI has no login/credential registry. Its local attestation is distinct from
+LOVISA's authenticated imaging acceptance and final clinical approval. Tests use
+scripted reviewers, not clinician validation. Keep it local.
 
-Detector AABB extents are physical source-grid box spans, not lesion diameters,
-segmentation volumes or RECIST. Manual calipers are geometry-aware Euclidean
-source-plane distances. Their appropriateness remains a human judgment. No manual
-contouring or box-editing tool exists; reject an unsuitable candidate box.
+## What the numbers mean
 
-## Workspace
+Box extents are source-grid AABB spans, not lesion diameters, volume or RECIST.
+Calipers are geometry-aware Euclidean distances on one integer source plane;
+endpoints must lie inside the accepted candidate box. Human judgment determines
+whether placement is appropriate. There is no contour/box-editing tool: reject an
+unsuitable candidate. No accepted candidates does not establish normality.
+
+## Workspace files
 
 | File | Purpose |
 | --- | --- |
-| study.json | Candidates, sources, geometry and model provenance |
-| source.npy | Float32 source-grid HU snapshot; not original DICOM |
-| integrity.json | Snapshot and pixel-file digests |
-| review.json | Decisions, calipers and content-bound local attestation |
-| report.md | Convenience text, regenerated from verified structured data |
+| study.json | Candidates, geometry, ordered sources and model provenance |
+| source.npy | Float32 source HU snapshot; not original DICOM |
+| integrity.json | Study and source-array digests |
+| review.json | Explicit decisions/calipers and content-bound local attestation |
+| report.md | Convenience text reconstructed from validated structured data |
 
-Original DICOM is never modified. Keep it for independent evidence reconstruction.
-Workspaces belong under ignored artifacts/. Acquisition date/prior comparison are
-unavailable and stated explicitly; file timestamps are never substituted.
+Original DICOM stays unchanged; retain it for independent reconstruction. Use ignored
+`artifacts/` and new output directories. Dates/prior comparison are unavailable;
+file timestamps are not substituted.
 
-## CLI
+## CLI and LOVISA export
 
-An expert may author Review JSON using the [schema](../../src/lung_nodule/contracts.py),
-including exact `digest(study)`, every decision, reviewer and literal true approval
-and qualification fields. No auto-approve option exists.
+A reviewer may author Review JSON against [contracts.py](../../src/lung_nodule/contracts.py),
+with exact study digest, every decision and explicit qualification/approval fields:
 
 ```bash
 .venv/bin/python -m lung_nodule.cli review --workspace artifacts/pretrained-demo --approval path/to/actual-review.json
 .venv/bin/python -m lung_nodule.cli export --workspace artifacts/pretrained-demo --output artifacts/nodules.zip
 ```
 
-Export requires valid review and generated-synthetic input. The new exchange
-format is not directly accepted by MHCRA's old importer. [Integration](mhcra.md).
-
-
-Current v2 exports include bounded source HU and every-slice previews for the
-implemented MHCRA viewer/calipers. The default standalone export still requires
-your explicit CT review. MHCRA repeats authenticated imaging review and final
-clinical approval; upstream attestation never bypasses those gates. [Integration](mhcra.md).
+Default export requires completed CT review and generated-synthetic input. Current
+nodule-v2 includes bounded HU and every-slice previews and is accepted by LOVISA's
+nodule importer. The dedicated bridge can instead create **pending** input for
+LOVISA review; it does not forge a CT approval. Both paths require LOVISA's own
+imaging acceptance and separate final report approval. [Exact workflow](mhcra.md).

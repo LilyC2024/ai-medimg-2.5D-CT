@@ -1,26 +1,28 @@
-# Model card
+# Lung detector model card
 
-Version 0.10.0 (detector unchanged; nodule-v2 exchange added). [Overview](../../README.md) · [Evaluation](../../EVALUATION.md)
+[Overview](../../README.md) · [Architecture](architecture.md) · [Evidence](../../EVALUATION.md)
+
+Version 0.10.0. This version added exchange interoperability; detector unchanged.
 
 | Item | Description |
 | --- | --- |
-| Task | Candidate pulmonary nodule boxes on supported volumetric CT |
-| Backbone | MONAI 3D ResNet50 RetinaNet, FPN, three anchor shapes |
-| Weights | Official LUNA16 bundle; revision pinned in detection.py |
-| Adaptation | Offline loading, source mapping, review and evidence-linked report |
-| Intended use | Educational local research with expert inspection |
-| Output | Boxes, scores, box spans, optional reviewer-placed calipers |
-| Not implemented | Malignancy diagnosis, all-abnormality detection, segmentation, tracking, management |
-| Local data | Generated phantom; no new patient-data accuracy evaluation |
-| Executed inference | Official weights on generated phantom; smoke JSON records details |
-| Clinical sensitivity/external validation | Unknown/not performed |
-| Accelerators | No CUDA/OpenVINO device available in development host |
+| Task | Candidate pulmonary-nodule boxes on supported volumetric CT |
+| Backbone | MONAI 3D ResNet50 RetinaNet, FPN and three anchor shapes |
+| Weights | Official LUNA16 bundle; fixed revision in detection.py |
+| Adaptation | Offline artifact loading, bounded sliding-window inference, source-grid mapping and human review |
+| Outputs | Candidate boxes/scores, box spans and optional reviewer-selected calipers |
+| Intended use | Local educational/research inspection with expert review |
+| Not implemented | Cancer diagnosis, all-abnormality detection, segmentation, tracking or management recommendations |
+| Executed evidence | Official weights on generated phantom; separate non-ML fixture and software tests |
+| Clinical/external patient evaluation | Not performed; sensitivity and clinical utility unknown |
+| CUDA/new-detector NPU | Actual execution not demonstrated on the recorded CPU-only host |
 
-Upstream metrics belong to their own protocol/cohort and are not application
-accuracy. Audit training overlap. Default threshold .15 is not clinically validated.
-Small/subsolid nodules, motion, unusual acquisitions and domain shifts require
-specific evaluation. No candidates does not exclude cancer or establish normality.
+Default .15 score threshold is not clinically validated. Upstream metrics belong
+to their original cohort/protocol; the changed inference recipe needs independent
+assessment. Audit pretrained training overlap. Small/subsolid lesions, acquisition
+changes and artifacts require specific evaluation. No candidates never rules out
+nodules/cancer. Detector score is not malignancy risk.
 
-The non-ML fixture finder is a different test component, with a sentinel score.
-The legacy four-class 2.5D U-Net is also a different task; its Dice/NPU timings do
-not describe this detector. No expert clinical validation is claimed.
+The fixture finder and legacy four-class 2.5D U-Net are different components/tasks.
+Neither phantom success nor legacy Dice/NPU timing demonstrates this detector's
+clinical performance. LOVISA receives a synthetic research appendix, not a diagnosis.

@@ -1,6 +1,11 @@
-# Module, function and folder reference
+# CT module, function and folder reference
 
-[Overview](../../README.md) · [Architecture](architecture.md)
+[Overview](../../README.md) · [Architecture](architecture.md) · [LOVISA integration](mhcra.md)
+
+The active package is `src/lung_nodule/`. Source validation, detection, geometry,
+review and reporting are separate modules. The older 2.5D modules remain for
+reproduction and the legacy bridge. Stable `mhcra-*` API names refer to LOVISA
+integration; the package contains no LLM agents.
 
 ## New package: src/lung_nodule/
 
@@ -19,7 +24,7 @@
 | contracts.Decision | Accept/reject/uncertain plus optional reviewer caliper |
 | contracts.Review.literal_booleans | Require literal human qualification and approval attestations |
 | Review.verify | Bind digest, exactly one decision per candidate, no uncertainty and valid calipers |
-| contracts.research_report | Canonical deterministic, source-linked report shared with MHCRA; verifies typed review |
+| contracts.research_report | Canonical deterministic, source-linked report shared with LOVISA; verifies typed review |
 | [exchange_contract.NoduleBundle](../../src/lung_nodule/exchange_contract.py) / consistent | Synthetic patient/study/status and exact artifact-role validation |
 | exchange_contract.ExchangeArtifact / safe_path | Bounded sizes, digest, role/index and safe nonreserved relative path |
 | exchange_contract.byte_digest / unique_object | SHA-256 of bytes; reject duplicate JSON keys |
@@ -44,7 +49,7 @@
 | workspace.report_text | Valid study + review → deterministic evidence-linked research text |
 | workspace.complete_review | Re-read workspace; compose report; persist explicit approval last |
 | workspace.reviewed_report | Revalidate and regenerate on download; never trust report.md alone |
-| workspace.export_synthetic_exchange | Generated workspace → self-validated nodule-v2 ZIP; explicit review by default, pending only for the MHCRA bridge |
+| workspace.export_synthetic_exchange | Generated workspace → self-validated nodule-v2 ZIP; explicit review by default, pending only for the LOVISA bridge |
 | [cli.main](../../src/lung_nodule/cli.py) | fetch-model/demo/detect/review/export command parsing and dispatch |
 | [ui.main](../../src/lung_nodule/ui.py) | Loopback Streamlit source viewer, candidate decisions, caliper preview and report download |
 | [research.NoduleTruth / DatasetCase](../../src/lung_nodule/research.py) | Physical reference nodule; patient/study/split/image annotation records |
@@ -83,7 +88,7 @@ Legacy scripts/functions retain source docstrings and references in
 | third_party | Upstream Apache-2.0 license text retained for the adapted MONAI topology |
 | src/data, src/models, src/baselines | Legacy 2.5D dataset/U-Net/teacher kept for reproducibility and v1 bridge |
 | Other src modules | Legacy preprocessing, calibration, evaluation, privacy allowlist and visualization |
-| deploy | Existing ONNX/CPU runtime, experimental API and synthetic legacy/v2 MHCRA producers |
+| deploy | Existing ONNX/CPU runtime, experimental API and synthetic legacy/v2 LOVISA producers |
 | scripts | New reproducible commands plus retained legacy training/export/Intel tools |
 | tests | New pytest functions plus legacy unittest regression classes; generated inputs only |
 | configs | Legacy baseline configuration; active recipe is versioned in detection.py |
