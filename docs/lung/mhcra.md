@@ -75,3 +75,21 @@ CT `contracts.py` and `exchange_contract.py` are ML-free. LOVISA vendors them as
 checks equality and CI pins a tested CT revision. Contract changes require producer,
 consumer and joint tests. Hashes prove consistency, not independent origin/model
 execution or clinical truth. [Function reference](code-reference.md).
+
+## Responsive LOVISA workspace
+
+In LOVISA, choose **CT review**. The local worker reports actual bridge stages
+through fixed `LOVISA_STAGE=` lines and opens completed output for pending
+inspection automatically. `generate_bundle(..., progress=None)` is backward
+compatible; the optional callback receives `starting`, `model` (pretrained only),
+`source`, `detect` and `export`. It supplies progress, never review approval.
+
+LOVISA applies a 110-second process watchdog and exposes cancellation. Its viewer
+checks the full accepted source once per view and each requested preview on
+access; acceptance/final reports still fully revalidate. No schema, model,
+training workflow or standalone CLI time limit changed.
+
+Local generated 32×64×64 producer/receiver smokes took 1.65s (fixture) and 12.43s
+(installed pretrained CPU). These individual runs do not establish diagnostic
+accuracy, full-volume performance or GPU/NPU support. See the
+[LOVISA response-budget guide](https://github.com/LilyC2024/Medical-AI/blob/main/docs/PERFORMANCE.md).

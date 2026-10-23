@@ -18,9 +18,18 @@ def identifier(value):
 
 
 def generate_bundle(
-    destination, patient_id, study_id, *, mode="fixture", model_dir=None, device="cpu"
+    destination,
+    patient_id,
+    study_id,
+    *,
+    mode="fixture",
+    model_dir=None,
+    device="cpu",
+    progress=None,
 ):
     """Run selected real/fixture detector on generated pixels; export pending v2."""
+    report = progress or (lambda stage: None)
+    report("starting")
     identifier(patient_id)
     identifier(study_id)
     if mode not in ("fixture", "pretrained") or (mode == "fixture" and device != "cpu"):
@@ -35,13 +44,17 @@ def generate_bundle(
         import torch
 
         torch.set_num_threads(4)
+        report("model")
         detector = MonaiDetector(model_dir, device=device)
     else:
         detector = PhantomDetector()
+    report("source")
     series = generate_chest(destination / "series")
+    report("detect")
     study, hu = detect_study(
         series, detector, study_id=study_id, patient_alias=patient_id
     )
+    report("export")
     workspace = save_workspace(destination / "workspace", study, hu)
     return export_synthetic_exchange(
         workspace, destination / "exchange/bundle.mhcra.zip", pending=True
@@ -64,6 +77,7 @@ def main():
         mode=a.mode,
         model_dir=a.model_dir,
         device=a.device,
+        progress=lambda stage: print("LOVISA_STAGE=" + stage, flush=True),
     )
     print(f"MHCRA_BUNDLE={result}", flush=True)
 

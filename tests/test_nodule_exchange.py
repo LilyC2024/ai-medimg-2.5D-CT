@@ -29,7 +29,11 @@ def rewrite(data, mutate):
 
 
 def test_pending_producer_requires_human_and_exports_complete_source_grid(tmp_path):
-    path = generate_bundle(tmp_path / "job", "synthetic-checklist", "s1")
+    stages = []
+    path = generate_bundle(
+        tmp_path / "job", "synthetic-checklist", "s1", progress=stages.append
+    )
+    assert stages == ["starting", "source", "detect", "export"]
     bundle, _, files = read_exchange(path.read_bytes(), "synthetic-checklist")
     assert bundle.status == "pending_review" and bundle.producer_review is None
     assert len(bundle.artifacts) == 66 and len(files) == 66

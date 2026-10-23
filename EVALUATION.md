@@ -79,3 +79,14 @@ and expert annotations remain the operator's responsibility.
 Legacy tissue-pipeline Dice, ONNX parity and measured Intel NPU timings are separate
 historical evidence. [Legacy guide](docs/legacy-pipeline.md) ·
 [Report inventory](reports/README.md) · [Intended use](docs/regulatory_scope.md).
+
+## LOVISA response-budget compatibility — 23 October 2026
+
+The bridge adds an optional progress callback and fixed local CLI stage markers.
+Existing exchange, model and review contracts are unchanged. All 81 regression
+tests passed in 36.99s; 13 focused exchange tests passed in 4.31s after adding stage-order assertions.
+The fixture regression checks both progress order and pending review. Existing dependency deprecation/tracing warnings remain.
+Actual local fixture/pretrained CPU producer-receiver smokes completed in 1.65s /
+12.43s using generated 32×64×64 input and no human approvals. GPU/NPU execution
+and clinical accuracy remain untested. LOVISA owns its 110-second UI watchdog;
+standalone CT training/full-volume processing retain their existing workflow.

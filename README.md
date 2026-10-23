@@ -109,3 +109,8 @@ execution is claimed. [Actual evaluation](EVALUATION.md).
 The legacy 2.5D tissue-mask/ONNX/OpenVINO experiment remains reproducible; its
 Dice/NPU timings are separate historical results. Weights and patient data are
 not committed. Dependencies, model assets and datasets retain separate terms.
+
+The LOVISA companion now has a readable patient workspace, a dedicated **CT review**
+view, real-stage progress, cancellation and automatic pending inspection. The
+synthetic bridge supplies stage events without changing the exchange schema or
+automatically approving candidates. [Connection details](docs/lung/mhcra.md).
