@@ -118,7 +118,7 @@ recorded separately. GPU training and new-detector NPU inference were not execut
 on the CPU-only development host. Historical benchmarks and phantom success do not
 demonstrate clinical detection performance. [Actual evaluation](EVALUATION.md).
 
-Current compatibility checks: **81 CT tests** plus companion regression, actual
+Current compatibility checks: **81 CT tests**, companion **146 tests**, actual
 fixture/pretrained/legacy producer-consumer smokes and local Ollama smoke. See
 [EVALUATION.md](EVALUATION.md) for current outcomes and previous hosted checks.
 

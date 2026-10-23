@@ -49,3 +49,7 @@ accelerator execution is inferred from synthetic fixtures or historical results.
 - Joint phase: actual local fixture, installed-pretrained CPU and legacy
   producer/consumer smokes passed with no approvals issued. Both suites, shared
   contract drift, documentation links and hosted CI tracked in EVALUATION.md.
+
+Hosted joint phase passed: CT Windows/Linux, Docker and pretrained jobs; MHCRA
+Python 3.10/3.12 plus fixture/pretrained/legacy integration. Both implementations
+published; exact commits and run links are recorded in EVALUATION.md.

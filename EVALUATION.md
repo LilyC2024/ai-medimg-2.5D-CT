@@ -17,7 +17,19 @@ non-ML fixture execution are reported separately. No new detector training,
 clinical accuracy, reading-time benefit, actual CUDA or new NPU execution is
 claimed. MHCRA performs its own authenticated imaging and final report reviews;
 unit/UI review identities are scripted tests, not clinicians. Current hosted
-release checks are recorded below after execution.
+release checks passed as recorded below.
+
+## Current hosted verification
+
+[CT Actions run 39922103738](https://github.com/LilyC2024/ai-medimg-2.5D-CT/actions/runs/39922103738)
+passed for implementation `e0704b22177a23b323e4d3aff455c447d0579542`: Windows and
+Linux regression/lint, fixture bridge, real pretrained smoke/bridge and Linux
+Docker checks. [MHCRA run 39922198090](https://github.com/LilyC2024/Medical-AI/actions/runs/39922198090)
+passed for consumer `607c8a586fc820f9757b5b5a9b715247005df52f`, with Python
+3.10/3.12 tests, exact contract equality and real fixture/pretrained/legacy
+producer-consumer smoke. Local CUDA/NPU remains unexecuted; no clinical
+performance is inferred. This documentation-only record does not change the
+tested code or the consumer's pinned producer contract.
 
 ## Previous lung research evaluation — 22 October 2026
 
