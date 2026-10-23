@@ -1,6 +1,6 @@
 # Local lung nodule research assistant
 
-**v0.9.0 — local 3D CT candidate detection, source-linked annotations, reviewable
+**v0.10.0 — local 3D CT candidate detection, source-linked annotations, reviewable
 measurements and a short human-reviewed research report.** Repository name retained
 for continuity: `ai-medimg-2.5D-CT`.
 
@@ -98,10 +98,11 @@ approves the report.** An LLM is unnecessary for the short report in this releas
 [Architecture](docs/lung/architecture.md).
 
 MHCRA is a separate local history application. Its four runtime specialists and
-safety/clinician gates are unchanged. The existing synthetic `mhcra-imaging-v1`
-bridge remains available. New nodule exports use a distinct contract that the
-current MHCRA importer does **not** consume; they must not masquerade as tissue
-masks. [Integration boundary and migration](docs/lung/mhcra.md).
+safety/clinician gates are unchanged. MHCRA v0.2 now consumes **mhcra-lung-nodules-v2**, including source HU,
+every-slice annotations and reviewable calipers. Authenticated MHCRA imaging
+acceptance and final clinical approval remain separate. The existing synthetic
+`mhcra-imaging-v1` tissue-mask bridge stays available. Incomplete nodule-v1
+archives need re-export; they cannot be relabeled as tissue masks. [Integration boundary and migration](docs/lung/mhcra.md).
 
 ## Verify and reproduce
 
@@ -117,8 +118,9 @@ recorded separately. GPU training and new-detector NPU inference were not execut
 on the CPU-only development host. Historical benchmarks and phantom success do not
 demonstrate clinical detection performance. [Actual evaluation](EVALUATION.md).
 
-Release checks: **68 local tests**, unchanged companion **120 tests**, and
-[hosted Windows/Linux, Docker and pretrained-smoke checks passed](https://github.com/LilyC2024/ai-medimg-2.5D-CT/actions/runs/39850836849).
+Current compatibility checks: **81 CT tests** plus companion regression, actual
+fixture/pretrained/legacy producer-consumer smokes and local Ollama smoke. See
+[EVALUATION.md](EVALUATION.md) for current outcomes and previous hosted checks.
 
 ## Documentation and project map
 

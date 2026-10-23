@@ -19,6 +19,13 @@
 | contracts.Decision | Accept/reject/uncertain plus optional reviewer caliper |
 | contracts.Review.literal_booleans | Require literal human qualification and approval attestations |
 | Review.verify | Bind digest, exactly one decision per candidate, no uncertainty and valid calipers |
+| contracts.research_report | Canonical deterministic, source-linked report shared with MHCRA; verifies typed review |
+| [exchange_contract.NoduleBundle](../../src/lung_nodule/exchange_contract.py) / consistent | Synthetic patient/study/status and exact artifact-role validation |
+| exchange_contract.ExchangeArtifact / safe_path | Bounded sizes, digest, role/index and safe nonreserved relative path |
+| exchange_contract.byte_digest / unique_object | SHA-256 of bytes; reject duplicate JSON keys |
+| exchange_contract.wire_pixels | Portable NumPy HU window, candidate boxes and source-plane caliper rasterization |
+| exchange_contract.source_pixels | Inspect NPY header, shape, dtype and exact payload before allocation |
+| exchange_contract.read_exchange | Bounded ZIP validation; exact manifest/artifact/report/source/overlay consistency |
 | [sources.sha256](../../src/lung_nodule/sources.py) | Streaming local file digest |
 | sources.load_sources | Approved series → HU, geometry, ordered evidence, source digest and input/protocol kinds |
 | [phantom.generate_chest](../../src/lung_nodule/phantom.py) | New directory → generated DICOM and source marker; optional synthetic sphere |
@@ -37,7 +44,7 @@
 | workspace.report_text | Valid study + review → deterministic evidence-linked research text |
 | workspace.complete_review | Re-read workspace; compose report; persist explicit approval last |
 | workspace.reviewed_report | Revalidate and regenerate on download; never trust report.md alone |
-| workspace.export_synthetic_exchange | Reviewed generated workspace → separate versioned nodule ZIP; not MHCRA v1 |
+| workspace.export_synthetic_exchange | Generated workspace → self-validated nodule-v2 ZIP; explicit review by default, pending only for the MHCRA bridge |
 | [cli.main](../../src/lung_nodule/cli.py) | fetch-model/demo/detect/review/export command parsing and dispatch |
 | [ui.main](../../src/lung_nodule/ui.py) | Loopback Streamlit source viewer, candidate decisions, caliper preview and report download |
 | [research.NoduleTruth / DatasetCase](../../src/lung_nodule/research.py) | Physical reference nodule; patient/study/split/image annotation records |
@@ -56,6 +63,7 @@ affected operation; they do not silently replace input, models or approvals.
 
 | File | Entry points and purpose |
 | --- | --- |
+| [deploy.mhcra_lung_bridge](../../deploy/mhcra_lung_bridge.py) | identifier validates IDs; generate_bundle creates fixture/pretrained synthetic workspace and pending nodule-v2 export; main parses CLI; no human approvals |
 | [smoke_lung.py](../../scripts/smoke_lung.py) | main: real local fixture/pretrained inference on generated CT; report must stay blocked |
 | [lung_hardware.py](../../scripts/lung_hardware.py) | inspect_hardware/main: actual CUDA/OpenVINO inventory and technical JSON |
 | [benchmark_lung.py](../../scripts/benchmark_lung.py) | main/run closure: unchanged-series full detection latency; load/first/warm measurements |
@@ -75,7 +83,7 @@ Legacy scripts/functions retain source docstrings and references in
 | third_party | Upstream Apache-2.0 license text retained for the adapted MONAI topology |
 | src/data, src/models, src/baselines | Legacy 2.5D dataset/U-Net/teacher kept for reproducibility and v1 bridge |
 | Other src modules | Legacy preprocessing, calibration, evaluation, privacy allowlist and visualization |
-| deploy | Existing ONNX/CPU runtime, experimental API and synthetic MHCRA v1 producer |
+| deploy | Existing ONNX/CPU runtime, experimental API and synthetic legacy/v2 MHCRA producers |
 | scripts | New reproducible commands plus retained legacy training/export/Intel tools |
 | tests | New pytest functions plus legacy unittest regression classes; generated inputs only |
 | configs | Legacy baseline configuration; active recipe is versioned in detection.py |

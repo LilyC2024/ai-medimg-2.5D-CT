@@ -56,3 +56,9 @@ and qualification fields. No auto-approve option exists.
 
 Export requires valid review and generated-synthetic input. The new exchange
 format is not directly accepted by MHCRA's old importer. [Integration](mhcra.md).
+
+
+Current v2 exports include bounded source HU and every-slice previews for the
+implemented MHCRA viewer/calipers. The default standalone export still requires
+your explicit CT review. MHCRA repeats authenticated imaging review and final
+clinical approval; upstream attestation never bypasses those gates. [Integration](mhcra.md).

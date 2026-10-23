@@ -1,4 +1,26 @@
-# Evaluation — lung research release, 22 October 2026
+# Current compatibility evaluation — 23 October 2026
+
+| Executed check | Outcome |
+| --- | --- |
+| Nodule-v2 producer/review phase gate | 26 tests passed; pending/reviewed exports and adversarial mutations |
+| Full CT regression | 81 passed in 25.74s (final local rerun); legacy and current nodule tests included |
+| Lint/format | Ruff src/scripts/deploy/tests and full active-package F checks/format passed |
+| Actual MHCRA fixture worker/receiver | Passed: 32×64×64 source, 1 fixture candidate, 66 validated artifacts |
+| Actual MHCRA pretrained worker/receiver | Passed: installed official weights, CPU, 1 candidate, 66 artifacts |
+| Actual legacy worker/receiver | Passed: 20×48×48 source, 41 artifacts, producer ONNX parity passed |
+| Approval state in all actual smokes | No imaging acceptance or final report approval issued |
+| Companion final offline regression | 146 tests passed in 44.55s; includes nodule caliper UI and urgent-routing checks |
+| Shared contract | Byte-identical schemas/report/renderer after MHCRA import-path rewrite |
+
+These smokes process generated pixels only, not real patients. Pretrained and
+non-ML fixture execution are reported separately. No new detector training,
+clinical accuracy, reading-time benefit, actual CUDA or new NPU execution is
+claimed. MHCRA performs its own authenticated imaging and final report reviews;
+unit/UI review identities are scripted tests, not clinicians. Current hosted
+release checks are recorded below after execution.
+
+## Previous lung research evaluation — 22 October 2026
+
 
 Software behavior and clinical performance are different. No new patient dataset,
 clinical sensitivity, cancer diagnosis accuracy or reading-time study is claimed.

@@ -1,42 +1,80 @@
-# MHCRA integration boundary
+# MHCRA lung integration
 
-[Overview](../../README.md) · [Existing companion](https://github.com/LilyC2024/Medical-AI)
+[Overview](../../README.md) · [Companion setup/use](https://github.com/LilyC2024/Medical-AI/blob/main/docs/IMAGING.md)
 
-## Current compatibility
+## Implemented compatibility
 
-MHCRA currently accepts `mhcra-imaging-v1`: generated-synthetic four-class tissue
-mask bundles. Its producer is retained unchanged in deploy/mhcra_bridge.py with its
-tests. Existing MHCRA jobs can continue calling that interface. Its old limits and
-class meanings are intentional; lung boxes must not be mislabeled as those masks.
+CT v0.10 and MHCRA v0.2 exchange **mhcra-lung-nodules-v2**: generated synthetic
+source HU, every-slice source/box previews, candidates, model/source provenance,
+optional producer review and canonical evidence-linked report. MHCRA validates the
+full bundle independently, provides candidate/caliper controls and requires its own
+**authenticated imaging acceptance**. Its final seven-section clinical report
+requires another explicit approval. Upstream local CT attestation cannot bypass
+these MHCRA gates.
 
-The new lung workflow exports `mhcra-lung-nodules-v1`, with study, review, report and
-candidate PNG previews. Only generated synthetic studies can be exported. This
-is a versioned research exchange, **not an implemented MHCRA consumer**. The current
-MHCRA importer must reject it. Public research patient images/records cannot enter
-MHCRA's synthetic database through either path.
+| Contract/capability | Status |
+| --- | --- |
+| Current nodule-v2 | Implemented producer, receiver, viewer, measurements and research appendix |
+| Legacy mhcra-imaging-v1 | Original tissue-mask producer/receiver retained |
+| Old mhcra-lung-nodules-v1 | Incomplete; rejected with instruction to re-export original workspace |
+| Public research DICOM, full CT, training/evaluation | Standalone CT only; no import into synthetic MHCRA |
 
-## Deliberate next consumer extension
+No medical hypotheses are added from images. Images/reviewer notes never enter
+Ollama; clinical safety escalation cannot be lowered. Accepted/rejected candidates
+and reviewer-selected distances are research annotations, not clinical diagnoses.
 
-1. Add a separate bounded nodule-aware importer, with patient/study identity,
-   source/model/recipe hashes, geometry, every candidate and reviewed caliper.
-2. Validate preview and measurement consistency and preserve original exchange
-   separately from clinical-record facts. Uploaded producer declarations cannot
-   independently prove model execution or real-world truth.
-3. Present candidates as model-generated research observations, retaining accepted,
-   rejected and uncertain state. MHCRA imaging acceptance must be authenticated and
-   distinct from a final clinical-report approval.
-4. Keep existing deterministic urgent/uncertain safety routing before reasoning.
-   Imaging must never lower escalation or silently expand the hypothesis catalog.
-5. Add approved research summaries as a separate evidence-linked appendix. Any
-   future imaging hypotheses require an explicit tested catalog/schema extension.
+## Launch through MHCRA
 
-No MHCRA code or safety policy was changed by this CT-focused release.
+Install this repository in its own Python 3.12 `.venv` with matching CPU or CUDA
+torch/torchvision and `.[ml,lung,ui,dev]`. Keep MHCRA's separate existing environment.
+MHCRA finds a sibling checkout or uses `MHCRA_CT_ROOT`. Its UI offers the non-ML
+fixture, installed pretrained detector with explicit device, and legacy demo.
+Installed pretrained weights can be configured with `MHCRA_CT_MODEL_DIR`.
+No downloads during inference and no unavailable-device fallback.
+
+The MHCRA-specific bridge exports **pending review** rather than forging the
+standalone reviewer step:
+
+```bash
+.venv/bin/python -m deploy.mhcra_lung_bridge --patient-id synthetic-checklist --study-id synthetic-example --output-dir artifacts/mhcra-lung --mode fixture --device cpu
+# Real pretrained detector, with explicitly downloaded/verified local weights:
+.venv/bin/python -m deploy.mhcra_lung_bridge --patient-id synthetic-checklist --study-id synthetic-pretrained --output-dir artifacts/mhcra-pretrained --mode pretrained --model-dir models/luna16 --device cpu
+```
+
+Output is `<output-dir>/exchange/bundle.mhcra.zip`. The generated study's patient
+alias/study ID match the MHCRA request. Use new immutable IDs/directories per run.
+The bridge never supplies human approval. The default standalone CLI `export`
+still requires its explicit reviewed workspace; its optional producer review is
+preserved in v2, while MHCRA always demands its own separate authenticated review.
+For manual export set `patient_alias` equal to the selected MHCRA synthetic ID.
+
+## Contract details and bounds
+
+`bundle.json` binds identity, unknown acquisition date, processing time, typed
+Study, pending/reviewed status and artifact sizes/SHA-256. `source.npy` holds finite
+float32 HU; all slice source/overlay PNGs and `producer/report.md` are listed.
+Pending report text is fixed; reviewed report is regenerated from Study/Review.
+No arbitrary ungrounded report prose can enter the receiver.
+
+MHCRA limits: 64 source slices, 256×256 plane, 64MiB ZIP, 128MiB expanded, 131
+members and 400KB manifest. Validate NPY headers/length before allocation, reject
+unsafe/duplicate/unlisted/encrypted entries, verify every hash and recompute every
+PNG pixel. Box and caliper rasterization uses NumPy without font dependencies.
+The full HU snapshot enables the receiver to calculate and display new calipers.
+Standalone public-research and full-volume workspaces retain their own larger
+bounds; export does not truncate them to fit MHCRA.
+
+`contracts.py` and `exchange_contract.py` are ML-free. MHCRA vendors them as
+`nodule_models.py` and `nodule_exchange.py`, changing only the import path. Its
+`scripts/sync_ct_contracts.py` checks equality; integration CI pins the tested CT
+commit. Change producer first, test, intentionally sync the consumer, test it,
+then run real joint smokes before updating the pin. Hashes prove consistency,
+not independent synthetic origin, execution authenticity or clinical truth.
 
 ## Agents and models
 
-The CT package has **no autonomous LLM agents**. The image detector is a neural
-computer-vision model; the geometry, measurements, review and report are Python.
-MHCRA separately coordinates its history, medication, clinical reasoning and
-safety roles with LangGraph. Only its reasoning role calls local Ollama; the other
-three roles use deterministic Python. Images do not reach that LLM through this
-release. More LLM agents would not supply missing lesion labels or validation.
+The CT package has no autonomous LLM agents. MONAI 3D RetinaNet is a CV detector;
+geometry, measurements, review and report are Python. MHCRA separately runs
+history, medication, reasoning and safety components in LangGraph. Only reasoning
+calls local Ollama. The CT worker is not a fifth LLM agent and supplies no model
+tools. [Function reference](code-reference.md) · [Evaluation](../../EVALUATION.md).

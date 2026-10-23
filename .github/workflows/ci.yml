@@ -24,6 +24,8 @@ jobs:
         run: python scripts/smoke_lung.py --output artifacts/lung-fixture-smoke.json
       - name: Exercise synthetic MHCRA bundle command
         run: python -m deploy.mhcra_bridge --demo --patient-id synthetic-checklist --study-id ci-study --output-dir artifacts/ci-mhcra
+      - name: Exercise pending nodule-v2 bridge
+        run: python -m deploy.mhcra_lung_bridge --patient-id synthetic-checklist --study-id ci-lung --output-dir artifacts/ci-lung --mode fixture --device cpu
       - name: Build and exercise CPU container with synthetic data
         if: runner.os == 'Linux'
         shell: bash
@@ -49,6 +51,8 @@ jobs:
         run: python -m lung_nodule.cli fetch-model --output models/luna16
       - name: Actual pretrained inference on generated phantom only
         run: python scripts/smoke_lung.py --model-dir models/luna16 --device cpu --output artifacts/pretrained-smoke.json
+      - name: Exercise real pretrained pending nodule-v2 bridge
+        run: python -m deploy.mhcra_lung_bridge --patient-id synthetic-checklist --study-id ci-lung-pretrained --output-dir artifacts/ci-lung-pretrained --mode pretrained --model-dir models/luna16 --device cpu
       - uses: actions/upload-artifact@v4
         with:
           name: generated-phantom-pretrained-smoke

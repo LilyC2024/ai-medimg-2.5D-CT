@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import html
 import json
 from pathlib import Path
 import zipfile
@@ -101,60 +100,10 @@ def overlay_slice(study, hu, z, *, annotated=True, calipers=()):
 
 
 def report_text(study, review):
-    """Compose only approved, structured observations; no LLM or cancer inference."""
-    review.verify(study)
-    lookup = {d.candidate_id: d for d in review.decisions}
-    accepted = [
-        c for c in study.candidates if lookup[c.candidate_id].decision == "accept"
-    ]
-    lines = [
-        "# Reviewed lung nodule research summary",
-        "",
-        f"Study: {study.study_id}; subject alias: {study.patient_alias}.",
-        f"Input: {study.input_kind}. Acquisition date unavailable. Prior comparison unavailable.",
-        f"Reviewer attestation: {html.escape(review.reviewer)}. Local attestation; credentials not independently verified.",
-        f"Model: {study.model.name}. Device: {study.model.execution_device}.",
-        f"Candidates: {len(study.candidates)} generated; {len(accepted)} accepted for research review.",
-        "",
-    ]
-    if study.model.synthetic_fixture:
-        lines += [
-            "SYNTHETIC FIXTURE FINDER: this output is a software demonstration, not trained nodule detection.",
-            "",
-        ]
-    if not accepted:
-        lines += [
-            "No candidates were accepted. This does not establish a normal CT or exclude nodules/cancer.",
-            "",
-        ]
-    for c in study.candidates:
-        decision = lookup[c.candidate_id]
-        lo, hi = np.array(c.box_zyx[:3]), np.array(c.box_zyx[3:])
-        extent_xyz = ((hi - lo) * study.geometry.spacing_zyx_mm)[::-1]
-        center = study.geometry.to_lps((lo + hi) / 2)
-        lines += [
-            f"- {c.candidate_id}: reviewer {decision.decision}; detector score {c.score:.4f} (not malignancy risk).",
-            f"  Source-grid box extents x/y/z: {extent_xyz[0]:.2f}/{extent_xyz[1]:.2f}/{extent_xyz[2]:.2f} mm; these are not lesion diameters or segmentation volume.",
-            f"  Box center LPS: ({center[0]:.2f}, {center[1]:.2f}, {center[2]:.2f}) mm; source slices {int(np.floor(lo[0]))}–{int(np.ceil(hi[0]))} (zero-based).",
-        ]
-        if decision.caliper:
-            lines += [
-                f"  Reviewer-placed in-plane caliper: {decision.caliper.length_mm(study.geometry):.2f} mm; slice {decision.caliper.start_zyx[0]:g}."
-            ]
-        for z in range(int(np.floor(lo[0])), int(np.ceil(hi[0])) + 1):
-            lines.append(f"  Evidence slice {z}: SHA-256 {study.sources[z].sha256}.")
-    lines += [
-        "",
-        "Conclusion: accepted entries are candidate image findings requiring clinician interpretation; no malignancy diagnosis or management recommendation is generated.",
-        "Coverage and protocol are operator attestations, not automatically established by the model. Missed lesions and false positives remain possible. No laterality/lobar location is inferred from position alone.",
-        f"Source-series digest: {study.source_sha256}",
-        f"Study snapshot digest: {digest(study)}",
-        f"Checkpoint SHA-256: {study.model.checkpoint_sha256}",
-        f"Inference recipe SHA-256: {study.model.config_sha256}",
-        f"Review digest: {digest(review)}",
-        "",
-    ]
-    return "\n".join(lines)
+    """Use the shared deterministic CT/MHCRA report contract."""
+    from lung_nodule.contracts import research_report
+
+    return research_report(study, review)
 
 
 def complete_review(directory, review):
@@ -178,30 +127,76 @@ def reviewed_report(directory):
     return report_text(study, review)
 
 
-def export_synthetic_exchange(directory, destination):
-    """New nodule contract; deliberately distinct from legacy MHCRA v1 tissue masks."""
+def export_synthetic_exchange(directory, destination, *, pending=False):
+    """Export verified v2 source/annotation bundle; pending mode grants no approval."""
+    from datetime import datetime, timezone
+    from uuid import uuid4
+    from io import BytesIO
+    from lung_nodule.exchange_contract import PENDING_REPORT, wire_pixels, read_exchange
+
     directory, destination = Path(directory), Path(destination)
     study, hu = load_workspace(directory)
     if study.input_kind != "generated-synthetic":
         raise ValueError("MHCRA exchange remains synthetic-only")
-    report = reviewed_report(directory)
-    payload = {
-        "schema_version": "mhcra-lung-nodules-v1",
-        "synthetic": True,
-        "study": study.model_dump(mode="json"),
-        "review": json.loads((directory / "review.json").read_text(encoding="utf-8")),
-        "report": report,
-        "consumer_support": "Requires a nodule-aware consumer; legacy mhcra-imaging-v1 import must reject this format",
+    review_path = directory / "review.json"
+    review = (
+        Review.model_validate_json(review_path.read_bytes())
+        if review_path.exists()
+        else None
+    )
+    if review is not None:
+        report = report_text(study, review)
+    elif pending:
+        report = PENDING_REPORT
+    else:
+        raise ValueError(
+            "Explicit review required; pending exports are only an unreviewed workbench proposal"
+        )
+    files = {
+        "source.npy": (directory / "source.npy").read_bytes(),
+        "producer/report.md": report.encode("utf-8"),
     }
-    destination.parent.mkdir(parents=True, exist_ok=True)
-    with zipfile.ZipFile(destination, "x", zipfile.ZIP_DEFLATED) as archive:
-        archive.writestr("nodules.json", json.dumps(payload, indent=2))
-        archive.writestr("report.md", report)
-        for c in study.candidates:
-            from io import BytesIO
-
-            z = int(round((c.box_zyx[0] + c.box_zyx[3]) / 2))
+    items = [
+        {"path": "source.npy", "role": "source_volume", "slice_index": None},
+        {"path": "producer/report.md", "role": "producer_report", "slice_index": None},
+    ]
+    calipers = [d.caliper for d in review.decisions if d.caliper] if review else []
+    for index in range(len(hu)):
+        source, overlay = wire_pixels(study, hu, index, calipers=calipers)
+        for role, pixels in (("source_preview", source), ("overlay_preview", overlay)):
+            path = f"previews/{index:03d}-{role}.png"
             buffer = BytesIO()
-            overlay_slice(study, hu, z).save(buffer, format="PNG")
-            archive.writestr(f"previews/{c.candidate_id}.png", buffer.getvalue())
+            Image.fromarray(pixels).save(buffer, format="PNG")
+            files[path] = buffer.getvalue()
+            items.append({"path": path, "role": role, "slice_index": index})
+    import hashlib
+
+    for a in items:
+        data = files[a["path"]]
+        a.update(sha256=hashlib.sha256(data).hexdigest(), size_bytes=len(data))
+    payload = {
+        "schema_version": "mhcra-lung-nodules-v2",
+        "synthetic": True,
+        "patient_id": study.patient_alias,
+        "study_id": study.study_id,
+        "job_id": uuid4().hex,
+        "acquisition_date": None,
+        "processed_at": datetime.now(timezone.utc).isoformat(),
+        "status": "producer_reviewed" if review else "pending_review",
+        "study": study.model_dump(mode="json"),
+        "producer_review": review.model_dump(mode="json") if review else None,
+        "artifacts": items,
+    }
+    archive_bytes = BytesIO()
+    with zipfile.ZipFile(archive_bytes, "w", zipfile.ZIP_DEFLATED) as archive:
+        archive.writestr("bundle.json", json.dumps(payload, indent=2, allow_nan=False))
+        for name, data in files.items():
+            archive.writestr(name, data)
+    data = archive_bytes.getvalue()
+    read_exchange(
+        data, study.patient_alias
+    )  # fail before publishing incomplete/invalid output
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    with destination.open("xb") as output:
+        output.write(data)
     return destination

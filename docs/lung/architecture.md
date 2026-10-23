@@ -52,4 +52,5 @@ Protocol/coverage are operator attestations; geometry checks do not establish
 clinical scope or anonymization. Dates remain unavailable. No prior comparison,
 lobar classification, malignancy classifier or management recommendation exists.
 No LLM or inference API is called. [MHCRA](mhcra.md) retains separate authenticated
-clinical gates and cannot ingest new nodule exports through its v1 importer.
+clinical gates. Its current nodule-v2 importer validates source HU, annotations and
+reviewable calipers separately from the retained legacy tissue-mask v1 path.

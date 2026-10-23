@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import html
 import json
 from typing import Annotated, Literal
 
@@ -227,3 +228,60 @@ class Review(Record):
                     raise ValueError(
                         "Caliper must reference the reviewed candidate box"
                     )
+
+
+def research_report(study, review):
+    """Compose only approved, structured observations; no LLM or cancer inference."""
+    review.verify(study)
+    lookup = {d.candidate_id: d for d in review.decisions}
+    accepted = [
+        c for c in study.candidates if lookup[c.candidate_id].decision == "accept"
+    ]
+    lines = [
+        "# Reviewed lung nodule research summary",
+        "",
+        f"Study: {study.study_id}; subject alias: {study.patient_alias}.",
+        f"Input: {study.input_kind}. Acquisition date unavailable. Prior comparison unavailable.",
+        f"Reviewer attestation: {html.escape(review.reviewer)}. Local attestation; credentials not independently verified.",
+        f"Model: {study.model.name}. Device: {study.model.execution_device}.",
+        f"Candidates: {len(study.candidates)} generated; {len(accepted)} accepted for research review.",
+        "",
+    ]
+    if study.model.synthetic_fixture:
+        lines += [
+            "SYNTHETIC FIXTURE FINDER: this output is a software demonstration, not trained nodule detection.",
+            "",
+        ]
+    if not accepted:
+        lines += [
+            "No candidates were accepted. This does not establish a normal CT or exclude nodules/cancer.",
+            "",
+        ]
+    for c in study.candidates:
+        decision = lookup[c.candidate_id]
+        lo, hi = np.array(c.box_zyx[:3]), np.array(c.box_zyx[3:])
+        extent_xyz = ((hi - lo) * study.geometry.spacing_zyx_mm)[::-1]
+        center = study.geometry.to_lps((lo + hi) / 2)
+        lines += [
+            f"- {c.candidate_id}: reviewer {decision.decision}; detector score {c.score:.4f} (not malignancy risk).",
+            f"  Source-grid box extents x/y/z: {extent_xyz[0]:.2f}/{extent_xyz[1]:.2f}/{extent_xyz[2]:.2f} mm; these are not lesion diameters or segmentation volume.",
+            f"  Box center LPS: ({center[0]:.2f}, {center[1]:.2f}, {center[2]:.2f}) mm; source slices {int(np.floor(lo[0]))}–{int(np.ceil(hi[0]))} (zero-based).",
+        ]
+        if decision.caliper:
+            lines += [
+                f"  Reviewer-placed in-plane caliper: {decision.caliper.length_mm(study.geometry):.2f} mm; slice {decision.caliper.start_zyx[0]:g}."
+            ]
+        for z in range(int(np.floor(lo[0])), int(np.ceil(hi[0])) + 1):
+            lines.append(f"  Evidence slice {z}: SHA-256 {study.sources[z].sha256}.")
+    lines += [
+        "",
+        "Conclusion: accepted entries are candidate image findings requiring clinician interpretation; no malignancy diagnosis or management recommendation is generated.",
+        "Coverage and protocol are operator attestations, not automatically established by the model. Missed lesions and false positives remain possible. No laterality/lobar location is inferred from position alone.",
+        f"Source-series digest: {study.source_sha256}",
+        f"Study snapshot digest: {digest(study)}",
+        f"Checkpoint SHA-256: {study.model.checkpoint_sha256}",
+        f"Inference recipe SHA-256: {study.model.config_sha256}",
+        f"Review digest: {digest(review)}",
+        "",
+    ]
+    return "\n".join(lines)

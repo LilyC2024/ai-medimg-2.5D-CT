@@ -38,3 +38,14 @@ accelerator execution is inferred from synthetic fixtures or historical results.
    fixed with explicit UTF-8 IO and portability regressions. Complete; clinical
    accuracy, GPU training and new-detector NPU execution remain explicitly outside
    the demonstrated results, not silently marked passed.
+
+## Coordinated MHCRA compatibility — v0.10.0
+
+- Producer phase: shared ML-free schema/report/rendering, bounded every-slice/HU
+  nodule-v2 export and pending-review bridge. Passed 26 producer/review tests.
+- Consumer phase in MHCRA: typed candidate/caliper decisions, authenticated
+  acceptance, source-linked report appendix; legacy contract retained. Passed
+  companion regression before joint smoke.
+- Joint phase: actual local fixture, installed-pretrained CPU and legacy
+  producer/consumer smokes passed with no approvals issued. Both suites, shared
+  contract drift, documentation links and hosted CI tracked in EVALUATION.md.

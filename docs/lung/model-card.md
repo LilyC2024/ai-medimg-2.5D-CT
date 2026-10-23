@@ -1,6 +1,6 @@
 # Model card
 
-Version 0.9.0. [Overview](../../README.md) · [Evaluation](../../EVALUATION.md)
+Version 0.10.0 (detector unchanged; nodule-v2 exchange added). [Overview](../../README.md) · [Evaluation](../../EVALUATION.md)
 
 | Item | Description |
 | --- | --- |

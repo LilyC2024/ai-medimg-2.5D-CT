@@ -1,4 +1,26 @@
-# v0.9.0 release and engineering record
+# v0.10.0 — implemented MHCRA nodule compatibility
+
+23 October 2026. [Overview](../../README.md) · [Checks](../../EVALUATION.md)
+
+- Replaced incomplete nodule-v1 export with **mhcra-lung-nodules-v2**: source HU,
+  every-slice previews, typed status/review, hashes and canonical report.
+- Added ML-free shared schema/NumPy rendering/validator; MHCRA vendors these with
+  drift checking, preserving exact behavior across Python/Pillow environments.
+- Added `deploy.mhcra_lung_bridge` for offline fixture/pretrained pending-review
+  bundles. No approval is simulated. Default standalone export stays review-gated.
+- Kept patient alias/study identity binding and strict synthetic-only exchange;
+  bounded export rejects oversized studies instead of silently cropping them.
+- Moved report template into `contracts.research_report`, keeping the workspace
+  wrapper compatible. Arbitrary producer prose fails receiver validation.
+- Added adversarial archive tests and CPU/Windows CI bridge commands. Updated
+  integration, API and review documentation. Existing detector/training/legacy
+  behavior remains available; dependency versions were inspected, not upgraded.
+- MHCRA now has an authenticated nodule viewer/caliper/acceptance path and a
+  source-linked appendix covered by final report approval. Its safety policy,
+  diagnostic catalog and image exclusion from the LLM remain unchanged.
+
+## Previous v0.9.0 lung research release
+
 
 22 October 2026. [Overview](../../README.md) · [Actual checks](../../EVALUATION.md)
 
