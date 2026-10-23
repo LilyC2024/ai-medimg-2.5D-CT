@@ -102,3 +102,14 @@ Legacy scripts/functions retain source docstrings and references in
 
 For old reports, stored script hashes describe their historical commit; retired
 source names are not promises of current commands. [Release/removal record](release.md).
+
+## Public research demo
+
+`workspace.export_research_exchange` verifies the original public workspace,
+extracts a bounded HU crop without resampling, translates enclosed boxes and LPS
+origin, and emits pending research-v3 evidence. `NoduleBundle.verify_research_crop`
+rechecks geometry/source/candidate mapping; absent full-source pixels are not
+independently validated by the consumer. `scripts/fetch_lidc_demo.py` explicitly
+fetches fixed public TCIA data; `scripts/evaluate_public_lidc.py` maps official
+reader contours by source SOP hash and computes a declared localization proxy.
+[Commands and limits](public-demo.md).

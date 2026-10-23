@@ -331,12 +331,57 @@ class PhantomDetector:
         return candidates
 
 
-def detect_study(series, detector, *, study_id, patient_alias, approval=None):
+def detect_study(
+    series, detector, *, study_id, patient_alias, approval=None, inference_region=None
+):
     hu, geometry, sources, identity, kind, protocol = load_sources(
         series, approval=approval
     )
     if detector.provenance.synthetic_fixture and kind != "generated-synthetic":
         raise ValueError("Fixture detector rejects research patient input")
+    provenance = detector.provenance
+    if inference_region is None:
+        candidates = detector.predict(hu, geometry)
+    else:
+        from lung_nodule.contracts import Geometry
+
+        region = np.asarray(inference_region)
+        if (
+            region.shape != (6,)
+            or not np.issubdtype(region.dtype, np.integer)
+            or np.any(region[:3] < 0)
+            or np.any(region[3:] < [2, 1, 1])
+            or np.any(region[:3] + region[3:] > np.array(hu.shape))
+        ):
+            raise ValueError("Invalid source inference region")
+        offset, shape = region[:3], region[3:]
+        g = Geometry.model_validate(
+            dict(
+                geometry.model_dump(),
+                shape_zyx=tuple(int(v) for v in shape),
+                origin_lps_mm=tuple(geometry.to_lps(offset)),
+            )
+        )
+        excerpt = hu[
+            tuple(slice(int(o), int(o + n)) for o, n in zip(offset, shape))
+        ].copy()
+        candidates = [
+            c.model_copy(
+                update={"box_zyx": tuple(np.array(c.box_zyx) + np.tile(offset, 2))}
+            )
+            for c in detector.predict(excerpt, g)
+        ]
+        provenance = provenance.model_copy(
+            update={
+                "name": provenance.name + "; excerpt only",
+                "config_sha256": digest(
+                    {
+                        "base_recipe": provenance.config_sha256,
+                        "inference_region_zyx": region.tolist(),
+                    }
+                ),
+            }
+        )
     study = Study(
         study_id=study_id,
         patient_alias=patient_alias,
@@ -344,8 +389,8 @@ def detect_study(series, detector, *, study_id, patient_alias, approval=None):
         source_sha256=identity,
         geometry=geometry,
         sources=sources,
-        model=detector.provenance,
-        candidates=detector.predict(hu, geometry),
+        model=provenance,
+        candidates=candidates,
         protocol_attestation=protocol,
     )
     return study, hu

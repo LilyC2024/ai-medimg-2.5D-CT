@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 import json
-from pathlib import Path
 import zipfile
+from pathlib import Path
 
 import numpy as np
 from PIL import Image, ImageDraw
@@ -13,7 +13,7 @@ from lung_nodule.contracts import Review, Study, digest
 from lung_nodule.sources import sha256
 
 
-def save_workspace(destination, study, hu):
+def save_workspace(destination, study, hu, *, inference_region=None):
     """Create a new workspace; never overwrite a study or mutate original DICOM."""
     destination = Path(destination)
     destination.mkdir(parents=True, exist_ok=False)
@@ -27,6 +27,11 @@ def save_workspace(destination, study, hu):
         json.dumps(
             {
                 "study_digest": digest(study),
+                **(
+                    {"inference_region_zyx": list(inference_region)}
+                    if inference_region is not None
+                    else {}
+                ),
                 "source_npy_sha256": sha256(destination / "source.npy"),
             },
             indent=2,
@@ -127,16 +132,26 @@ def reviewed_report(directory):
     return report_text(study, review)
 
 
-def export_synthetic_exchange(directory, destination, *, pending=False):
+def _export_exchange(
+    directory,
+    destination,
+    *,
+    pending=False,
+    research=None,
+    original_study=None,
+    crop_origin_zyx=None,
+    inference_region=None,
+):
     """Export verified v2 source/annotation bundle; pending mode grants no approval."""
     from datetime import datetime, timezone
-    from uuid import uuid4
     from io import BytesIO
-    from lung_nodule.exchange_contract import PENDING_REPORT, wire_pixels, read_exchange
+    from uuid import uuid4
+
+    from lung_nodule.exchange_contract import PENDING_REPORT, read_exchange, wire_pixels
 
     directory, destination = Path(directory), Path(destination)
     study, hu = load_workspace(directory)
-    if study.input_kind != "generated-synthetic":
+    if study.input_kind != "generated-synthetic" and research is None:
         raise ValueError("MHCRA exchange remains synthetic-only")
     review_path = directory / "review.json"
     review = (
@@ -175,8 +190,10 @@ def export_synthetic_exchange(directory, destination, *, pending=False):
         data = files[a["path"]]
         a.update(sha256=hashlib.sha256(data).hexdigest(), size_bytes=len(data))
     payload = {
-        "schema_version": "mhcra-lung-nodules-v2",
-        "synthetic": True,
+        "schema_version": "lovisa-ct-research-v3"
+        if research is not None
+        else "mhcra-lung-nodules-v2",
+        "synthetic": research is None,
         "patient_id": study.patient_alias,
         "study_id": study.study_id,
         "job_id": uuid4().hex,
@@ -187,6 +204,13 @@ def export_synthetic_exchange(directory, destination, *, pending=False):
         "producer_review": review.model_dump(mode="json") if review else None,
         "artifacts": items,
     }
+    if research is not None:
+        payload.update(
+            research=research,
+            original_study=original_study.model_dump(mode="json"),
+            crop_origin_zyx=crop_origin_zyx,
+            inference_region_zyx=inference_region,
+        )
     archive_bytes = BytesIO()
     with zipfile.ZipFile(archive_bytes, "w", zipfile.ZIP_DEFLATED) as archive:
         archive.writestr("bundle.json", json.dumps(payload, indent=2, allow_nan=False))
@@ -200,3 +224,88 @@ def export_synthetic_exchange(directory, destination, *, pending=False):
     with destination.open("xb") as output:
         output.write(data)
     return destination
+
+
+def export_synthetic_exchange(directory, destination, *, pending=False):
+    """Legacy synthetic-v2 export; public studies require the explicit research API."""
+    return _export_exchange(directory, destination, pending=pending)
+
+
+def export_research_exchange(
+    directory, destination, *, patient_id, research, crop_origin_zyx, shape_zyx
+):
+    """Export an unreviewed, bounded, source-mapped public CT excerpt to a composite case.
+
+    No resampling or inferred anatomy is introduced. Whole-source study metadata and
+    hashes remain in the manifest; absent scan pixels are never claimed to be covered.
+    """
+    import tempfile
+
+    from lung_nodule.contracts import Geometry, SourceSlice
+    from lung_nodule.exchange_contract import PublicResearchSource
+
+    original, hu = load_workspace(directory)
+    integrity = json.loads((Path(directory) / "integrity.json").read_text())
+    inference_region = integrity.get("inference_region_zyx", [0, 0, 0, *hu.shape])
+    provenance = PublicResearchSource.model_validate(research)
+    if original.input_kind != "approved-public-research":
+        raise ValueError("Research export requires verified public source workspace")
+    if provenance.original_sha256 != sha256(Path(directory) / "source.npy"):
+        raise ValueError("Research source array hash mismatch")
+    offset, shape = np.array(crop_origin_zyx), np.array(shape_zyx)
+    if (
+        offset.shape != (3,)
+        or shape.shape != (3,)
+        or not np.issubdtype(offset.dtype, np.integer)
+        or not np.issubdtype(shape.dtype, np.integer)
+        or np.any(offset < 0)
+        or np.any(shape < [2, 1, 1])
+        or np.any(shape > [64, 256, 256])
+        or np.any(offset + shape > np.array(hu.shape))
+    ):
+        raise ValueError("Invalid bounded source crop")
+    geometry = Geometry.model_validate(
+        dict(
+            original.geometry.model_dump(),
+            shape_zyx=tuple(int(x) for x in shape),
+            origin_lps_mm=tuple(original.geometry.to_lps(offset)),
+        )
+    )
+    sources = [
+        SourceSlice.model_validate(dict(s.model_dump(), index=i))
+        for i, s in enumerate(original.sources[offset[0] : offset[0] + shape[0]])
+    ]
+    candidates = []
+    for c in original.candidates:
+        lo, hi = np.array(c.box_zyx[:3]), np.array(c.box_zyx[3:])
+        if np.all(lo >= offset) and np.all(hi <= offset + shape - 1):
+            candidates.append(
+                c.model_copy(update={"box_zyx": tuple(np.r_[lo - offset, hi - offset])})
+            )
+    values = dict(
+        original.model_dump(),
+        patient_alias=patient_id,
+        geometry=geometry,
+        sources=sources,
+        candidates=candidates,
+        source_sha256=digest(
+            {
+                "geometry": geometry.model_dump(mode="json"),
+                "sources": [s.model_dump(mode="json") for s in sources],
+            }
+        ),
+    )
+    study = Study.model_validate(values)
+    excerpt = hu[tuple(slice(int(o), int(o + n)) for o, n in zip(offset, shape))].copy()
+    with tempfile.TemporaryDirectory() as temp:
+        workspace = Path(temp) / "excerpt"
+        save_workspace(workspace, study, excerpt)
+        return _export_exchange(
+            workspace,
+            destination,
+            pending=True,
+            research=provenance.model_dump(mode="json"),
+            original_study=original,
+            crop_origin_zyx=tuple(int(x) for x in offset),
+            inference_region=inference_region,
+        )

@@ -51,7 +51,11 @@ def load_sources(directory, *, approval=None):
                 isinstance(data[k], str) and data[k].strip()
                 for k in ("dataset", "license", "approved_by")
             )
-            or data["protocol"] != "adult-noncontrast-chest-complete"
+            or data["protocol"]
+            not in (
+                "adult-noncontrast-chest-complete",
+                "public-chest-protocol-unverified",
+            )
         ):
             raise ValueError("Invalid public research/protocol approval")
         kind, protocol = "approved-public-research", data["protocol"]
@@ -66,6 +70,15 @@ def load_sources(directory, *, approval=None):
             raise ValueError("Source requires SOP and study identity")
         studies.add(str(ds.StudyInstanceUID))
         frames.add(str(ds.get("FrameOfReferenceUID", "")))
+        contrast = str(ds.get("ContrastBolusAgent", "")).strip()
+        if (
+            protocol == "adult-noncontrast-chest-complete"
+            and contrast
+            and contrast.lower() not in ("none", "no", "no contrast")
+        ):
+            raise ValueError(
+                "Contrast evidence conflicts with noncontrast protocol attestation"
+            )
         records.append(
             (
                 float(np.array(ds.ImagePositionPatient) @ normal),

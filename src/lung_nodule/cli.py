@@ -35,6 +35,13 @@ def main(argv=None):
     detect.add_argument("--patient-alias", required=True)
     detect.add_argument("--study-id", required=True)
     detect.add_argument("--output", required=True)
+    detect.add_argument(
+        "--inference-region",
+        nargs=6,
+        type=int,
+        metavar=("Z", "Y", "X", "DEPTH", "HEIGHT", "WIDTH"),
+        help="Explicit excerpt-only inference; rest of scan is not analysed",
+    )
     review = sub.add_parser(
         "review", help="Apply an explicitly authored research reviewer approval JSON"
     )
@@ -45,6 +52,20 @@ def main(argv=None):
     )
     export.add_argument("--workspace", required=True)
     export.add_argument("--output", required=True)
+    research = sub.add_parser(
+        "export-research",
+        help="Pending public CT excerpt for a fictional LOVISA composite case",
+    )
+    research.add_argument("--workspace", required=True)
+    research.add_argument("--output", required=True)
+    research.add_argument("--patient-id", required=True)
+    research.add_argument("--research-provenance", required=True)
+    research.add_argument(
+        "--crop-origin", nargs=3, type=int, required=True, metavar=("Z", "Y", "X")
+    )
+    research.add_argument(
+        "--shape", nargs=3, type=int, required=True, metavar=("Z", "Y", "X")
+    )
     a = p.parse_args(argv)
     from lung_nodule.detection import (
         MonaiDetector,
@@ -90,8 +111,9 @@ def main(argv=None):
             study_id=a.study_id,
             patient_alias=a.patient_alias,
             approval=a.approval,
+            inference_region=a.inference_region,
         )
-        save_workspace(a.output, study, hu)
+        save_workspace(a.output, study, hu, inference_region=a.inference_region)
         print(
             f"{len(study.candidates)} candidate(s); review pending. Workspace: {a.output}"
         )
@@ -102,6 +124,19 @@ def main(argv=None):
         complete_review(a.workspace, approval)
         print(
             "Research reviewer attestation recorded. Report remains educational, not a diagnosis."
+        )
+    elif a.command == "export-research":
+        from lung_nodule.workspace import export_research_exchange
+
+        print(
+            export_research_exchange(
+                a.workspace,
+                a.output,
+                patient_id=a.patient_id,
+                research=json.loads(Path(a.research_provenance).read_text()),
+                crop_origin_zyx=a.crop_origin,
+                shape_zyx=a.shape,
+            )
         )
     else:
         print(export_synthetic_exchange(a.workspace, a.output))

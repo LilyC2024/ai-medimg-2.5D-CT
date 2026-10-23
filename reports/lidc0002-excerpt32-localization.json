@@ -1,0 +1,36 @@
+{
+  "schema_version": "lidc-reader-localization-smoke-v1",
+  "study_sha256": "2263ca451bce5b57cec6481146dfe15c276fc08581c75413d0bd3192e51e978f",
+  "xml_sha256": "e821db52f84f9ea34cb23eef505327b7646ca178aa7d868a1384a1cb5ca9497a",
+  "candidate_count": 1,
+  "reader_observations": 2,
+  "out_of_scope_reader_observations": 0,
+  "inference_region_zyx": [
+    168,
+    313,
+    300,
+    32,
+    96,
+    96
+  ],
+  "roi_selection": "Dataset-annotation-selected excerpt smoke, not detection accuracy",
+  "matched_reader_observations": 2,
+  "criterion": "predicted center within reader contour bounding box expanded by 2 mm",
+  "rows": [
+    {
+      "reader": 3,
+      "annotation_id": "MI014_11691",
+      "matched_candidates": [
+        "N001"
+      ]
+    },
+    {
+      "reader": 4,
+      "annotation_id": "8",
+      "matched_candidates": [
+        "N001"
+      ]
+    }
+  ],
+  "limitation": "One research scan; possible LUNA pretrained overlap; no consensus, pathology, independent validation or specificity estimate."
+}

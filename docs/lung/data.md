@@ -46,7 +46,7 @@ Supply an approval file with the real dataset/version, terms and approving opera
 
 Pass it using `--approval` to detection/preparation. This attests permission/scope;
 it does not independently prove anonymization or ethics approval. Never relabel
-public/clinical data as synthetic. LOVISA rejects public-research exchanges.
+public/clinical data as synthetic. LOVISA accepts public research only through the separate research-v3 schema and a labelled fictional composite case; synthetic-v2 still rejects public input.
 
 ## Dataset and licensing boundaries
 
@@ -61,3 +61,5 @@ No public patient cohort was imported/evaluated in the recorded release.
 unexecuted experiments. Code is MIT; model assets/upstream code/datasets retain
 separate terms. `fetch-model` retains upstream licenses. Commit no patient images,
 original identifiers, weights, local approvals or reviewer workspaces.
+
+Public data with unconfirmed acquisition protocol may use the explicit `public-chest-protocol-unverified` research path; this is not noncontrast confirmation or clinical validation. A declared contrast agent conflicts with the older noncontrast attestation and is rejected.

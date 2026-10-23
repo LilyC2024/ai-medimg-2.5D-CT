@@ -23,7 +23,7 @@ the former MHCRA AI label.
 | CT does | LOVISA does |
 | --- | --- |
 | Validate volume/source geometry and run local CV detection | Organize synthetic history and preserve source attribution |
-| Display source, candidates and calipers | Independently inspect/accept a synthetic imaging bundle |
+| Display source, candidates and calipers | Independently inspect/accept a synthetic or labelled public research bundle |
 | Compose deterministic research summary | Reason over text only and add accepted imaging after reasoning |
 | Require standalone review for normal export | Require authenticated imaging acceptance and separate final clinical approval |
 
@@ -37,7 +37,8 @@ its hypothesis catalog. CT is not a fifth LLM specialist.
 | mhcra-lung-nodules-v2 | Implemented source HU, all-slice previews, candidates/calipers and combined report |
 | mhcra-imaging-v1 | Retained legacy tissue-mask path |
 | incomplete mhcra-lung-nodules-v1 | Re-export original workspace; cannot migrate by renaming schema |
-| Public-research/full-size CT, training and FROC | Standalone CT only; LOVISA accepts bounded generated-synthetic data |
+| `lovisa-ct-research-v3` | Public source-mapped excerpt in a fictional composite case; declared dataset/license/subject provenance |
+| Full-size CT, training and FROC | Standalone preparation; no full-volume coverage is implied by an excerpt |
 
 ## Prepare synthetic input
 
@@ -116,3 +117,10 @@ No CT image/measurement is interpreted by LOVISA's LLM.
 [Current report guide and clearly labelled scripted example](https://github.com/LilyC2024/Medical-AI/blob/main/docs/REPORTS.md).
 This updates documentation only; CT contracts, detector, measurements, training
 and standalone research reports are unchanged.
+
+## Public CT excerpt
+
+Use `export-research`, not the synthetic bridge, for public studies. It leaves all
+review pending and validates exact crop origin, physical geometry, source slices
+and enclosed candidates against the original workspace. The report states
+limited coverage and protocol uncertainty. [Reproducible real-image demo](public-demo.md).

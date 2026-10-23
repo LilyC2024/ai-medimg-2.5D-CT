@@ -17,3 +17,13 @@ clinical accuracy or actual accelerator execution. [Evidence](EVALUATION.md).
 The existing detector, package layout and exchange names stay stable in the
 LOVISA documentation pass. No patient-data validation, model retraining or new
 GPU/NPU execution is claimed complete.
+
+## Public research exchange
+
+Research extension: bounded, source-mapped CT excerpts may be linked to explicitly
+fictional composite cases with dataset/license/subject provenance. Existing
+synthetic-v2 remains strict. A protocol-unverified research path records uncertainty
+instead of asserting that missing contrast information proves noncontrast. Real
+CT inference is a research smoke; full RetinaNet training still requires CUDA.
+
+Status: implemented and tested locally — 83 CT tests and actual 11.98-second real-image excerpt inference; full-scan attempt stopped and full CUDA training not executed. Compatible LOVISA publishing and hosted checks follow.

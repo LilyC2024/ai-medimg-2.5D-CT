@@ -35,7 +35,7 @@ flowchart LR
     Q --> D[Local detector]
     D --> V[Inspect candidates and calipers]
     V --> R[Explicit CT review and research summary]
-    D --> B[Bounded synthetic bundle for LOVISA]
+    D --> B[Bounded synthetic / public research evidence]
     B --> I[LOVISA authenticated imaging acceptance]
     I --> A[Combined clinical summary and CT pictures]
     A --> F[LOVISA final clinical approval]
@@ -44,6 +44,21 @@ flowchart LR
 Default standalone export requires CT review. The dedicated LOVISA bridge creates
 pending synthetic input so LOVISA can review it itself. Neither path approves the
 final clinical report. [Integration and original LOVISA pictures](docs/lung/mhcra.md).
+
+## Real CT research example
+
+A separate **research-v3** export sends a bounded source-mapped CT excerpt to
+LOVISA's Jordan fictional composite case. Its endoscopy image comes from an
+unrelated research subject; no common disease or real patient linkage is claimed.
+Source geometry, original slice hashes and candidate mappings remain verifiable.
+The short LOVISA report includes inspected results and pictures, with source/model
+details retained separately. [Commands and boundaries](docs/lung/public-demo.md).
+
+An actual LIDC-IDRI scan is evaluated against individual readers' XML contours as
+a localization smoke, with possible pretrained LUNA overlap. It is not independent
+clinical validation. Full-scan CPU inference is offline preparation and can take
+many minutes. The local UI opens prepared excerpts; full RetinaNet training still
+requires the documented CUDA/16-GB workflow and was **not run on this CPU host**.
 
 ## Start locally
 

@@ -1,8 +1,25 @@
 # CT evaluation record
 
-Software execution and clinical performance are separate. The recorded data are
-generated CT-like phantoms; no new patient accuracy or reader-time benefit is
-claimed. [Validation commands](docs/validation.md).
+## Real CT excerpt and LOVISA research evidence — 23 October 2026
+
+- Final local regression: **83 passed in 34.61s**, with 11 existing dependency/legacy-export warnings. New tests cover exact public crop geometry, pending exports and scripted excerpt-to-source candidate mapping.
+- Actual source: official public TCIA **LIDC-IDRI-0002**, 261 DICOM slices, source 512×512 per slice, CC BY 3.0. Contrast status is not supplied; the explicit public-research protocol remains unverified. Deidentified dates were not used as true acquisition dates. LIDC-IDRI-0001 was inspected during selection and excluded because contrast was documented.
+- The attempted whole-scan CPU run was **stopped after roughly 28 minutes without a completed result**. It is not reported as a successful full-scan test. Full RetinaNet training was **not executed**: CUDA is unavailable and the existing full trainer requires a >=16-GB CUDA GPU and a proper larger cohort.
+- The final **32×96×96 source ROI**, origin `(168,313,300)`, was selected from the first source-matched official reader contour before inference. Actual registered MONAI CPU inference took **11.98s**, proposing one candidate. An earlier 16-slice probe took 21.29s under concurrent load and clipped the annotated lesion extent; the wider final ROI replaced it.
+- XML localization smoke: two included reader contour observations, both matched by the declared predicted-center/contour-box proxy with 2-mm margin; zero out-of-scope observations. This is annotation-selected localization, **not detection accuracy**, consensus, pathology, FROC or independent evaluation. LUNA pretraining overlap is possible. [Exact evidence](reports/lidc0002-excerpt32-localization.json).
+- Actual research-v3 producer -> LOVISA validator passed with source HU, all excerpt previews, original source metadata/hashes, exact crop translation and explicit actual-inference coverage. No resampling, inferred acquisition date or automatic caliper was introduced.
+- Combined real CT/endoscopy + actual local Ollama smoke passed in **34.32s**, four embedded source/annotation images and 170 report words. All approvals were **scripted in an isolated temporary database**, not clinical reviews or updates to the actual app.
+
+The prepared local demo links this CT to a fictional composite case with unrelated
+Kvasir endoscopy imagery; no real-patient or common-disease linkage is asserted.
+Research datasets, DICOM/JPEG pixels and model weights stay outside Git. Runtime
+remains local. [Reproduce this demo](docs/lung/public-demo.md).
+
+The sections below are historical release records with their then-current scope.
+
+Software execution and clinical performance are separate. Earlier records use generated CT-like phantoms. The public-data extension below
+adds an annotation-selected real CT ROI smoke; no independent patient accuracy
+or reader-time benefit is claimed. [Validation commands](docs/validation.md).
 
 ## LOVISA concise-report documentation alignment — 23 October 2026
 
