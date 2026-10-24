@@ -23,6 +23,11 @@ Keep patient/hash-separated cohorts and audit pretrained overlap. No test succes
 promotes weights or establishes clinical accuracy. Record available hardware;
 never claim CUDA/NPU execution that did not occur.
 
+## AI-assisted development
+
+AI coding agents write and review code under one human author. Agent reviews are
+self-audits, not independent human, security or clinician review.
+
 ## Publication checklist
 
 Review staged diff, changed interfaces, local links/anchors and full test results.

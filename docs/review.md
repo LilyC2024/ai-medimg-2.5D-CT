@@ -1,11 +1,13 @@
-# Expert source review — 24 October 2026
+# AI coding-agent source review — 24 October 2026
 
 [Overview](../README.md) · [Checks](validation.md) · [Actual evidence](../EVALUATION.md)
 
-A CT specialist reviewed source loading, geometry, training preparation, model and
-review workspaces, exchange boundaries, legacy API uploads and tests. The primary
-agent checked documentation and producer/consumer compatibility. These are code
-reviews, not clinician or model-performance validation.
+An AI coding agent focused on CT (a separate session, not a human specialist)
+reviewed source loading, geometry, training preparation, model and review
+workspaces, exchange boundaries, legacy API uploads and tests. The primary agent
+checked documentation and producer/consumer compatibility. This is an AI-assisted
+self-audit under the single author: not independent human review, clinician review
+or model-performance validation.
 
 | P2 finding | Reproduction and repair |
 | --- | --- |

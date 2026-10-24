@@ -1,8 +1,22 @@
 # CT evaluation record
 
+## Review-process wording correction — 24 October 2026
+
+Documentation only: the agent review is described as an AI-assisted self-audit,
+not a CT specialist's review. No source, contract, model or test changed.
+
+| Executed check | Actual outcome |
+| --- | --- |
+| `python -m pytest -q` (Python 3.12, CPU torch from PyPI) | **105 passed in 28.85s** (with `ui` extra) |
+| `ruff check .` (repo config) | All checks passed |
+| `pip check` | No broken requirements found |
+| `scripts/check_docs.py` / `generate_api_docs.py --check` | Passed: 32 documents; API reference matches |
+
+Not run: hosted CI, GPU/NPU, pretrained-weight smoke (no source change).
+
 ## Expert source review — 24 October 2026
 
-Independent CT review repaired upload cleanup ownership, duplicate/encrypted ZIP
+AI coding-agent CT review (a self-audit, not independent human review) repaired upload cleanup ownership, duplicate/encrypted ZIP
 handling, class labels before integer conversion, finite real training HU, and
 workspace preflight before reserving an output directory. Eighteen regressions
 cover the demonstrated defects. [Detailed review](docs/review.md).
