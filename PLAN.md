@@ -38,4 +38,6 @@ Status: implemented and tested locally — 83 CT tests and actual 11.98-second r
    31 documents/anchors and generated API references checked; specialist audit
    corrected fresh-install paths, historical slice counts and checker scope.
 3. **Joint release:** actual local inference/producer-consumer checks, evidence,
-   unchanged or explicitly synchronized contracts and tested publication. Status: local validation passed; publication pending.
+   unchanged or explicitly synchronized contracts and tested publication. Status: complete — 105 local tests, actual registered CPU inference and all
+   receiver transfers passed. Source published as 9a3cdfe; hosted 40099064726
+   passed Linux/Windows, container and pretrained checks. No new GPU/NPU claim.

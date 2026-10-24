@@ -167,3 +167,15 @@ fixture/pretrained/legacy transfers against the pinned CT revision above.
 ## Final public-research publication checks
 
 Tested producer `b73a72188efda899f9d0a0d321f905002bc7dac3` passed its [hosted workflow](https://github.com/LilyC2024/ai-medimg-2.5D-CT/actions/runs/40014638635). The CT workflow passed all configured jobs. The follow-up changes in this section and PLAN.md are documentation only. No datasets, weights, accounts or generated research-image reports were published.
+
+## Publication and hosted verification — 24 October 2026
+
+Tested source [9a3cdfe](https://github.com/LilyC2024/ai-medimg-2.5D-CT/commit/9a3cdfeb0dc71cb5a7e479e54d5a8430ddbe967c) is published.
+[Hosted workflow 40099064726](https://github.com/LilyC2024/ai-medimg-2.5D-CT/actions/runs/40099064726)
+completed successfully. Linux/Windows software checks, generated-data paths, CPU
+container execution and actual official-weight phantom inference all passed.
+LOVISA's joint workflow also passed against this exact producer pin.
+
+Final follow-up changes only phase/evaluation Markdown records; tested runtime,
+models, protocols and generated source references are unchanged. Local branch
+and publication trees are checked for equality before synchronization.
