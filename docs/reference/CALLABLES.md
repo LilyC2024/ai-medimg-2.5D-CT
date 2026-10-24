@@ -285,7 +285,7 @@ Static calls (including nested helper bodies): `argparse.ArgumentParser`, `p.add
 
 Offline generated-synthetic nodule jobs for LOVISA; legacy MHCRA entry point, no approval.
 
-#### [identifier](../../deploy/mhcra_lung_bridge.py#L12)
+#### [identifier](../../deploy/mhcra_lung_bridge.py#L13)
 
 `identifier(value)`
 
@@ -293,17 +293,17 @@ Static calls (including nested helper bodies): `re.fullmatch`, `argparse.Argumen
 
 Explicit raised conditions: `argparse.ArgumentTypeError`. See source for triggers; called validators may raise additional exceptions.
 
-#### [generate_bundle](../../deploy/mhcra_lung_bridge.py#L20)
+#### [generate_bundle](../../deploy/mhcra_lung_bridge.py#L21)
 
 `generate_bundle(destination, patient_id, study_id, *, mode='fixture', model_dir=None, device='cpu', progress=None)`
 
 Run selected real/fixture detector on generated pixels; export pending v2.
 
-Static calls (including nested helper bodies): `report`, `identifier`, `Path`, `destination.mkdir`, `generate_chest`, `detect_study`, `save_workspace`, `export_synthetic_exchange`, `ValueError`, `torch.set_num_threads`, `MonaiDetector`, `PhantomDetector`.
+Static calls (including nested helper bodies): `report`, `identifier`, `Path`, `destination.mkdir`, `generate_chest`, `detect_study`, `save_workspace`, `export_synthetic_exchange`, `ValueError`, `torch.set_num_threads`, `MonaiDetector`, `PhantomDetector`, `os.environ.get`.
 
 Explicit raised conditions: `ValueError`. See source for triggers; called validators may raise additional exceptions.
 
-#### [main](../../deploy/mhcra_lung_bridge.py#L64)
+#### [main](../../deploy/mhcra_lung_bridge.py#L68)
 
 `main()`
 
@@ -1311,11 +1311,11 @@ Local, source-linked lung nodule research tools. No diagnostic claims.
 
 Command-line entry points. Inference never downloads or automatically approves.
 
-#### [main](../../src/lung_nodule/cli.py#L10)
+#### [main](../../src/lung_nodule/cli.py#L13)
 
 `main(argv=None)`
 
-Static calls (including nested helper bodies): `argparse.ArgumentParser`, `p.add_subparsers`, `sub.add_parser`, `fetch.add_argument`, `demo.add_argument`, `detect.add_argument`, `review.add_argument`, `export.add_argument`, `research.add_argument`, `p.parse_args`, `print`, `json.dumps`, `Path`, `root.mkdir` (additional calls in source).
+Static calls (including nested helper bodies): `argparse.ArgumentParser`, `p.add_subparsers`, `sub.add_parser`, `fetch.add_argument`, `keygen.add_argument`, `demo.add_argument`, `detect.add_argument`, `review.add_argument`, `export.add_argument`, `research.add_argument`, `p.parse_args`, `command.add_argument`, `print`, `json.dumps` (additional calls in source).
 
 ## [src/lung_nodule/contracts.py](../../src/lung_nodule/contracts.py)
 
@@ -1749,6 +1749,252 @@ Generate 32x64x64 DICOM, 1.5x1x1mm spacing and optional synthetic sphere.
 
 Static calls (including nested helper bodies): `Path`, `directory.mkdir`, `np.where`, `np.random.default_rng(seed).normal`, `range`, `directory.with_name(directory.name + '.synthetic.json').write_text`, `generate_uid`, `FileMetaDataset`, `FileDataset`, `hu[z].astype(np.int16).tobytes`, `ds.save_as`, `json.dumps`, `np.random.default_rng`, `str` (additional calls in source).
 
+## [src/lung_nodule/producer_signature.py](../../src/lung_nodule/producer_signature.py)
+
+Bounded Ed25519 producer attestations, shared byte-for-byte across LOVISA projects.
+
+A pinned signature identifies an exporting key and exact manifest/artifact bytes.
+It does not establish evaluation validity, data permission or clinical truth.
+Unsigned legacy evidence remains structurally valid; consumers choose a trust policy.
+
+### [Record](../../src/lung_nodule/producer_signature.py#L36)
+
+Class contract is defined by the fields and methods below.
+
+### [Performance](../../src/lung_nodule/producer_signature.py#L40)
+
+Signed producer declaration; an unmatched-candidate fraction is not screening FPR.
+
+| Declared field | Type | Default / constraint expression |
+| --- | --- | --- |
+| `measured` | `bool` | `Field(strict=True)` |
+| `metric` | `str` | `Field(min_length=1, max_length=200)` |
+| `false_positive_fraction` | `float \| None` | `Field(default=None, ge=0, le=1, strict=True)` |
+| `test_images` | `int \| None` | `Field(default=None, ge=1, strict=True)` |
+| `negative_images` | `int \| None` | `Field(default=None, ge=0, strict=True)` |
+| `evaluation_sha256` | `str \| None` | `Field(default=None, pattern='^[a-f0-9]{64}$')` |
+| `limitations` | `str` | `Field(min_length=1, max_length=600)` |
+
+#### [Performance.complete](../../src/lung_nodule/producer_signature.py#L52)
+
+`complete(self)`
+
+Require complete measured evidence and consistent optional image counts.
+
+Static calls (including nested helper bodies): `model_validator`, `any`, `ValueError`.
+
+Explicit raised conditions: `ValueError`. See source for triggers; called validators may raise additional exceptions.
+
+### [Claims](../../src/lung_nodule/producer_signature.py#L85)
+
+Class contract is defined by the fields and methods below.
+
+| Declared field | Type | Default / constraint expression |
+| --- | --- | --- |
+| `schema_version` | `Literal['lovisa-producer-signature-v1']` | `required / supplied by caller` |
+| `producer` | `Producer` | `required / supplied by caller` |
+| `bundle_sha256` | `str` | `Hex64` |
+| `key_id` | `str` | `Hex64` |
+| `signed_at` | `datetime` | `required / supplied by caller` |
+| `performance` | `Performance` | `required / supplied by caller` |
+
+#### [Claims.timezone_required](../../src/lung_nodule/producer_signature.py#L94)
+
+`timezone_required(self)`
+
+Keep the declared signing time timezone-aware without claiming freshness.
+
+Static calls (including nested helper bodies): `model_validator`, `ValueError`, `self.signed_at.utcoffset`.
+
+Explicit raised conditions: `ValueError`. See source for triggers; called validators may raise additional exceptions.
+
+### [Envelope](../../src/lung_nodule/producer_signature.py#L101)
+
+Class contract is defined by the fields and methods below.
+
+| Declared field | Type | Default / constraint expression |
+| --- | --- | --- |
+| `claims` | `Claims` | `required / supplied by caller` |
+| `signature_b64` | `str` | `Field(min_length=80, max_length=100)` |
+
+### [Check](../../src/lung_nodule/producer_signature.py#L106)
+
+A trust result; only verified pinned keys expose signed performance declarations.
+
+| Declared field | Type | Default / constraint expression |
+| --- | --- | --- |
+| `status` | `Literal['verified', 'unsigned', 'untrusted-key']` | `required / supplied by caller` |
+| `producer` | `Producer \| None` | `None` |
+| `key_id` | `str \| None` | `None` |
+| `label` | `str \| None` | `Field(default=None, max_length=200)` |
+| `performance` | `Performance \| None` | `None` |
+
+#### [canonical](../../src/lung_nodule/producer_signature.py#L116)
+
+`canonical(value) → bytes`
+
+Serialize signed claims deterministically, rejecting nonfinite numbers.
+
+Static calls (including nested helper bodies): `isinstance`, `value.model_dump`, `json.dumps`.
+
+#### [key_id](../../src/lung_nodule/producer_signature.py#L125)
+
+`key_id(public_raw: bytes) → str`
+
+Identify the exact 32-byte Ed25519 public key with SHA-256.
+
+Static calls (including nested helper bodies): `hashlib.sha256(public_raw).hexdigest`, `ValueError`, `isinstance`, `len`, `hashlib.sha256`.
+
+Explicit raised conditions: `ValueError`. See source for triggers; called validators may raise additional exceptions.
+
+#### [_crypto](../../src/lung_nodule/producer_signature.py#L132)
+
+`_crypto()`
+
+Load local cryptography only for actual signing/key/proof operations.
+
+Static calls (including nested helper bodies): `ValueError`.
+
+Explicit raised conditions: `ValueError`. See source for triggers; called validators may raise additional exceptions.
+
+#### [_public_raw](../../src/lung_nodule/producer_signature.py#L145)
+
+`_public_raw(public_key) → bytes`
+
+Extract raw Ed25519 bytes, rejecting other signing algorithms.
+
+Static calls (including nested helper bodies): `_crypto`, `public_key.public_bytes`, `isinstance`, `TypeError`.
+
+Explicit raised conditions: `TypeError`. See source for triggers; called validators may raise additional exceptions.
+
+#### [generate_key](../../src/lung_nodule/producer_signature.py#L155)
+
+`generate_key(path) → dict`
+
+Create a new private PEM without overwrite; mode 0600 is enforced on POSIX.
+
+Static calls (including nested helper bodies): `_crypto`, `ed25519.Ed25519PrivateKey.generate`, `private.private_bytes`, `Path`, `path.parent.mkdir`, `os.open`, `public_info`, `serialization.NoEncryption`, `os.fdopen`, `handle.write`, `private.public_key`.
+
+#### [public_info](../../src/lung_nodule/producer_signature.py#L172)
+
+`public_info(public_key) → dict`
+
+Return public material only; neither CLI nor return value contains private bytes.
+
+Static calls (including nested helper bodies): `_public_raw`, `key_id`, `base64.b64encode(raw).decode`, `base64.b64encode`.
+
+#### [load_private_key](../../src/lung_nodule/producer_signature.py#L178)
+
+`load_private_key(path)`
+
+Load a bounded regular local Ed25519 PEM with owner-only POSIX permissions.
+
+Static calls (including nested helper bodies): `_crypto`, `Path`, `path.stat`, `serialization.load_pem_private_key`, `path.is_symlink`, `ValueError`, `path.read_bytes`, `isinstance`, `TypeError`, `stat.S_ISREG`, `stat.S_IMODE`.
+
+Explicit raised conditions: `TypeError`, `ValueError`. See source for triggers; called validators may raise additional exceptions.
+
+#### [_unique](../../src/lung_nodule/producer_signature.py#L197)
+
+`_unique(pairs)`
+
+Reject ambiguous duplicate JSON keys.
+
+Static calls (including nested helper bodies): `ValueError`.
+
+Explicit raised conditions: `ValueError`. See source for triggers; called validators may raise additional exceptions.
+
+#### [_json](../../src/lung_nodule/producer_signature.py#L207)
+
+`_json(raw)`
+
+Decode strict bounded JSON without NaN or Infinity extensions.
+
+Static calls (including nested helper bodies): `json.loads`, `ValueError`.
+
+Explicit raised conditions: `ValueError`. See source for triggers; called validators may raise additional exceptions.
+
+#### [_json.nonfinite](../../src/lung_nodule/producer_signature.py#L210)
+
+`nonfinite(value)`
+
+Static calls (including nested helper bodies): `ValueError`.
+
+Explicit raised conditions: `ValueError`. See source for triggers; called validators may raise additional exceptions.
+
+#### [_base64](../../src/lung_nodule/producer_signature.py#L216)
+
+`_base64(value, length, label)`
+
+Require canonical base64 and exact algorithm-specific byte lengths.
+
+Static calls (including nested helper bodies): `base64.b64decode`, `ValueError`, `len`, `base64.b64encode(raw).decode`, `base64.b64encode`.
+
+Explicit raised conditions: `ValueError`. See source for triggers; called validators may raise additional exceptions.
+
+#### [_safe_name](../../src/lung_nodule/producer_signature.py#L227)
+
+`_safe_name(name)`
+
+Reject traversal, platform-specific aliases, control characters and metadata clashes.
+
+Static calls (including nested helper bodies): `isinstance`, `len`, `PurePosixPath(name).is_absolute`, `any`, `PurePosixPath`, `name.split`, `ord`.
+
+#### [_archive](../../src/lung_nodule/producer_signature.py#L239)
+
+`_archive(payload)`
+
+Validate central-directory limits before decompressing any member.
+
+Static calls (including nested helper bodies): `zipfile.ZipFile`, `archive.infolist`, `ValueError`, `io.BytesIO`, `any`, `archive.close`, `isinstance`, `len`, `sum`, `set`, `archive.getinfo`, `entry.is_dir`, `_safe_name`, `stat.S_IFMT`.
+
+Explicit raised conditions: `ValueError`. See source for triggers; called validators may raise additional exceptions.
+
+#### [validate_signature_envelope](../../src/lung_nodule/producer_signature.py#L276)
+
+`validate_signature_envelope(bundle_raw, signature_raw, expected_producer=None)`
+
+Check strict optional claims and binding, without asserting key trust or proof.
+
+Static calls (including nested helper bodies): `Envelope.model_validate`, `_base64`, `ValueError`, `_json`, `hashlib.sha256(bundle_raw).hexdigest`, `len`, `hashlib.sha256`.
+
+Explicit raised conditions: `ValueError`. See source for triggers; called validators may raise additional exceptions.
+
+#### [validate_archive](../../src/lung_nodule/producer_signature.py#L289)
+
+`validate_archive(payload: bytes, expected_producer=None)`
+
+Bound and reconstruct manifest/artifact hashes plus optional signature structure.
+
+This is consistency validation, not cryptographic proof. Modality validators
+must still check schemas and source-derived geometry/pixels.
+
+Static calls (including nested helper bodies): `_archive`, `archive.read`, `_json`, `set`, `ValueError`, `isinstance`, `manifest.get`, `expected.add`, `hashlib.sha256`, `archive.namelist`, `validate_signature_envelope`, `artifact.get`, `archive.open`, `len` (additional calls in source).
+
+Explicit raised conditions: `ValueError`. See source for triggers; called validators may raise additional exceptions.
+
+#### [sign_archive](../../src/lung_nodule/producer_signature.py#L366)
+
+`sign_archive(payload: bytes, private_key, producer, performance=NOT_MEASURED) → bytes`
+
+Sign only bounded, exact, hash-verified evidence; never bless malformed ZIPs.
+
+Static calls (including nested helper bodies): `_crypto`, `stream.getvalue`, `validate_archive`, `ValueError`, `isinstance`, `TypeError`, `_archive`, `Claims`, `Envelope`, `io.BytesIO`, `len`, `zipfile.ZipFile`, `source.infolist`, `destination.writestr` (additional calls in source).
+
+Explicit raised conditions: `TypeError`, `ValueError`. See source for triggers; called validators may raise additional exceptions.
+
+#### [check_archive](../../src/lung_nodule/producer_signature.py#L408)
+
+`check_archive(payload: bytes, trusted: dict, *, expected_producer=None) → Check`
+
+Verify exact evidence against pinned keys; unknown keys expose no performance.
+
+Consumers must reject ``untrusted-key`` for acceptance. Allowing unsigned old
+evidence is a separate explicit policy, not an automatic signature downgrade.
+
+Static calls (including nested helper bodies): `validate_archive`, `trusted.get`, `_crypto`, `Check`, `isinstance`, `ValueError`, `_base64`, `ed25519.Ed25519PublicKey.from_public_bytes(raw).verify`, `canonical`, `pinned.get`, `key_id`, `ed25519.Ed25519PublicKey.from_public_bytes`.
+
+Explicit raised conditions: `ValueError`. See source for triggers; called validators may raise additional exceptions.
+
 ## [src/lung_nodule/research.py](../../src/lung_nodule/research.py)
 
 Patient-separated research manifests, local GPU training and transparent FROC.
@@ -1888,7 +2134,7 @@ Static calls (including nested helper bodies): `st.set_page_config`, `st.title`,
 
 Local study snapshots and deterministic reports; human approval binds all content.
 
-#### [save_workspace](../../src/lung_nodule/workspace.py#L16)
+#### [save_workspace](../../src/lung_nodule/workspace.py#L17)
 
 `save_workspace(destination, study, hu, *, inference_region=None)`
 
@@ -1898,7 +2144,7 @@ Static calls (including nested helper bodies): `Path`, `np.asarray`, `destinatio
 
 Explicit raised conditions: `ValueError`. See source for triggers; called validators may raise additional exceptions.
 
-#### [load_workspace](../../src/lung_nodule/workspace.py#L55)
+#### [load_workspace](../../src/lung_nodule/workspace.py#L56)
 
 `load_workspace(directory)`
 
@@ -1908,7 +2154,7 @@ Static calls (including nested helper bodies): `Path`, `Study.model_validate_jso
 
 Explicit raised conditions: `ValueError`. See source for triggers; called validators may raise additional exceptions.
 
-#### [overlay_slice](../../src/lung_nodule/workspace.py#L90)
+#### [overlay_slice](../../src/lung_nodule/workspace.py#L91)
 
 `overlay_slice(study, hu, z, *, annotated=True, calipers=())`
 
@@ -1918,7 +2164,7 @@ Static calls (including nested helper bodies): `(np.clip((hu[z] + 1000) / 1400, 
 
 Explicit raised conditions: `ValueError`. See source for triggers; called validators may raise additional exceptions.
 
-#### [report_text](../../src/lung_nodule/workspace.py#L118)
+#### [report_text](../../src/lung_nodule/workspace.py#L119)
 
 `report_text(study, review)`
 
@@ -1926,7 +2172,7 @@ Use the shared deterministic CT/MHCRA report contract.
 
 Static calls (including nested helper bodies): `research_report`.
 
-#### [complete_review](../../src/lung_nodule/workspace.py#L125)
+#### [complete_review](../../src/lung_nodule/workspace.py#L126)
 
 `complete_review(directory, review)`
 
@@ -1934,7 +2180,7 @@ Re-read source snapshot immediately before exporting a completed report.
 
 Static calls (including nested helper bodies): `Path`, `load_workspace`, `report_text`, `(directory / 'report.md').write_text`, `(directory / 'review.json').write_text`, `review.model_dump_json`.
 
-#### [reviewed_report](../../src/lung_nodule/workspace.py#L138)
+#### [reviewed_report](../../src/lung_nodule/workspace.py#L139)
 
 `reviewed_report(directory)`
 
@@ -1942,27 +2188,31 @@ Recompose on every download; stale/tampered report files cannot confer approval.
 
 Static calls (including nested helper bodies): `Path`, `load_workspace`, `Review.model_validate_json`, `report_text`, `(directory / 'review.json').read_bytes`.
 
-#### [_export_exchange](../../src/lung_nodule/workspace.py#L146)
+#### [_export_exchange](../../src/lung_nodule/workspace.py#L147)
 
-`_export_exchange(directory, destination, *, pending=False, research=None, original_study=None, crop_origin_zyx=None, inference_region=None)`
+`_export_exchange(directory, destination, *, pending=False, research=None, original_study=None, crop_origin_zyx=None, inference_region=None, signing_key=None)`
 
 Export verified v2 source/annotation bundle; pending mode grants no approval.
+
+With ``signing_key`` (an Ed25519 key file path) the archive carries a producer
+signature. CT performance is always declared unmeasured: no FROC or
+false-positive evaluation exists for this detector.
 
 Static calls (including nested helper bodies): `load_workspace`, `range`, `BytesIO`, `archive_bytes.getvalue`, `read_exchange`, `destination.parent.mkdir`, `Path`, `ValueError`, `review_path.exists`, `Review.model_validate_json`, `report_text`, `(directory / 'source.npy').read_bytes`, `report.encode`, `len` (additional calls in source).
 
 Explicit raised conditions: `ValueError`. See source for triggers; called validators may raise additional exceptions.
 
-#### [export_synthetic_exchange](../../src/lung_nodule/workspace.py#L240)
+#### [export_synthetic_exchange](../../src/lung_nodule/workspace.py#L251)
 
-`export_synthetic_exchange(directory, destination, *, pending=False)`
+`export_synthetic_exchange(directory, destination, *, pending=False, signing_key=None)`
 
 Legacy synthetic-v2 export; public studies require the explicit research API.
 
 Static calls (including nested helper bodies): `_export_exchange`.
 
-#### [export_research_exchange](../../src/lung_nodule/workspace.py#L245)
+#### [export_research_exchange](../../src/lung_nodule/workspace.py#L260)
 
-`export_research_exchange(directory, destination, *, patient_id, research, crop_origin_zyx, shape_zyx)`
+`export_research_exchange(directory, destination, *, patient_id, research, crop_origin_zyx, shape_zyx, signing_key=None)`
 
 Export an unreviewed, bounded, source-mapped public CT excerpt to a composite case.
 

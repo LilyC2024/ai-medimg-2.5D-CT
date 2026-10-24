@@ -1,5 +1,31 @@
 # CT evaluation record
 
+## Reviewed branch integration — current release, 24 October 2026
+
+[Every branch and decision](docs/BRANCH_REVIEW.md). Original proposal branches
+are preserved; their claimed tests were not substituted for these actual runs.
+
+| Executed local check | Outcome |
+| --- | --- |
+| Final CT regression | **121 passed in 85.12s**, generated/scripted software checks |
+| Coverage | **73.53%**; configured floor passed |
+| Lint and scoped body type checks | Passed in existing Python 3.12 environment |
+| Installed dependency audit | No known vulnerabilities reported after targeted fixes |
+| SBOM | CycloneDX environment document generated under /tmp; no patient data |
+| Documentation/API/publication checks | Passed; source API regenerated |
+
+Actual registered MONAI phantom: 30.25s, one candidate, no review approval.
+Actual signed generated CT CLI → LOVISA: 3.76s, 66 artifacts, pinned proof verified.
+Docker rebuild could not execute locally: access to /var/run/docker.sock denied;
+its Dockerfile now includes DATA_TERMS.md for the new package license metadata.
+Hosted Linux/Windows/container checks will validate publication separately.
+All transfer work used temporary storage and issued no image or final-report
+approvals. No clinical validation, GPU training or NPU execution is claimed.
+Hosted checks for this new commit are not yet recorded; prior release runs below
+remain historical.
+
+## Previous release evidence
+
 ## Expert source review — 24 October 2026
 
 Independent CT review repaired upload cleanup ownership, duplicate/encrypted ZIP

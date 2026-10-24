@@ -30,3 +30,8 @@ Exclude datasets, weights, original identifiers, local approvals and generated
 clinical/research workspaces. Preserve MIT and third-party notices. State the
 concrete bug, resulting behavior, validation and remaining assumptions. Publishing
 source is not deployment or regulatory approval of a diagnostic service.
+
+Review [branch decisions](docs/BRANCH_REVIEW.md) before changing interoperability.
+Run the configured mypy/coverage gates and dependency audit in addition to tests.
+Shared signature source must remain identical across all three projects. Source
+code is MIT; dataset/model permissions remain separate.

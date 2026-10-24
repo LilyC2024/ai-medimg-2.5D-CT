@@ -1,6 +1,7 @@
 """Offline generated-synthetic nodule jobs for LOVISA; legacy MHCRA entry point, no approval."""
 
 import argparse
+import os
 from pathlib import Path
 import re
 
@@ -57,7 +58,10 @@ def generate_bundle(
     report("export")
     workspace = save_workspace(destination / "workspace", study, hu)
     return export_synthetic_exchange(
-        workspace, destination / "exchange/bundle.mhcra.zip", pending=True
+        workspace,
+        destination / "exchange/bundle.mhcra.zip",
+        pending=True,
+        signing_key=os.environ.get("LOVISA_SIGNING_KEY_FILE"),
     )
 
 

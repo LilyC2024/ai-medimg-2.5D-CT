@@ -41,3 +41,15 @@ Status: implemented and tested locally — 83 CT tests and actual 11.98-second r
    unchanged or explicitly synchronized contracts and tested publication. Status: complete — 105 local tests, actual registered CPU inference and all
    receiver transfers passed. Source published as 9a3cdfe; hosted 40099064726
    passed Linux/Windows, container and pretrained checks. No new GPU/NPU claim.
+
+## Claude branch integration — 24 October 2026
+
+1. **Branch and runtime review:** inspect every origin branch against `a85538e`,
+   integrate compatible signing APIs with shared bounded signature verification,
+   and test runtime/security changes before documentation. Status: passed — focused signature/adversarial regressions and full local suite.
+2. **Quality gates and documentation:** execute type/coverage/dependency/SBOM
+   checks; retain source-agent review history with clear nonclinical attribution;
+   integrate data terms, document branch decisions, regenerate source API docs.
+   Status: passed — local type, coverage, dependency and documentation checks.
+3. **Joint validation and publication:** full tests, exact shared source sync and
+   producer/consumer validation before parent-agent publication. Status: in progress — joint signed transfers passed; publication follows.

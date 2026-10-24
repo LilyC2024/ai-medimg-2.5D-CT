@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=68", "wheel"]
+requires = ["setuptools>=84.1", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -9,11 +9,11 @@ description = "Local lung nodule research assistant: source-linked 3D candidates
 readme = "README.md"
 requires-python = ">=3.12,<3.13"
 license = "MIT"
-license-files = ["LICENSE", "THIRD_PARTY_NOTICES.md", "third_party/*.txt"]
+license-files = ["LICENSE", "THIRD_PARTY_NOTICES.md", "DATA_TERMS.md", "third_party/*.txt"]
 dependencies = [
   "matplotlib",
   "numpy",
-  "pillow",
+  "pillow>=13,<14",
   "opencv-python",
   "pandas",
   "pydicom",
@@ -22,6 +22,7 @@ dependencies = [
   "SimpleITK",
   "tqdm",
   "pydantic>=2,<3",
+  "cryptography>=44,<51",
 ]
 
 [project.optional-dependencies]
@@ -43,6 +44,12 @@ dev = [
   "pytest",
   "httpx",
 ]
+quality = [
+  "mypy==2.4.0",
+  "pytest-cov==7.1.0",
+  "pip-audit==2.10.1",
+  "cyclonedx-bom==7.5.0",
+]
 
 [project.scripts]
 lung-nodule = "lung_nodule.cli:main"
@@ -59,3 +66,20 @@ exclude = ["artifacts", "data", "data_processed", "outputs"]
 
 [tool.ruff.lint]
 select = ["E9", "F63", "F7", "F82"]
+
+[tool.mypy]
+files = [
+  "src/lung_nodule/contracts.py",
+  "src/lung_nodule/exchange_contract.py",
+  "src/lung_nodule/workspace.py",
+  "src/lung_nodule/producer_signature.py",
+]
+ignore_missing_imports = true
+follow_imports = "silent"
+check_untyped_defs = true
+
+[tool.coverage.run]
+source = ["src", "deploy"]
+
+[tool.coverage.report]
+fail_under = 65

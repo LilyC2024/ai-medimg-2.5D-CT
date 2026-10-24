@@ -10,3 +10,16 @@ onnx
 *.pt
 *.onnx
 .repair_*.py
+
+# Private configuration and test/audit output
+.env
+.env.*
+*.key
+*.pem
+*.sqlite*
+*.db
+.coverage*
+.pytest_cache
+.mypy_cache
+.ruff_cache
+*.log

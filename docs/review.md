@@ -25,3 +25,7 @@ No shared wire schema, dependency, installed weight, dataset, actual review or
 clinical hypothesis changed. Local administrators and data-permission declarations
 remain trusted. GPU training, new-detector NPU inference and independent clinical
 performance are not established by this review.
+
+These were AI-assisted source reviews, not independent human clinical or security
+audits. Runtime specialist roles are separate from development review agents.
+See [branch integration decisions](BRANCH_REVIEW.md).

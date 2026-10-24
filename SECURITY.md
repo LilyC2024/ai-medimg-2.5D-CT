@@ -49,3 +49,12 @@ vulnerabilities privately where a maintainer channel is available, using a small
 artificial reproduction and no personal data.
 
 [Expert repairs](docs/review.md) · [Validation](docs/validation.md).
+
+## Optional signed imaging exchange
+
+Ed25519 producer signatures bind exact manifest/artifact bytes. Keep signing keys
+outside Git and readable only by their owner. Exporter identity is not accuracy,
+clinical approval or independent validation of producer-declared metrics. LOVISA
+requires local public-key pinning for signed imports; unsigned research examples
+remain compatible unless its policy requires signatures. Shared archive bounds
+and structural checks also apply to malformed signed input.

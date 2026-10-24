@@ -138,3 +138,23 @@ not nodule-v2/research-v3/legacy-v1 schemas or renderer source. Exact vendored s
 and actual fixture/pretrained/legacy transfers remain required. Public research
 provenance is an operator declaration, not independent source authentication.
 [Source repairs](../review.md) · [Receiver workflow](https://github.com/LilyC2024/Medical-AI/blob/main/docs/WORKFLOWS.md).
+
+## Optional signed export
+
+Generate a new private key (never commit it):
+
+```bash
+.venv/bin/python -m lung_nodule.cli keygen --output /private/local-exporter.key
+```
+
+Pin the returned public key in LOVISA using
+`python -m medical_assistant.producer_trust --producer lovisa-ct --public-key <public_key_b64> --label <name>`.
+Keys require a trusted local identity check. Add `--signing-key /private/local-exporter.key`
+to the companion export/infer command, or set `LOVISA_SIGNING_KEY_FILE`. A private
+PEM must have owner-only POSIX permissions. No private key is sent to LOVISA.
+
+The shared module bounds archives, rejects ambiguous paths/JSON and binds all
+manifest-listed artifact hashes. Signed proof identifies the exporter, not clinical
+accuracy. Unknown signed keys are blocked by LOVISA; unsigned older examples stay
+compatible unless its trust settings require signatures. Existing schema versions
+are retained. See [branch review](../BRANCH_REVIEW.md).

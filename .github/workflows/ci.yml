@@ -1,5 +1,7 @@
 name: Lung research and legacy compatibility
 on: [push, pull_request]
+permissions:
+  contents: read
 jobs:
   synthetic:
     strategy:
@@ -13,14 +15,31 @@ jobs:
         with:
           python-version: '3.12'
       - run: python -m pip install torch==2.14.1+cpu torchvision==0.29.1+cpu --index-url https://download.pytorch.org/whl/cpu
-      - run: python -m pip install -e ".[ml,lung,ui,dev]"
+      - run: python -m pip install -e ".[ml,lung,ui,dev,quality]"
       - run: python -m pip check
       - run: python scripts/check_docs.py
       - run: python scripts/generate_api_docs.py --check
       - run: python -m ruff check src scripts deploy tests
       - run: python -m ruff check src/lung_nodule --select F
       - run: python -m ruff format --check src/lung_nodule
-      - run: python -m pytest -q
+      - name: Type-check shared contracts, workspaces and signing
+        run: python -m mypy
+      - name: Tests with coverage floor
+        run: python -m pytest -q --cov --cov-report=term
+      - name: Audit installed dependencies and write SBOM
+        if: runner.os == 'Linux'
+        run: |
+          python -m pip install --upgrade pip setuptools filelock
+          python -m pip_audit --skip-editable --local
+          python -c "from pathlib import Path; Path('artifacts').mkdir(exist_ok=True)"
+          cyclonedx-py environment -o artifacts/sbom.cdx.json
+      - name: Upload SBOM
+        if: runner.os == 'Linux'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ct-sbom
+          path: artifacts/sbom.cdx.json
+          retention-days: 30
       - name: Exercise unreviewed nodule fixture workflow
         run: python scripts/smoke_lung.py --output artifacts/lung-fixture-smoke.json
       - name: Exercise synthetic MHCRA bundle command

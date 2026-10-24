@@ -1,7 +1,7 @@
 FROM python:3.12-slim
 WORKDIR /app
 COPY pyproject.toml README.md LICENSE ./
-COPY THIRD_PARTY_NOTICES.md ./
+COPY THIRD_PARTY_NOTICES.md DATA_TERMS.md ./
 COPY third_party ./third_party
 COPY src ./src
 COPY deploy ./deploy
