@@ -11,6 +11,9 @@ Local operators, model installers, the filesystem and process administrator are
 trusted. Hashes detect inconsistent artifacts, not a coordinated rewrite of all
 local metadata, proof of anonymization, data permission or model execution.
 Never load untrusted model graphs/checkpoints simply because they have hashes.
+Exports can carry an Ed25519 producer signature (`keygen`, `--signing-key` or
+`LOVISA_SIGNING_KEY_FILE`). Keep the private key owner-only (0600) and outside Git;
+a signature identifies the key holder, not model correctness or data permission.
 Pinned pretrained assets retain separate upstream terms; code publication grants
 no dataset or model rights.
 

@@ -152,8 +152,14 @@ def _export_exchange(
     original_study=None,
     crop_origin_zyx=None,
     inference_region=None,
+    signing_key=None,
 ):
-    """Export verified v2 source/annotation bundle; pending mode grants no approval."""
+    """Export verified v2 source/annotation bundle; pending mode grants no approval.
+
+    With ``signing_key`` (an Ed25519 key file path) the archive carries a producer
+    signature. CT performance is always declared unmeasured: no FROC or
+    false-positive evaluation exists for this detector.
+    """
     from datetime import datetime, timezone
     from io import BytesIO
     from uuid import uuid4
@@ -228,6 +234,10 @@ def _export_exchange(
         for name, data in files.items():
             archive.writestr(name, data)
     data = archive_bytes.getvalue()
+    if signing_key is not None:
+        from lung_nodule.producer_signature import load_private_key, sign_archive
+
+        data = sign_archive(data, load_private_key(signing_key), "lovisa-ct")
     read_exchange(
         data, study.patient_alias
     )  # fail before publishing incomplete/invalid output
@@ -237,13 +247,22 @@ def _export_exchange(
     return destination
 
 
-def export_synthetic_exchange(directory, destination, *, pending=False):
+def export_synthetic_exchange(directory, destination, *, pending=False, signing_key=None):
     """Legacy synthetic-v2 export; public studies require the explicit research API."""
-    return _export_exchange(directory, destination, pending=pending)
+    return _export_exchange(
+        directory, destination, pending=pending, signing_key=signing_key
+    )
 
 
 def export_research_exchange(
-    directory, destination, *, patient_id, research, crop_origin_zyx, shape_zyx
+    directory,
+    destination,
+    *,
+    patient_id,
+    research,
+    crop_origin_zyx,
+    shape_zyx,
+    signing_key=None,
 ):
     """Export an unreviewed, bounded, source-mapped public CT excerpt to a composite case.
 
@@ -319,4 +338,5 @@ def export_research_exchange(
             original_study=original,
             crop_origin_zyx=tuple(int(x) for x in offset),
             inference_region=inference_region,
+            signing_key=signing_key,
         )

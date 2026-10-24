@@ -4,7 +4,10 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 from pathlib import Path
+
+SIGNING_KEY_ENV = "LOVISA_SIGNING_KEY_FILE"
 
 
 def main(argv=None):
@@ -14,6 +17,10 @@ def main(argv=None):
         "fetch-model", help="Explicitly download pinned official weights and licenses"
     )
     fetch.add_argument("--output", required=True)
+    keygen = sub.add_parser(
+        "keygen", help="Create an Ed25519 signing key for review ZIPs; prints public key"
+    )
+    keygen.add_argument("--output", required=True, help="New private key file (0600)")
     demo = sub.add_parser(
         "demo",
         help="Generated sphere phantom + non-ML fixture finder; leaves review pending",
@@ -66,7 +73,18 @@ def main(argv=None):
     research.add_argument(
         "--shape", nargs=3, type=int, required=True, metavar=("Z", "Y", "X")
     )
+    for command in (export, research):
+        command.add_argument(
+            "--signing-key",
+            default=os.environ.get(SIGNING_KEY_ENV),
+            help=f"Ed25519 key file; defaults to ${SIGNING_KEY_ENV}; unsigned if absent",
+        )
     a = p.parse_args(argv)
+    if a.command == "keygen":
+        from lung_nodule.producer_signature import generate_key
+
+        print(json.dumps({"producer": "lovisa-ct", **generate_key(a.output)}, indent=2))
+        return
     from lung_nodule.detection import (
         MonaiDetector,
         PhantomDetector,
@@ -136,10 +154,15 @@ def main(argv=None):
                 research=json.loads(Path(a.research_provenance).read_text()),
                 crop_origin_zyx=a.crop_origin,
                 shape_zyx=a.shape,
+                signing_key=a.signing_key,
             )
         )
     else:
-        print(export_synthetic_exchange(a.workspace, a.output))
+        print(
+            export_synthetic_exchange(
+                a.workspace, a.output, signing_key=a.signing_key
+            )
+        )
 
 
 if __name__ == "__main__":

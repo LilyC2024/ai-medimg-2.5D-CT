@@ -61,6 +61,27 @@ normal standalone `export` still requires completed CT review. Its optional prod
 attestation can seed LOVISA controls but cannot approve LOVISA imaging/final output.
 For manual export, set `patient_alias` to the selected LOVISA synthetic patient ID.
 
+## Producer signatures
+
+Hashes prove internal consistency, not origin: anyone can build a ZIP with
+fabricated candidates and valid hashes. An Ed25519 producer signature lets LOVISA
+check that a pinned key exported these exact bytes.
+
+```bash
+# Once: create an owner-only private key outside Git; prints the public key/key_id.
+.venv/bin/python -m lung_nodule.cli keygen --output ~/.config/lovisa/ct-signing.key
+export LOVISA_SIGNING_KEY_FILE=~/.config/lovisa/ct-signing.key
+```
+
+`export`, `export-research` (`--signing-key` or the variable) and the LOVISA bridge
+then add `signature.json`: a signature over `bundle.json`'s SHA-256, the producer
+name and a performance claim. CT always declares its false-positive rate as **not
+measured**; no FROC or per-candidate evaluation exists. Pin the printed public key
+in LOVISA ([Medical-AI imaging guide](https://github.com/LilyC2024/Medical-AI/blob/main/docs/IMAGING.md)).
+A signature shows who exported the file, not that the model is correct.
+[`producer_signature.py`](../../src/lung_nodule/producer_signature.py) is copied
+byte-for-byte into the endoscopy companion and LOVISA.
+
 ## What crosses the boundary
 
 `bundle.json` contains identity, processing timestamp, unknown acquisition date,
@@ -68,8 +89,8 @@ typed Study/status/optional Review and artifact hashes/sizes. `source.npy` suppl
 finite float32 HU; source/overlay PNGs cover every slice; `producer/report.md` is the
 canonical reviewed report or fixed pending text.
 
-LOVISA limits: **64 slices ×256×256**, 64 MiB ZIP, 128 MiB expanded, 131 members,
-400 KB manifest. It checks NPY headers before allocation, validates safe paths and
+LOVISA limits: **64 slices ×256×256**, 64 MiB ZIP, 128 MiB expanded, 131 members
+plus an optional `signature.json`, 400 KB manifest. It checks NPY headers before allocation, validates safe paths and
 hashes, and recomputes every preview/report. The shared NumPy renderer avoids font
 version differences. Export rejects oversized studies rather than truncating them.
 

@@ -1,5 +1,22 @@
 # CT evaluation record
 
+## Producer signatures — 24 October 2026
+
+Software change: optional Ed25519 signatures on exported review ZIPs. No detector,
+threshold, geometry or review rule changed. Signatures were tested with keys
+generated inside pytest temporary directories; no key is committed.
+
+| Executed check | Actual outcome |
+| --- | --- |
+| `python -m pytest -q` (Python 3.12, CPU torch from PyPI, `ui` extra) | **111 passed in 31.32s** (105 before + 6 new) |
+| New `tests/test_producer_signature.py` | 6 passed: pinned verify, unsigned/unpinned reporting, tampered bundle/claims/producer rejection, 0600 key files, performance invariants, keygen output |
+| `ruff check .` | All checks passed |
+| `pip check` | No broken requirements found |
+| `scripts/check_docs.py` / `generate_api_docs.py --check` | Passed: 32 documents; API reference regenerated and matches |
+
+Not run: hosted CI, pretrained-weight smoke, LOVISA joint smoke against this
+branch (run from the LOVISA branch, recorded there).
+
 ## Expert source review — 24 October 2026
 
 Independent CT review repaired upload cleanup ownership, duplicate/encrypted ZIP

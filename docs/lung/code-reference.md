@@ -50,7 +50,8 @@ integration; the package contains no LLM agents.
 | workspace.complete_review | Re-read workspace; compose report; persist explicit approval last |
 | workspace.reviewed_report | Revalidate and regenerate on download; never trust report.md alone |
 | workspace.export_synthetic_exchange | Generated workspace → self-validated nodule-v2 ZIP; explicit review by default, pending only for the LOVISA bridge |
-| [cli.main](../../src/lung_nodule/cli.py) | fetch-model/demo/detect/review/export command parsing and dispatch |
+| [cli.main](../../src/lung_nodule/cli.py) | fetch-model/keygen/demo/detect/review/export command parsing and dispatch |
+| [producer_signature](../../src/lung_nodule/producer_signature.py) | Ed25519 key creation, archive signing and pinned-key verification shared byte-for-byte with LOVISA and endoscopy |
 | [ui.main](../../src/lung_nodule/ui.py) | Loopback Streamlit source viewer, candidate decisions, caliper preview and report download |
 | [research.NoduleTruth / DatasetCase](../../src/lung_nodule/research.py) | Physical reference nodule; patient/study/split/image annotation records |
 | DatasetManifest.group_separation | Enforce explicit approval, patient/hash separation, unique studies, relative paths and completeness |
