@@ -52,4 +52,4 @@ Status: implemented and tested locally — 83 CT tests and actual 11.98-second r
    integrate data terms, document branch decisions, regenerate source API docs.
    Status: passed — local type, coverage, dependency and documentation checks.
 3. **Joint validation and publication:** full tests, exact shared source sync and
-   producer/consumer validation before parent-agent publication. Status: in progress — joint signed transfers passed; publication follows.
+   producer/consumer validation before parent-agent publication. Status: complete — published to main; local/joint checks and hosted release/security workflows passed.

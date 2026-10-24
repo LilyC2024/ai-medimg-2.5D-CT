@@ -18,11 +18,13 @@ Actual registered MONAI phantom: 30.25s, one candidate, no review approval.
 Actual signed generated CT CLI → LOVISA: 3.76s, 66 artifacts, pinned proof verified.
 Docker rebuild could not execute locally: access to /var/run/docker.sock denied;
 its Dockerfile now includes DATA_TERMS.md for the new package license metadata.
-Hosted Linux/Windows/container checks will validate publication separately.
+The hosted Linux/Windows/container and pretrained checks subsequently passed.
 All transfer work used temporary storage and issued no image or final-report
 approvals. No clinical validation, GPU training or NPU execution is claimed.
-Hosted checks for this new commit are not yet recorded; prior release runs below
-remain historical.
+[Hosted release checks](https://github.com/LilyC2024/ai-medimg-2.5D-CT/actions/runs/40122853003)
+passed, including Linux/Windows and the configured actual-model/container checks.
+[Hosted secret scan and CodeQL](https://github.com/LilyC2024/ai-medimg-2.5D-CT/actions/runs/40122853012)
+also passed. Prior release runs below remain historical.
 
 ## Previous release evidence
 
