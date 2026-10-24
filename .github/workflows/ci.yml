@@ -35,7 +35,7 @@ jobs:
           cyclonedx-py environment -o artifacts/sbom.cdx.json
       - name: Upload SBOM
         if: runner.os == 'Linux'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ct-sbom
           path: artifacts/sbom.cdx.json
@@ -73,7 +73,7 @@ jobs:
         run: python scripts/smoke_lung.py --model-dir models/luna16 --device cpu --output artifacts/pretrained-smoke.json
       - name: Exercise real pretrained pending nodule-v2 bridge
         run: python -m deploy.mhcra_lung_bridge --patient-id synthetic-checklist --study-id ci-lung-pretrained --output-dir artifacts/ci-lung-pretrained --mode pretrained --model-dir models/luna16 --device cpu
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: generated-phantom-pretrained-smoke
           path: artifacts/pretrained-smoke.json
