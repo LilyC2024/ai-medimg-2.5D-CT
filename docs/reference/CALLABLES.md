@@ -1771,10 +1771,10 @@ Producer-declared evaluation of the exact model; shown beside candidates.
 | --- | --- | --- |
 | `measured` | `bool` | `required / supplied by caller` |
 | `metric` | `str` | `Field(min_length=1, max_length=200)` |
-| `false_positive_fraction` | `Optional[float]` | `Field(default=None, ge=0, le=1)` |
-| `test_images` | `Optional[int]` | `Field(default=None, ge=1, strict=True)` |
-| `negative_images` | `Optional[int]` | `Field(default=None, ge=0, strict=True)` |
-| `evaluation_sha256` | `Optional[str]` | `Field(default=None, pattern='^[a-f0-9]{64}$')` |
+| `false_positive_fraction` | `float \| None` | `Field(default=None, ge=0, le=1)` |
+| `test_images` | `int \| None` | `Field(default=None, ge=1, strict=True)` |
+| `negative_images` | `int \| None` | `Field(default=None, ge=0, strict=True)` |
+| `evaluation_sha256` | `str \| None` | `Field(default=None, pattern='^[a-f0-9]{64}$')` |
 | `limitations` | `str` | `Field(min_length=1, max_length=600)` |
 
 #### [Performance.complete](../../src/lung_nodule/producer_signature.py#L46)
@@ -1814,10 +1814,10 @@ Result of checking an archive against locally pinned producer keys.
 | Declared field | Type | Default / constraint expression |
 | --- | --- | --- |
 | `status` | `Literal['verified', 'unsigned', 'untrusted-key']` | `required / supplied by caller` |
-| `producer` | `Optional[Producer]` | `None` |
-| `key_id` | `Optional[str]` | `None` |
-| `label` | `Optional[str]` | `None` |
-| `performance` | `Optional[Performance]` | `None` |
+| `producer` | `Producer \| None` | `None` |
+| `key_id` | `str \| None` | `None` |
+| `label` | `str \| None` | `None` |
+| `performance` | `Performance \| None` | `None` |
 
 #### [canonical](../../src/lung_nodule/producer_signature.py#L86)
 
@@ -1863,9 +1863,9 @@ Static calls (including nested helper bodies): `_public_raw`, `key_id`, `base64.
 
 `load_private_key(path)`
 
-Static calls (including nested helper bodies): `_crypto`, `Path`, `serialization.load_pem_private_key`, `ValueError`, `path.read_bytes`, `isinstance`, `stat.S_IMODE`, `path.stat`.
+Static calls (including nested helper bodies): `_crypto`, `Path`, `serialization.load_pem_private_key`, `ValueError`, `path.read_bytes`, `isinstance`, `TypeError`, `stat.S_IMODE`, `path.stat`.
 
-Explicit raised conditions: `ValueError`. See source for triggers; called validators may raise additional exceptions.
+Explicit raised conditions: `TypeError`, `ValueError`. See source for triggers; called validators may raise additional exceptions.
 
 #### [sign_archive](../../src/lung_nodule/producer_signature.py#L146)
 

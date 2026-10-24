@@ -16,7 +16,7 @@ import stat
 import zipfile
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Literal, Optional
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
@@ -36,10 +36,10 @@ class Performance(Record):
 
     measured: bool
     metric: str = Field(min_length=1, max_length=200)
-    false_positive_fraction: Optional[float] = Field(default=None, ge=0, le=1)
-    test_images: Optional[int] = Field(default=None, ge=1, strict=True)
-    negative_images: Optional[int] = Field(default=None, ge=0, strict=True)
-    evaluation_sha256: Optional[str] = Field(default=None, pattern=r"^[a-f0-9]{64}$")
+    false_positive_fraction: float | None = Field(default=None, ge=0, le=1)
+    test_images: int | None = Field(default=None, ge=1, strict=True)
+    negative_images: int | None = Field(default=None, ge=0, strict=True)
+    evaluation_sha256: str | None = Field(default=None, pattern=r"^[a-f0-9]{64}$")
     limitations: str = Field(min_length=1, max_length=600)
 
     @model_validator(mode="after")
@@ -77,10 +77,10 @@ class Check(Record):
     """Result of checking an archive against locally pinned producer keys."""
 
     status: Literal["verified", "unsigned", "untrusted-key"]
-    producer: Optional[Producer] = None
-    key_id: Optional[str] = None
-    label: Optional[str] = None
-    performance: Optional[Performance] = None
+    producer: Producer | None = None
+    key_id: str | None = None
+    label: str | None = None
+    performance: Performance | None = None
 
 
 def canonical(value) -> bytes:
@@ -139,7 +139,7 @@ def load_private_key(path):
         raise ValueError("Signing key must be readable only by its owner (chmod 600)")
     key = serialization.load_pem_private_key(path.read_bytes(), password=None)
     if not isinstance(key, ed25519.Ed25519PrivateKey):
-        raise ValueError("Signing key must be Ed25519")
+        raise TypeError("Signing key must be Ed25519")
     return key
 
 
