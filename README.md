@@ -73,4 +73,4 @@ remain separate from lung-nodule performance. [Hardware](docs/lung/deployment.md
 
 **Research only:** candidates cannot establish malignancy or a normal scan.
 No independent clinical validation is claimed. Code is MIT; model/data rights are
-separate. [Security](SECURITY.md) · [Contributing](CONTRIBUTING.md).
+separate ([DATA_TERMS](DATA_TERMS.md)). [Security](SECURITY.md) · [Contributing](CONTRIBUTING.md).

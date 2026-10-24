@@ -1,5 +1,19 @@
 # CT evaluation record
 
+## Dataset terms — 24 October 2026
+
+Documentation only: `DATA_TERMS.md` added and included in package license files.
+No source, contract, model or test changed.
+
+| Executed check | Actual outcome |
+| --- | --- |
+| `python -m pytest -q` (Python 3.12, CPU torch from PyPI, `ui` extra) | **105 passed in 27.87s** |
+| `ruff check .` (repo config) | All checks passed |
+| `pip check` after reinstall | No broken requirements found |
+| `scripts/check_docs.py` / `generate_api_docs.py --check` | Passed: 33 documents; API reference matches |
+
+Not run: hosted CI, GPU/NPU, pretrained-weight smoke.
+
 ## Expert source review — 24 October 2026
 
 Independent CT review repaired upload cleanup ownership, duplicate/encrypted ZIP
