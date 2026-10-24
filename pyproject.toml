@@ -59,3 +59,20 @@ exclude = ["artifacts", "data", "data_processed", "outputs"]
 
 [tool.ruff.lint]
 select = ["E9", "F63", "F7", "F82"]
+
+[tool.mypy]
+# Typed gate on the shared exchange contracts and workspace export; widen deliberately.
+files = [
+  "src/lung_nodule/contracts.py",
+  "src/lung_nodule/exchange_contract.py",
+  "src/lung_nodule/workspace.py",
+]
+ignore_missing_imports = true
+follow_imports = "silent"
+
+[tool.coverage.run]
+source = ["src", "deploy"]
+
+[tool.coverage.report]
+# Measured 71% on 24 October 2026; legacy/training paths need CUDA or real data.
+fail_under = 65

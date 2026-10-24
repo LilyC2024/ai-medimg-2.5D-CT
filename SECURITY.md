@@ -48,4 +48,8 @@ normality, management recommendations or device certification. Report potential
 vulnerabilities privately where a maintainer channel is available, using a small
 artificial reproduction and no personal data.
 
+CI audits installed dependencies (pip-audit), scans history for secrets (gitleaks),
+runs CodeQL and publishes an SBOM. These are automated checks, not an independent
+security review.
+
 [Expert repairs](docs/review.md) · [Validation](docs/validation.md).

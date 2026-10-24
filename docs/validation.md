@@ -14,7 +14,14 @@ Run from the CT checkout in its existing environment:
 .venv/bin/python -m ruff format --check src/lung_nodule
 .venv/bin/python -m pytest -q
 .venv/bin/python scripts/check_docs.py
+# CI gates (install: pip install mypy==2.4.0 pytest-cov==7.1.0 pip-audit==2.10.1)
+.venv/bin/python -m mypy                               # contracts and workspaces
+.venv/bin/python -m pytest -q --cov --cov-report=term  # fails below 65%
+.venv/bin/python -m pip_audit --skip-editable --local
 ```
+
+Hosted CI also runs gitleaks over full history and CodeQL, uploads a CycloneDX SBOM
+of the installed environment, and Dependabot proposes weekly updates.
 
 [Tests](../tests) cover source ordering/geometry/identity, mapping and calipers,
 review/content binding, hostile exchange archives, source/header allocation,

@@ -1,5 +1,19 @@
 # CT evaluation record
 
+## CI quality and security gates — 24 October 2026
+
+Tooling only; no source change.
+
+| Executed check (local, Python 3.12) | Actual outcome |
+| --- | --- |
+| `mypy` (2.4.0) on contracts, exchange contract, workspace | Success: no issues in 3 files |
+| `pytest -q --cov` | **105 passed**; coverage **70.88%** ≥ 65% floor |
+| `pip_audit --skip-editable --local` (after upgrading the venv's pip 24.0, which had 12 advisories) | No known vulnerabilities found |
+| `cyclonedx-py environment` | SBOM with 140 components |
+| Existing ruff checks / format check | All checks passed / already formatted |
+
+Not run: gitleaks and CodeQL (hosted only), Windows runner, hosted CI.
+
 ## Expert source review — 24 October 2026
 
 Independent CT review repaired upload cleanup ownership, duplicate/encrypted ZIP
