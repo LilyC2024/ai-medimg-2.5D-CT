@@ -104,6 +104,14 @@ def validate_dataset(manifest_path, dataset_root):
             raise ValueError(
                 "Training NIfTI must be resampled to .703125/.703125/1.25mm"
             )
+        pixels = np.asanyarray(image.dataobj)
+        if (
+            not np.issubdtype(pixels.dtype, np.number)
+            or np.iscomplexobj(pixels)
+            or not np.isfinite(pixels).all()
+        ):
+            raise ValueError("Training image must contain finite real HU voxels")
+        del pixels  # Do not retain a prior full volume while loading the next case.
         for nodule in case.nodules:
             ras = np.array(nodule.center_lps_mm) * [-1, -1, 1]
             center = np.linalg.solve(image.affine[:3, :3], ras - image.affine[:3, 3])

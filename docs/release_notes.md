@@ -38,3 +38,11 @@ previews and source-grid measurements. Tiny-model training and parity were teste
 the general research CLI/API remained separate. [Integration evidence](../reports/mhcra_integration.json).
 The receiving app is now **LOVISA**. Current lung work and nodule-v2 interoperability
 are documented in the [active release record](lung/release.md).
+
+## Expert review — 24 October 2026
+
+The active nodule and retained legacy paths both remain available. Fixed numeric
+validation before coercion/persistence, finite training sources, temporary upload
+ownership and encrypted/duplicate archives. Shared exchange schemas and installed
+models are unchanged. Detailed defects/tests are in [Review](review.md); the new
+[documentation index](README.md) distinguishes current and historical workflows.

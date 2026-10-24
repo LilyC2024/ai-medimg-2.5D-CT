@@ -24,3 +24,7 @@ An AI coding assistant implemented/reviewed software and tests. No independent
 expert clinical approval is claimed. Source sample permissions remain unresolved;
 code MIT terms grant no patient-data rights. Historical checkpoints/metrics are
 identified by their own records, not current lung-project performance.
+
+The 24 October source repairs affect input integrity and cleanup only. They do
+not retrain this historical model, alter its original teacher metrics or validate
+NPU execution for the newer RetinaNet detector. [Audit](review.md).

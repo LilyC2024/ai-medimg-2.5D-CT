@@ -5,8 +5,8 @@
 ## Define the research experiment
 
 CT supplies pretrained inference and a guarded upstream training launcher.
-Training/evaluation stay in this project; LOVISA consumes only bounded synthetic
-research results. No newly trained or independently validated nodule model is
+Training/evaluation stay in this project; LOVISA consumes bounded synthetic
+results or separately labelled public research excerpts, never a training job. No newly trained or independently validated nodule model is
 claimed. Obtain permitted public labels, resolve reader annotations and freeze
 patient-separated training/validation/test cohorts before training. Audit overlap
 with the pretrained model before using it as a benchmark. Never split neighboring
@@ -135,3 +135,16 @@ A successfully trained checkpoint is not automatically promoted into LOVISA or
 approved clinically. Validate its protocol, source mapping, candidate performance
 and report evidence separately before selecting it for a research run.
 [Integration boundary](mhcra.md).
+
+## Failed preflight and evidence recording
+
+Validation now reads each source array and rejects complex/nonfinite HU before
+training. It does not infer clinically plausible intensity units from numbers;
+HU and annotation completeness remain declared research responsibilities. A
+matching hash is identity evidence, not proof of correct labels or permissions.
+
+Record the exact manifest/config/model/checkpoint, device, actual process exit
+status, warning messages and validation selection. Keep test scoring independent.
+A CPU-only host can validate data and inference but cannot mark the guarded CUDA
+trainer as executed. The expert source review retrained no detector and changed
+no model assets. [Current evidence](../../EVALUATION.md).

@@ -56,10 +56,20 @@ pathology truth. The pretrained model uses LUNA16 development data: audit overla
 before any independent evaluation. Split by patient, include genuinely annotated
 negatives and never interpret missing labels as negative truth.
 
-No public patient cohort was imported/evaluated in the recorded release.
+No independent multi-patient clinical cohort has been evaluated. One permitted
+LIDC-IDRI subject was used for the separately declared annotation-selected ROI
+localization smoke; it is not a clinical benchmark.
 [Training/evaluation protocol](training.md) separates implemented tooling from
 unexecuted experiments. Code is MIT; model assets/upstream code/datasets retain
 separate terms. `fetch-model` retains upstream licenses. Commit no patient images,
 original identifiers, weights, local approvals or reviewer workspaces.
 
 Public data with unconfirmed acquisition protocol may use the explicit `public-chest-protocol-unverified` research path; this is not noncontrast confirmation or clinical validation. A declared contrast agent conflicts with the older noncontrast attestation and is rejected.
+
+## Revalidation guarantees
+
+Training NIfTI must have finite real numeric source voxels, expected spacing and
+valid affine; a valid file hash alone is insufficient. The legacy segmentation
+loader checks finite real integer labels in range before conversion, so fractional
+values cannot silently become classes. These checks preserve input meaning rather
+than repairing or guessing invalid data. [Review findings](../review.md).

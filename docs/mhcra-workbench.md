@@ -34,3 +34,9 @@ IDs. Never relabel nodule boxes as tissue masks.
 LOVISA now includes this accepted inspection in one concise clinical summary,
 with representative pictures, a previewed clinician note and an offline HTML
 download. [Report guide](https://github.com/LilyC2024/Medical-AI/blob/main/docs/REPORTS.md).
+
+In current LOVISA use **CT review → Upload → Analyze** with the legacy ZIP.
+Opening it validates existing tissue results; it does not select the nodule
+pipeline or re-infer a DICOM scan. Review inclusion, safety and final report
+approval remain separate. Invalid/encrypted/duplicate DICOM uploads to the retained
+standalone API are rejected with explicit cleanup ownership. [API audit](review.md).

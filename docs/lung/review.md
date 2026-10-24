@@ -60,3 +60,12 @@ nodule-v2 includes bounded HU and every-slice previews and is accepted by LOVISA
 nodule importer. The dedicated bridge can instead create **pending** input for
 LOVISA review; it does not forge a CT approval. Both paths require LOVISA's own
 imaging acceptance and separate final report approval. [Exact workflow](mhcra.md).
+
+## Retry and integrity boundaries
+
+Source snapshots must be finite real float32-representable data matching geometry.
+Bad input is rejected before output reservation. A completed review never repairs
+an inconsistent source or source mapping. Original DICOM remains separate; hashes
+prove internal identity, not actual anonymization, producer execution or clinical
+truth. Public research excerpts use a separate provenance-bound export path and
+still require LOVISA image acceptance. [Public demo](public-demo.md).

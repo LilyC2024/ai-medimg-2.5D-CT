@@ -16,6 +16,7 @@ jobs:
       - run: python -m pip install -e ".[ml,lung,ui,dev]"
       - run: python -m pip check
       - run: python scripts/check_docs.py
+      - run: python scripts/generate_api_docs.py --check
       - run: python -m ruff check src scripts deploy tests
       - run: python -m ruff check src/lung_nodule --select F
       - run: python -m ruff format --check src/lung_nodule

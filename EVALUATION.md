@@ -1,5 +1,34 @@
 # CT evaluation record
 
+## Expert source review — 24 October 2026
+
+Independent CT review repaired upload cleanup ownership, duplicate/encrypted ZIP
+handling, class labels before integer conversion, finite real training HU, and
+workspace preflight before reserving an output directory. Eighteen regressions
+cover the demonstrated defects. [Detailed review](docs/review.md).
+
+| Executed check | Actual outcome |
+| --- | --- |
+| Final full regression | **105 passed in 29.40s**, including 18 source-review and four documentation regressions |
+| Source-repair suite before documentation phase | 101 passed in 34.96s; subsequent targeted review/docs 22 passed in 6.19s |
+| Actual installed MONAI CPU phantom smoke | **8.39s**, one candidate, unreviewed reporting blocked; no review issued |
+| LOVISA actual interoperability | Fixture/pretrained nodule-v2: 66 artifacts each; retained tissue-mask-v1: 41 artifacts; all pending review |
+| Documentation/source checks | 31 maintained Markdown files/anchors, generated API freshness, source compilation, pip consistency, full applicable Ruff and lung formatting passed |
+| Shared contracts | Exact LOVISA-vendored contract/renderer match; no wire/schema change |
+
+The 11 warnings are existing legacy Starlette/httpx, ONNX/TorchScript/tracing and
+MONAI/NumPy deprecations. API regression inference is scripted; the separate
+pretrained smoke above actually executed installed weights on generated pixels.
+No model/dataset/dependency/actual approval was changed. No full CT training,
+CUDA, new-detector NPU or new clinical accuracy result is claimed. Previous ROI
+inference remains a separately labelled annotation-selected localization smoke.
+
+Root documentation is concise; detailed setup, geometry, training, review,
+security, integration and source references are linked. Local-only source sketches
+contain no medical images. Historical experiments below retain their original
+models/data/measurement limitations; their metrics are not detector validation.
+Publication and hosted outcomes are recorded after execution below.
+
 ## Real CT excerpt and LOVISA research evidence — 23 October 2026
 
 - Final local regression: **83 passed in 34.61s**, with 11 existing dependency/legacy-export warnings. New tests cover exact public crop geometry, pending exports and scripted excerpt-to-source candidate mapping.

@@ -1,44 +1,57 @@
-# CT validation: current checks and historical evidence
+# Validate CT software and interoperability
 
-[Overview](../README.md) · [Actual results](../EVALUATION.md)
+[Overview](../README.md) · [Actual outcomes](../EVALUATION.md) · [Expert repairs](review.md)
 
-## Current software checks
+## Local software checks
+
+Run from the CT checkout in its existing environment:
 
 ```bash
-.venv/bin/python scripts/check.py
+.venv/bin/python -m pip check
+.venv/bin/python -m compileall -q src deploy scripts tests
+.venv/bin/python -m ruff check src scripts deploy tests
+.venv/bin/python -m ruff check src/lung_nodule --select F
+.venv/bin/python -m ruff format --check src/lung_nodule
+.venv/bin/python -m pytest -q
+.venv/bin/python scripts/check_docs.py
+```
+
+[Tests](../tests) cover source ordering/geometry/identity, mapping and calipers,
+review/content binding, hostile exchange archives, source/header allocation,
+patient/hash leakage, and retained 2.5D/API behavior. New review regressions cover
+upload cleanup ownership, duplicate/encrypted members, fractional targets,
+nonfinite/complex HU and retryable workspace validation. Scripted detector tests
+are labelled software checks, not actual pretrained inference.
+
+The Markdown checker checks local files and heading anchors, including repeated
+headings, encoded paths and fenced examples. It does not contact external URLs.
+
+## Actual local detector checks
+
+```bash
+# Non-ML generated phantom
 .venv/bin/python scripts/smoke_lung.py --output artifacts/fixture-smoke.json
+# Actual registered pretrained weights on generated pixels
 .venv/bin/python scripts/smoke_lung.py --model-dir models/luna16 --device cpu --output artifacts/pretrained-smoke.json
 ```
 
-`check.py` runs documentation links, Ruff and the full pytest suite. Inputs are
-synthetic; test review identities are scripted. The real pretrained smoke is
-separate, requires installed verified weights and leaves report approval blocked.
-Windows/Linux CI also exercises both bridge commands; Linux checks Docker. LOVISA
-runs its own regression and pinned real producer-consumer smokes.
+Use the installed registered model directory; this host may use `models/luna16-full`.
+Both smokes leave review pending. No candidate count is an accuracy metric.
+[Public ROI reproduction](lung/public-demo.md) is a separate research smoke with
+pretrained-overlap and annotation-selection limitations.
 
-## Evidence map
+## LOVISA joint checks
 
-| Requirement | Source |
-| --- | --- |
-| Current source, geometry, detection, review and exchange | [tests](../tests) and [current evaluation](../EVALUATION.md) |
-| Actual pretrained CPU inference on generated CT | [Smoke JSON](../reports/lung_pretrained_smoke.json) |
-| Phantom CPU latency | [Latency JSON](../reports/lung_cpu_latency.json) |
-| Legacy rescale/padding/geometry | [Repair tests](../tests/test_repairs.py), [HU investigation](../reports/hu_investigation.json) |
-| Legacy frozen split and training trace | [Data manifest](../reports/data_manifest.json), [training](../reports/training.json) |
-| Legacy held-out metrics/batch invariance | [Evaluation](../reports/evaluation.json), [invariance](../reports/invariance.json) |
-| Legacy ONNX provenance/parity | [Parity](../reports/onnx_parity.json), [deployment](../reports/deployment.json) |
-| Actual historical full U-Net Intel NPU | [Benchmark](../reports/intel_benchmark.json) |
-| Historical fresh environment/checkout/container | [Verification](../reports/verification.json) |
-| LOVISA synthetic legacy bridge | [Integration record](../reports/mhcra_integration.json) |
+In LOVISA's own `.venv`, run exact CT contract sync and its fixture/pretrained/
+legacy producer-consumer smokes. The receiver independently validates bounded
+HU, geometry, previews, candidates and pending review; no smoke should issue an
+actual-app approval. See [receiver validation](https://github.com/LilyC2024/Medical-AI/blob/main/docs/VALIDATION.md).
 
-## Interpretation limits
+## Hosted and hardware boundaries
 
-Generated-pixel success establishes software execution, not sensitivity, clinical
-utility or safety. Current CUDA training/new-detector NPU execution and independent
-patient evaluation remain unexecuted. Legacy metrics compare heuristic labels on
-one series; raw and worse postprocessed results stay separate. Empty-class/global
-metric rules are in [legacy architecture](architecture.md).
-
-The historical real sample's rights/source remain unresolved. Numeric aliases and
-hashes do not establish anonymization. No patient/model asset release is implied.
-[Data](data.md) · [Scope](regulatory_scope.md).
+Linux/Windows CI exercises generated data, actual tiny legacy training/export,
+CPU container paths and a pinned official-weight phantom smoke. Setup downloads
+are explicit; no public patient cohort or clinician report is uploaded. CUDA
+training and Intel NPU execution require actual hardware and separate evidence.
+Record warnings/failures honestly in EVALUATION; passing software tests is not
+clinical, regulatory or independent model validation.

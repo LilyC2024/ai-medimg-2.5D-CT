@@ -87,3 +87,16 @@ hosting support. Workspaces contain image pixels and belong outside Git.
 | Review remains blocked | Resolve every candidate and check explicit attestations/caliper bounds |
 | Training memory error | Consult upstream batch/patch settings; record changes and re-evaluate |
 | Unsupported CT geometry | Use a supported research series; do not discard slices silently |
+
+## Input failures versus device failures
+
+Use a fresh workspace for a successful new study. Invalid source shape/nonfinite/
+nonrepresentable pixels now fail before creating it, so corrected input can retry
+the same unused destination. Do not fix a registration mismatch by editing hashes;
+reinstall or re-register the actual intended assets.
+
+LOVISA's prepared ZIP route validates existing results, not full-volume detection.
+Its installed-model example uses generated bounded pixels. Full-scan CPU work can
+outlast interactive budgets and belongs offline. The retained API owns upload
+extraction lifetime and reports encrypted/duplicate members as invalid input.
+[Review](../review.md) · [Current setup](../setup.md).

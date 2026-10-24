@@ -28,3 +28,10 @@ Neither phantom success nor legacy Dice/NPU timing demonstrates this detector's
 clinical performance. LOVISA accepts reviewed synthetic or separately labelled public-research excerpts in fictional cases into its clinical summary; this is not a diagnosis.
 
 The real ROI is 32×96×96 at source origin (168,313,300), selected from an official reader contour before inference. Only that region was analysed; the rest of the scan was not. Inference-region bounds are exported separately from full-source metadata. [Commands and terms](public-demo.md).
+
+## Engineering audit versus model validation
+
+The 24 October code review tightened archive cleanup, numeric source/target checks
+and workspace creation. It did not alter architecture, weights, threshold, model
+registration or the recorded ROI result. New regression counts measure software
+behavior only; they cannot be added to model accuracy evidence. [Audit](../review.md).

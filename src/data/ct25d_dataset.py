@@ -529,7 +529,20 @@ class CT25DDataset(Dataset):
     def _load_label_volume(self, path_value: str) -> np.ndarray:
         if path_value not in self._label_cache:
             with np.load(Path(path_value).expanduser().resolve()) as data:
-                self._label_cache[path_value] = data[self.label_key].astype(np.int64)
+                labels = data[self.label_key]
+                # Validate the original values: casting first silently turns
+                # fractional masks into apparently valid class identifiers.
+                if (
+                    not np.issubdtype(labels.dtype, np.number)
+                    or np.iscomplexobj(labels)
+                    or not np.isfinite(labels).all()
+                    or np.any(labels != np.floor(labels))
+                    or np.any((labels < 0) | (labels > 3))
+                ):
+                    raise ValueError(
+                        "Label masks require finite integer class IDs in [0,3]."
+                    )
+                self._label_cache[path_value] = labels.astype(np.int64)
         return self._label_cache[path_value]
 
     def __getitem__(self, index: int) -> dict[str, Any]:

@@ -60,3 +60,12 @@ docker run --rm --entrypoint python -v "$PWD/artifacts/legacy:/work" lung-resear
 Use generated source in `/work/series` for this example. Models/data are mounted,
 not bundled. Hosted Linux CI exercised both paths. Local Docker verification was
 blocked by daemon access; no local container pass is claimed. [Evidence](validation.md).
+
+## Documentation and source identity
+
+Run `scripts/generate_api_docs.py --check` and `scripts/check_docs.py` alongside
+software checks. The latter verifies local heading anchors as well as file paths;
+external links are not fetched. Current expert repairs and tests are separate
+from historical measurements in this guide. Reproduce an old run with its own
+recorded model/config/input, not by substituting a current nodule detector.
+[Findings](review.md) · [Current validation](validation.md).

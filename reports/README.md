@@ -13,3 +13,9 @@ NPU results to the current lung detector. [Legacy evidence guide](../docs/valida
 
 Commit no new patient images, local approvals, reviewer identities or weights here.
 Keep local runs under ignored `artifacts/`, `models/` and `data/`.
+
+The 24 October audit adds software regressions and separately measured local
+smokes, recorded in [EVALUATION](../EVALUATION.md). It does not reinterpret older
+clinical/sample permissions or add a new benchmark. Every new record should state
+input scope, model/config/source identity, backend, timing scope, review status and
+whether inference was actual or scripted. Real pixels and weights remain ignored.

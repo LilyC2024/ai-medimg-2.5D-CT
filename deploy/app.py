@@ -3,7 +3,6 @@
 import io
 import json
 import os
-import shutil
 import tempfile
 import zipfile
 from contextlib import asynccontextmanager
@@ -70,13 +69,12 @@ def predict(dicom_zip: UploadFile = File(...)):
     payload = dicom_zip.file.read(64 * 1024 * 1024 + 1)
     if len(payload) > 64 * 1024 * 1024:
         raise HTTPException(413, "Upload exceeds 64 MiB")
-    extracted = None
     try:
-        extracted = unzip_series_bytes(payload)
-        cleanup = extracted
-        while not cleanup.name.startswith("ct25d_dicom_"):
-            cleanup = cleanup.parent
-        with tempfile.TemporaryDirectory(prefix="ct25d_result_") as tmp:
+        with (
+            tempfile.TemporaryDirectory(prefix="ct25d_dicom_") as source_root,
+            tempfile.TemporaryDirectory(prefix="ct25d_result_") as tmp,
+        ):
+            extracted = unzip_series_bytes(payload, extraction_root=Path(source_root))
             result = run_deployment_inference(
                 series_dir=extracted,
                 checkpoint_path=app.state.checkpoint_path,
@@ -104,6 +102,3 @@ def predict(dicom_zip: UploadFile = File(...)):
         __import__("pydicom").errors.InvalidDicomError,
     ):
         raise HTTPException(422, "Invalid archive or unsupported CT geometry")
-    finally:
-        if extracted is not None:
-            shutil.rmtree(cleanup, ignore_errors=True)

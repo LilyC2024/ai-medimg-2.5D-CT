@@ -124,3 +124,17 @@ Use `export-research`, not the synthetic bridge, for public studies. It leaves a
 review pending and validates exact crop origin, physical geometry, source slices
 and enclosed candidates against the original workspace. The report states
 limited coverage and protocol uncertainty. [Reproducible real-image demo](public-demo.md).
+
+## Current LOVISA actions and compatible repairs
+
+In LOVISA select the matching case, **CT review → Upload → Analyze**. A ZIP opens
+its included source/results without detector rerun. With no upload, Model/example
+can launch an explicit generated fixture or installed-detector phantom. Resolve
+all candidates and include the study before safety and final review. A valid new
+image after preparation starts a fresh unreviewed context; old reports are intact.
+
+The expert review changed numeric preflight/workspace and legacy upload handling,
+not nodule-v2/research-v3/legacy-v1 schemas or renderer source. Exact vendored sync
+and actual fixture/pretrained/legacy transfers remain required. Public research
+provenance is an operator declaration, not independent source authentication.
+[Source repairs](../review.md) · [Receiver workflow](https://github.com/LilyC2024/Medical-AI/blob/main/docs/WORKFLOWS.md).

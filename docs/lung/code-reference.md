@@ -74,7 +74,7 @@ affected operation; they do not silently replace input, models or approvals.
 | [benchmark_lung.py](../../scripts/benchmark_lung.py) | main/run closure: unchanged-series full detection latency; load/first/warm measurements |
 | [illustrate_lung.py](../../scripts/illustrate_lung.py) | main: reproduce source/box/caliper PNG from generated pixels |
 | [check.py](../../scripts/check.py) | main: lint and full pytest suite, including legacy unittest classes |
-| [check_docs.py](../../scripts/check_docs.py) | main: validate local Markdown links; external URLs/anchors not checked |
+| [check_docs.py](../../scripts/check_docs.py) | main: validate local Markdown links; local heading anchors checked; external URLs not fetched |
 
 Legacy scripts/functions retain source docstrings and references in
 [legacy pipeline](../legacy-pipeline.md). They are not new lung APIs.
@@ -113,3 +113,17 @@ independently validated by the consumer. `scripts/fetch_lidc_demo.py` explicitly
 fetches fixed public TCIA data; `scripts/evaluate_public_lidc.py` maps official
 reader contours by source SOP hash and computes a declared localization proxy.
 [Commands and limits](public-demo.md).
+
+## Source-linked API inventory and new preflight contracts
+
+[Complete callable/subfunction reference](../reference/CALLABLES.md) derives exact
+signatures, declared class fields, nested functions, static calls and explicit
+raises without importing ML. `scripts/generate_api_docs.py --write` refreshes it;
+`--check` detects stale documentation. Subject guides define operational meaning.
+
+`save_workspace` validates source shape/finite/real/float32 range before output
+reservation. `validate_dataset` verifies finite real source HU as well as geometry
+and identity. `CT25DDataset` validates discrete targets before conversion. The
+legacy upload API passes an explicitly owned empty extraction root to
+`unzip_series_bytes`; it never infers cleanup ownership from archive member names.
+[Reproductions and regressions](../review.md).

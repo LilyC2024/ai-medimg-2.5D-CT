@@ -16,9 +16,20 @@ from lung_nodule.sources import sha256
 def save_workspace(destination, study, hu, *, inference_region=None):
     """Create a new workspace; never overwrite a study or mutate original DICOM."""
     destination = Path(destination)
+    hu = np.asarray(hu)
+    if (
+        hu.shape != study.geometry.shape_zyx
+        or not np.issubdtype(hu.dtype, np.number)
+        or np.iscomplexobj(hu)
+        or not np.isfinite(hu).all()
+        or np.any(np.abs(hu) > np.finfo(np.float32).max)
+    ):
+        raise ValueError(
+            "Pixels must match source geometry and contain finite real float32-representable values"
+        )
+    # Validate before reserving the output name. Invalid inputs must remain
+    # retryable and must never persist an unreadable float32 source snapshot.
     destination.mkdir(parents=True, exist_ok=False)
-    if hu.shape != study.geometry.shape_zyx or not np.isfinite(hu).all():
-        raise ValueError("Pixels do not match source geometry")
     (destination / "study.json").write_text(
         study.model_dump_json(indent=2), encoding="utf-8"
     )

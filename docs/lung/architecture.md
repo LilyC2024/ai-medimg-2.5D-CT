@@ -52,6 +52,20 @@ Reviewer identifiers are local attestations, not authenticated credentials.
 Keep Streamlit on loopback. Hashes establish consistency, not independent origin,
 anonymization, model-execution authenticity or clinical truth.
 
-LOVISA receives only bounded synthetic nodule-v2 data and performs independent
-validation, authenticated imaging acceptance and final clinical approval. Its
+LOVISA receives bounded synthetic nodule-v2 or separately labelled public
+research-v3 excerpts and performs independent validation, authenticated imaging
+acceptance and final clinical approval. Its
 images/notes stay outside local Ollama. [Integration contract](mhcra.md).
+
+## Numeric and persistence preflight
+
+Workspace creation validates source shape, finite real numeric values and float32
+representability before reserving a directory. Training preflight checks actual
+finite real voxel data as well as hashes/affine/spacing. Invalid target labels are
+rejected before integer conversion in the retained 2.5D dataset path. These checks
+prevent a successful-looking artifact from hiding corrupted input.
+
+![Relationship to history, endoscopy and human review](../images/lovisa-system.svg)
+
+The sketch describes component responsibilities, not accuracy or patient linkage.
+[Expert repairs](../review.md) · [Function inventory](code-reference.md).

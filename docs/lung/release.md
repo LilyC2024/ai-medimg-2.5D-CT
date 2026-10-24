@@ -51,3 +51,12 @@ AI coding assistance supported implementation, tests and documentation. Runtime
 CT has no LLM agents. LOVISA's sequential specialist roles are distinct from
 coding review subagents; neither software review nor scripted approval is clinical
 verification. [LOVISA architecture](https://github.com/LilyC2024/Medical-AI/blob/main/docs/ARCHITECTURE.md).
+
+## 24 October 2026 — expert repair and documentation pass
+
+Source fixes preserve wire formats and installed models. Numeric preflight now
+rejects invalid source/target data before coercion or workspace creation. Legacy
+uploads reject ambiguous/encrypted members and clean up the actual extraction
+root. Root documentation is concise; detailed source/API, training, integration,
+security and validation guides are linked below it. [Review](../review.md) ·
+[Current evidence](../../EVALUATION.md).

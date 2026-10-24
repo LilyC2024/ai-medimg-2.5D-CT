@@ -53,7 +53,7 @@ alone does not collect all active nodule tests. [Additional commands](reproducib
 | Warm Intel NPU p50 / p95 | 4.94 / 6.21 ms per stack | [Intel benchmark](../reports/intel_benchmark.json) |
 | NPU mask agreement / absolute Dice drop | 99.9943% / 0.000080 on model grid | [Intel benchmark](../reports/intel_benchmark.json) |
 
-The baseline used one local 34-slice series and a same-series split (18 train,
+The baseline used one local 34-source-slice series and a same-series split (18 train,
 4 validation, 4 test, 4 buffer centers). It does not establish unseen-patient
 performance. Teacher quality is weak; postprocessing worsened agreement. Historical
 sample source/redistribution terms remain unresolved, so no real-data download or
@@ -70,3 +70,15 @@ The legacy `mhcra-imaging-v1` bridge is still supported by **LOVISA** (formerly
 MHCRA AI). It is separate from current `mhcra-lung-nodules-v2`. The two formats must
 never be interchanged by renaming. [Legacy bridge](mhcra-workbench.md) ·
 [Current nodule integration](lung/mhcra.md).
+
+## Maintained behavior after expert review
+
+This path remains available for reproducibility and deployment experience. The
+review repaired API extraction ownership, encrypted/duplicate upload rejection
+and source-label validation before casting. Its clinical scope and recorded
+teacher/NPU metrics are unchanged. Current lung work uses a different model,
+protocol and evidence stream. [Repairs](review.md) · [Function reference](lung/code-reference.md).
+
+The historical slice counts refer to different stages: **34 source slices → 30
+cropped/processed slices → 18 training / 4 validation / 4 test / 4 buffer centers**.
+The 30-center split is not a claim that the original source had only 30 slices.

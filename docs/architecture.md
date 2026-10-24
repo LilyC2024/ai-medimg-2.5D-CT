@@ -40,3 +40,12 @@ threshold ≤0.01. These are engineering gates, not clinical acceptance criteria
 Deployment binds graph, checkpoint and preprocessing hashes. Unsupported geometry,
 changed artifacts or parity failures stop execution. [Reproduce](reproducibility.md)
 · [Evidence](validation.md).
+
+## Current maintenance boundary
+
+The legacy upload API and dataset remain tested. Uploads now reject encrypted and
+duplicate normalized members; the API owns and cleans the entire temporary root.
+Ground-truth labels are checked before integer casting, so fractional/nonfinite/
+complex targets cannot be silently accepted. These repairs do not change the
+legacy topology or turn pseudo-label agreement into lung detection evidence.
+[Audit](review.md) · [Current architecture](lung/architecture.md).

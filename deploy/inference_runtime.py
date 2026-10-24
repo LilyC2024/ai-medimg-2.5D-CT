@@ -594,12 +594,24 @@ def attach_reference_metrics(
     return updated
 
 
-def unzip_series_bytes(payload: bytes) -> Path:
+def unzip_series_bytes(payload: bytes, *, extraction_root: Path | None = None) -> Path:
+    """Validate and extract one series into an owned or caller-managed empty root.
+
+    A caller supplying ``extraction_root`` owns its lifetime; the returned series
+    may be nested arbitrarily. Never infer the cleanup root from member names.
+    """
     import shutil
 
     if len(payload) > 64 * 1024 * 1024:
         raise ValueError("Upload exceeds 64 MiB.")
-    temp_dir = Path(tempfile.mkdtemp(prefix="ct25d_dicom_"))
+    owns_root = extraction_root is None
+    temp_dir = (
+        Path(tempfile.mkdtemp(prefix="ct25d_dicom_"))
+        if owns_root
+        else Path(extraction_root).resolve()
+    )
+    if not temp_dir.is_dir() or any(temp_dir.iterdir()):
+        raise ValueError("Extraction root must be an existing empty directory.")
     try:
         with zipfile.ZipFile(io.BytesIO(payload)) as archive:
             files = [entry for entry in archive.infolist() if not entry.is_dir()]
@@ -609,8 +621,17 @@ def unzip_series_bytes(payload: bytes) -> Path:
                 or sum(entry.file_size for entry in files) > 256 * 1024 * 1024
             ):
                 raise ValueError("Archive is empty or exceeds decoded limits.")
+            names = set()
             for entry in archive.infolist():
                 name = entry.filename.replace("\\", "/")
+                if entry.flag_bits & 1:
+                    raise ValueError("Encrypted archives are unsupported.")
+                # Reject aliases before extraction rather than silently letting
+                # a later member replace a previous source slice.
+                normalized = Path(name).as_posix()
+                if normalized in names:
+                    raise ValueError("Duplicate archive member.")
+                names.add(normalized)
                 if (
                     name.startswith("/")
                     or ":" in name
@@ -627,5 +648,6 @@ def unzip_series_bytes(payload: bytes) -> Path:
             raise ValueError("Provide exactly one DICOM series directory.")
         return directories.pop()
     except Exception:
-        shutil.rmtree(temp_dir)
+        if owns_root:
+            shutil.rmtree(temp_dir)
         raise

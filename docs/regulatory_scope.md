@@ -19,3 +19,9 @@ The former head-CT/hemorrhage research idea was exploratory and is not the curre
 lung deliverable. Current development targets lung-nodule **candidates**, not all
 abnormalities, malignancy classification or management recommendations. Do not
 infer an unimplemented indication from an old project note.
+
+The current code review strengthens input/evidence checks and error handling; it
+adds no clinical indication, regulatory certification or automatic decision.
+Public research images in LOVISA remain linked only to explicitly fictional
+composite cases with unrelated subject provenance. [Security](../SECURITY.md) ·
+[Current expert review](review.md).

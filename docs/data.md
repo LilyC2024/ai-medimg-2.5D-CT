@@ -28,3 +28,11 @@ history. No original image redistribution is approved here.
 The historical HU repair prevented double rescale in compressed fallback. Stored
 padding −2000 with intercept −1024 corresponds to −3024 HU, not −4048; padding is
 excluded/replaced for preprocessing. [Recorded investigation](../reports/hu_investigation.json).
+
+## Numeric target and upload validation
+
+Class labels must be real finite integer IDs in the supported range before any
+cast. A fractional value is rejected rather than rounded/truncated. Archive
+uploads accept one series only, reject encrypted/duplicate/unsafe members and
+have explicit caller-owned cleanup. Dataset declarations and hashes remain
+consistency evidence, not permission or anonymization. [Expert review](review.md).

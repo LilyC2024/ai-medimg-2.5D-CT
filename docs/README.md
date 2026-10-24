@@ -1,25 +1,26 @@
-# CT project documentation
+# CT documentation
 
-[Project overview](../README.md)
+[Project overview](../README.md) · [LOVISA](https://github.com/LilyC2024/Medical-AI)
 
-The active project is the **Lung CT Research Assistant**. Its companion **LOVISA**
-organizes history and prepares the reviewed clinical report. Earlier “MHCRA”
-references identify LOVISA's former name or stable integration interfaces.
+The current product is a lung-nodule research assistant. The older 2.5D
+segmentation/deployment exercise is retained as a distinct engineering track.
 
-| Your goal | Read |
+| Task | Guide |
 | --- | --- |
-| Understand model/coordinates/trust | [Architecture](lung/architecture.md) |
-| Choose supported CT and review data permission | [Data](lung/data.md) |
-| Inspect candidates, measure and complete CT review | [Review](lung/review.md) |
-| Send synthetic evidence to LOVISA | [Integration](lung/mhcra.md) |
-| Install CPU/CUDA, run Docker or troubleshoot | [Deployment](lung/deployment.md) |
-| Prepare labels, launch training or evaluate detection | [Training](lung/training.md) |
-| Find functions and folders | [Code reference](lung/code-reference.md) |
-| Understand intended use and limitations | [Model card](lung/model-card.md) / [Scope](regulatory_scope.md) |
-| Reproduce software checks and inspect outcomes | [Validation](validation.md) / [Evaluation](../EVALUATION.md) |
-| Understand changes and portfolio claims | [Release](lung/release.md) |
+| Install environments and launch the local UI | [Setup](setup.md) |
+| Load sources, inspect candidates and place calipers | [Review](lung/review.md) |
+| Understand arrays, source geometry, model and trust | [Architecture](lung/architecture.md) |
+| Find folders, functions and CLI entry points | [Code reference](lung/code-reference.md) |
+| Prepare permitted volumes and patient-separated experiments | [Data](lung/data.md) / [Training](lung/training.md) |
+| Select CPU/CUDA and understand NPU limitations | [Deployment](lung/deployment.md) |
+| Inspect detector scope and limitations | [Model card](lung/model-card.md) |
+| Transfer synthetic/public evidence to LOVISA | [Integration](lung/mhcra.md) |
+| Reproduce the bounded real CT demonstration | [Public demo](lung/public-demo.md) |
+| Run checks and inspect fixes | [Validation](validation.md) / [Expert review](review.md) |
+| Inspect actual software/model evidence | [Evaluation](../EVALUATION.md) |
+| Reproduce the historical 2.5D path | [Legacy guide](legacy-pipeline.md) / [Reproducibility](reproducibility.md) |
 
-Legacy 2.5D work has a separate [pipeline guide](legacy-pipeline.md),
-[architecture](architecture.md), [model card](model_card.md),
-[reproduction commands](reproducibility.md) and [dated record](release_notes.md).
-Its pseudo-label metrics and NPU timings are not lung-nodule evidence.
+[Scope](regulatory_scope.md) · [Security](../SECURITY.md) ·
+[Contribution workflow](../CONTRIBUTING.md) · [Phases](../PLAN.md).
+The documentation distinguishes scripted tests, real model execution and unexecuted
+hardware/training work. None constitutes clinical certification.

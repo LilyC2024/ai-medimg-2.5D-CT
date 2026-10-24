@@ -20,3 +20,11 @@ Previously tracked identifiers are not erased by cleanup. Data ownership and any
 history remediation need separate review. Technical aliases/hashes are not full
 anonymization. Namespace migration is unnecessary for the currently tested package
 contracts; stable LOVISA bridge names remain documented. [Data rules](lung/data.md).
+
+## Current review decision
+
+The 24 October pass retained both meaningful engineering tracks and their public
+entry points. It repaired demonstrated integrity/lifecycle defects rather than
+removing legacy code for cosmetic simplification. New guides distinguish active
+lung behavior, historical segmentation/NPU evidence and LOVISA integration. Exact
+callable documentation is generated from maintained source. [Audit](review.md).
