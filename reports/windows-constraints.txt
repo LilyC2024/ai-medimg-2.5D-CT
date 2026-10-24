@@ -1,6 +1,6 @@
 # Recorded Windows Python 3.12 environment; install CPU torch separately first.
 matplotlib==3.11.2
-numpy==2.5.2
+numpy==2.5.4
 opencv-python==5.0.0.93
 pandas==3.0.6
 pydicom==3.0.2
